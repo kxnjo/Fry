@@ -1,0 +1,24 @@
+<!-- homepage template -->
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0" />
+		<title>Fry</title>
+
+        <!-- import global index.css and index.js -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+        <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+	</head>
+	<body>
+        {% include 'navbar.html' %}
+
+        {% block content %}
+        {% endblock %}
+
+        {% include 'footer.html' %}
+    </body>
+
+</html>
