@@ -55,7 +55,7 @@ def create_table():
 # routes == MAIN
 @app.route("/")
 def home():
-    return "hello world"
+    return render_template("main/home.html")
 
 # == USER ROUTES ==
 @app.route("/login")
