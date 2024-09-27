@@ -7,6 +7,8 @@ to create own env, run:
 then to activate environment:
 `source .venv/bin/activate`
 
+run `pip install -r requirements.txt`
+
 ## to run program:
 `python app.py`
 
