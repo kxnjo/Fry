@@ -3,14 +3,14 @@ import mysql.connector
 import config
 
 # import routes
-from routes.users import users_bp
+from routes.users import user_bp
 from routes.sample import sample_bp
 
 app = Flask(__name__)
 
 # add url route to all endpoints under /users
 # ie. localhost:8000/users/...
-app.register_blueprint(users_bp, url_prefix="/users")
+app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(sample_bp, url_prefix="/sample")
 
 
