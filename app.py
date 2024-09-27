@@ -1,66 +1,23 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify, Blueprint
 import mysql.connector
+import config
+
+# import routes
+from routes.users import users_bp
+from routes.sample import sample_bp
 
 app = Flask(__name__)
 
-HOST = "127.0.0.1"
-PORT = 3306
-USER = "FryGames"
-PASSWORD = "FryIsBetter"
-DATABASE = "FryGames"
+# add url route to all endpoints under /users
+# ie. localhost:8000/users/...
+app.register_blueprint(users_bp, url_prefix="/users")
+app.register_blueprint(sample_bp, url_prefix="/sample")
 
-# database connections ==
-def create_connection():
-    try: 
-        conn = mysql.connector.connect(
-            host = HOST,
-            port = PORT,
-            user = USER,
-            password = PASSWORD,
-            database = DATABASE
-        )
-        print(conn)
-        print(f"Connection Successful!")
-        return conn
-    except mysql.connector.Error as e:
-        print(f"Error connecting to MySQL Platform: {e}")
-        return None;
-
-@app.route("/create-table")
-def create_table():
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor()
-        create_table_query = """
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(100) NOT NULL,
-            email VARCHAR(100) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-        # Execute the SQL statement
-        cur.execute(create_table_query)
-        conn.commit()  # Commit the transaction
-        return "Table 'users' created successfully."
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error creating table: {e}"
-    finally:
-        cur.close()
-        conn.close()
 
 # routes == MAIN
 @app.route("/")
 def home():
     return render_template("main/home.html")
-
-# == USER ROUTES ==
-@app.route("/login")
-def login():
-    return render_template("user/login.html")
 
 
 # == ALL GAMES ==
