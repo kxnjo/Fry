@@ -1,0 +1,13 @@
+- developer
+- game
+- game_developer
+- category
+- game_category
+- price_change
+
+tables not in yet:
+- user
+- friend
+- owned_game
+- review
+- wanted_game
