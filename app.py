@@ -5,6 +5,7 @@ import config
 # import routes
 from routes.users import user_bp
 from routes.sample import sample_bp
+from routes.review import review_bp
 
 app = Flask(__name__)
 
@@ -12,6 +13,7 @@ app = Flask(__name__)
 # ie. localhost:8000/users/...
 app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(sample_bp, url_prefix="/sample")
+app.register_blueprint(review_bp, url_prefix="/review")
 
 
 # routes == MAIN
