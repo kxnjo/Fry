@@ -3,4 +3,10 @@
     <a class="navbar-brand" href="#">
       <img src=" {{ url_for('static', filename='img/fries.png') }} " width="50" height="50" alt=""> Fry
     </a>
+
+    <div class="ml-auto"></div>
+      <a class="btn btn-outline-light" href="{{ url_for('home') }}">Home</a>
+      <a class="btn btn-outline-light" href="{{ url_for('viewGames') }}">Games</a>
+      <a class="btn btn-outline-light" href="{{ url_for('review_bp.check') }}">Reviews</a>
+    </div>
   </nav>
