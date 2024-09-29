@@ -1,6 +1,8 @@
 import random
 import string
 import hashlib
+import sys
+import os
 from datetime import date
 import mysql.connector
 
@@ -126,6 +128,7 @@ def generate_dummy_users(cur, conn, num_users=30):
         email = generate_email(username)
         # password = generate_random_password()  # Generate a random password
         password = "password123"  # Generate a random password
+        role = "user"
         created_on = date.today()
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
@@ -136,13 +139,13 @@ def generate_dummy_users(cur, conn, num_users=30):
 
             # Insert the dummy user into the database
             create_table_query = """
-                INSERT INTO user (user_id, username, email, password, created_on)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO user (user_id, username, email, password, created_on, role)
+                VALUES (%s, %s, %s, %s, %s, %s)
             """
             try:
                 cur.execute(
                     create_table_query,
-                    (uid, username, email, hashed_password, created_on),
+                    (uid, username, email, hashed_password, created_on, role),
                 )
                 print(f"Inserted user {uid}: {username}, {email} with password: {password}")
             except Exception as e:
@@ -154,7 +157,7 @@ def generate_dummy_users(cur, conn, num_users=30):
 
 if __name__ == "__main__":
     # Number of dummy users to generate
-    NUM_USERS = 30
+    NUM_USERS = 50
 
     # Connect to your database
     conn = create_connection()
