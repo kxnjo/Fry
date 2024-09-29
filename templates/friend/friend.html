@@ -1,0 +1,27 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Friend List</h1>
+
+    <div class="row">
+        <div class="col-12">
+            {% for friend in friend %}
+            <div class="card friend-card">
+                <div class="card-body">
+                    <h5 class="card-title">account id: {{ friend.user1_id }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted"> friend id: {{ friend.user2_id }}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted"> friendship date: {{ friend.friendship_date }}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted"> account username: {{ friend.username1 }}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted"> friend username: {{ friend.username2 }}</h6>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning" role="alert">
+                No friends found.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
