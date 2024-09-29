@@ -47,6 +47,7 @@ def user_count():
     cur = conn.cursor()
     return jsonify(getUserNum(cur))
 
+
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -112,22 +113,21 @@ def register():
             if checkUser(cur, name, email):
                 # other details
                 uid = f"u{getUserNum(cur) + 1}"
-                print("uid =", uid)
+                role = "user"
                 created_on = date.today()
-                print(f"created_on = {created_on}")
                 # hash the password
                 hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
 
                 # table query
                 create_table_query = """
-                    INSERT INTO user (user_id, username, email, password, created_on) 
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO user (user_id, username, email, password, created_on, role) 
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """
 
                 # Execute the SQL statement
                 cur.execute(
                     create_table_query,
-                    (uid, name, email, hashed_input_password, created_on),
+                    (uid, name, email, hashed_input_password, created_on, role),
                 )
                 conn.commit()
 
