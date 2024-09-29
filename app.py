@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, Blueprint
-import mysql.connector
 import config
 
 # import routes
@@ -7,6 +6,7 @@ from routes.users import user_bp
 from routes.sample import sample_bp
 from routes.review import review_bp
 from routes.friend import friend_bp
+from routes.wishlist import wishlist_bp
 
 app = Flask(__name__)
 
@@ -16,6 +16,7 @@ app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(sample_bp, url_prefix="/sample")
 app.register_blueprint(review_bp, url_prefix="/review")
 app.register_blueprint(friend_bp, url_prefix="/friend")
+app.register_blueprint(wishlist_bp, url_prefix="/wishlist")
 
 
 # routes == MAIN

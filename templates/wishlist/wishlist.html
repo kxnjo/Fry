@@ -1,0 +1,30 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Wishlist</h1>
+
+    <div class="row">
+        <div class="col-12">
+            <table class="table">
+                {% for i in wishlist %}
+                <tr>
+                    <td>
+                        <h6>User: {{ i[0] }}</h5>
+                        <h6>Game: {{ i[1] }}</h6>
+                        <h6>Date Added: {{ i[2] }}</h6>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('wishlist_bp.deleteFromWishlist', user_id=i[0], game_id=i[1]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                    </td>
+                <tr>
+                {% endfor %}
+            </table>
+            <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}">
+                <input type="text" name="user" value="u20" hidden>
+                <input type="text" name="game" value="g107100" hidden>
+                <button type="submit" class="btn btn-outline-primary">Add to wishlist</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
