@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-import mysql.connector
+import mysql.connector # type: ignore
 import config
 import datetime
 
@@ -25,13 +25,14 @@ def view_wishlist():
     try:
         cur = conn.cursor()
 
-        cur.execute("SELECT * FROM wanted_game")
-        wishlist = cur.fetchall()
+        get_table_query = """
+            SELECT username, title, added_date FROM wanted_game
+            INNER JOIN user ON wanted_game.user_id = user.user_id
+            INNER JOIN game ON wanted_game.game_id = game.game_id;
+        """
         
-        for i in wishlist:
-            print(i[0])
-            print(i[1])
-            print(i[2])
+        cur.execute(get_table_query)
+        wishlist = cur.fetchall()
 
     except mysql.connector.Error as e:
         print(f"Error: {e}")
@@ -72,7 +73,7 @@ def addToWishlist():
         except mysql.connector.Error as e:
             conn.rollback()
             print(f"Error: {e}")
-            return f"Error adding to wishlist: {e}"
+            return f"Error adding to wanted_games: {e}"
         finally:
             cur.close()
             conn.close()
@@ -92,7 +93,6 @@ def deleteFromWishlist(user_id, game_id):
         print("this is the user:", user_id)
         print("this is the game:", game_id)
 
-        
         delete_table_query = """
             DELETE FROM wanted_game
             WHERE user_id = %s AND game_id = %s
@@ -108,7 +108,7 @@ def deleteFromWishlist(user_id, game_id):
     except mysql.connector.Error as e:
         conn.rollback()
         print(f"Error: {e}")
-        return f"Error deleting from wishlist: {e}"
+        return f"Error deleting from wanted_games: {e}"
     finally:
         cur.close()
         conn.close()

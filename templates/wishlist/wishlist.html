@@ -9,7 +9,7 @@
                 {% for i in wishlist %}
                 <tr>
                     <td>
-                        <h6>User: {{ i[0] }}</h5>
+                        <h6>User: @{{ i[0] }}</h5>
                         <h6>Game: {{ i[1] }}</h6>
                         <h6>Date Added: {{ i[2] }}</h6>
                     </td>
@@ -22,7 +22,7 @@
             <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}">
                 <input type="text" name="user" value="u20" hidden>
                 <input type="text" name="game" value="g107100" hidden>
-                <button type="submit" class="btn btn-outline-primary">Add to wishlist</button>
+                <button type="submit" class="btn btn-outline-primary">Test Add to wishlist</button>
             </form>
         </div>
     </div>
