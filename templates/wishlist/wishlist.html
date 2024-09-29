@@ -14,7 +14,7 @@
                         <h6>Date Added: {{ i[2] }}</h6>
                     </td>
                     <td>
-                        <a href="{{ url_for('wishlist_bp.deleteFromWishlist', user_id=i[0], game_id=i[1]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                        <a href="{{ url_for('wishlist_bp.deleteFromWishlist', user_id=i[3], game_id=i[4]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
                     </td>
                 <tr>
                 {% endfor %}

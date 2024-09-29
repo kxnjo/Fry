@@ -26,7 +26,7 @@ def view_wishlist():
         cur = conn.cursor()
 
         get_table_query = """
-            SELECT username, title, added_date FROM wanted_game
+            SELECT username, title, added_date, wanted_game.user_id, wanted_game.game_id FROM wanted_game
             INNER JOIN user ON wanted_game.user_id = user.user_id
             INNER JOIN game ON wanted_game.game_id = game.game_id;
         """
@@ -72,8 +72,14 @@ def addToWishlist():
 
         except mysql.connector.Error as e:
             conn.rollback()
-            print(f"Error: {e}")
-            return f"Error adding to wanted_games: {e}"
+            # Check if the error is a duplicate entry error (error code 1062)
+            if e.errno == 1062:
+                print("Duplicate entry error!")
+                return f"NOOOO! Game is already in wishlist!"
+            else:
+                # For any other error, print the general error message
+                print(f"Error: {e}")
+                return f"Error adding to wanted_games: {e}"
         finally:
             cur.close()
             conn.close()
