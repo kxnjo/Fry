@@ -1,5 +1,35 @@
 {% extends "index.html" %}
-
 {% block content %}
-hello view all games here
+<div class="container mt-5">
+    <h1 class="text-center">Games</h1>
+
+    <div class="row">
+        <div class="col-12">
+            {% for game in games %}
+            <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="text-decoration-none">
+                <div class="card game-card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ game.game_title }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted"> Released on: {{ game.game_release_date }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted"> Price: {{ game.game_price }}</h6>
+                    </div>
+                </div>
+            </a>
+            {% else %}
+            <div class="alert alert-warning" role="alert">
+                No games found.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+<div class="pagination"></div>
+    {% if page > 1 %}
+    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page-1) }}">Previous</a>
+
+    {% endif %}
+
+    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page+1) }}">Next</a>
+
+</div>
 {% endblock %}
