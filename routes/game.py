@@ -18,7 +18,6 @@ def create_connection():
 
 @game_bp.route("/games")
 def view_all_games():
-
     page = request.args.get('page', 1, type=int)
     sort_by = request.args.get('sort', 'title')  # Default sort is by title
     sort_order = request.args.get('order', 'asc')  # Default order is ascending
@@ -74,9 +73,9 @@ def view_all_games():
 
     return render_template("games/view_games.html", games=games, page=page, sort_by=sort_by, sort_order=sort_order)
 
+
 @game_bp.route("/game/<game_id>")
 def view_game(game_id):
-
     conn = create_connection()
     cur = conn.cursor()
     cur.execute('''
@@ -95,7 +94,7 @@ def view_game(game_id):
 
     if not game:
         return "Game not found", 404
-    
+
     game_data = {
         "game_id": game[0],
         "game_title": game[1],
@@ -155,5 +154,64 @@ def view_game(game_id):
     else:
         print("not found")
 
-    return render_template("games/game.html", game = game_data, categories = categories, developers = developers)
 
+    # Retrieve Reviews from DB
+    cur.execute('''
+        SELECT
+            r.review_id, r.review_text, r.review_date, u.username, g.title, r.recommended
+        FROM
+            review r
+        JOIN user u ON r.user_id = u.user_id
+        JOIN game g ON r.game_id = g.game_id
+        WHERE
+            g.game_id = %s
+        ORDER BY
+            r.review_date DESC
+        LIMIT 10
+    ''', (game_id,))
+
+    # Create a list to hold review data
+    reviews = []
+
+    # Fetch the review rows
+    review_rows = cur.fetchall()
+    if review_rows:
+        for row in review_rows:
+            if row[5] == 'TRUE':
+                recommended_val = "RECOMMENDED"
+            else:
+                recommended_val = "NOT RECOMMENDED"
+
+            review_data = {
+                "review_id": row[0],
+                "review_text": row[1],
+                "review_date": row[2],
+                "user_id": row[3],
+                "game_id": row[4],
+                "recommended": recommended_val
+            }
+            reviews.append(review_data)
+
+    # count number of recommended / non recommended reviews per game
+    cur.execute('''
+        SELECT 
+            SUM(review.recommended = 'TRUE') AS true_count,
+            SUM(review.recommended = 'FALSE') AS false_count
+        FROM 
+            review
+        WHERE 
+            review.game_id = %s
+    ''', (game_id,))
+
+    recommended_rows = cur.fetchone()
+    if recommended_rows:
+        true_count = recommended_rows[0]
+        false_count = recommended_rows[1]
+        # After fetching the recommended counts
+        recommended_data = {
+            "true_count": true_count,
+            "false_count": false_count
+        }
+
+    return render_template("games/game.html", game=game_data, categories=categories, developers=developers,
+                           reviews=reviews, recommended_data = recommended_data)

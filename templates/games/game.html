@@ -35,4 +35,45 @@
         </div>
     </div>
 </div>
+
+<!--Show Reviews-->
+<!-- Show Reviews -->
+<div class="container">
+    <h1>Reviews</h1>
+    <div class="row">
+        <div class="col">
+            <h6>Recommended: {{ recommended_data.true_count }}</h6>
+            <ul class="list-group">
+                {% for review in reviews if review.recommended == "RECOMMENDED" %}
+                    <div class="card review-card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">User: {{ review.user_id }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Review ID: {{ review.review_id }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
+                            <p class="card-text">{{ review.review_text }}</p>
+                            <span class="text-success">Recommended</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col">
+            <h6>Not Recommended: {{ recommended_data.false_count }}</h6>
+            <ul class="list-group">
+                {% for review in reviews if review.recommended == "NOT RECOMMENDED" %}
+                    <div class="card review-card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">User: {{ review.user_id }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Review ID: {{ review.review_id }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
+                            <p class="card-text">{{ review.review_text }}</p>
+                            <span class="text-danger">Not Recommended</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

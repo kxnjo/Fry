@@ -3,16 +3,60 @@
 <div class="container mt-5">
     <h1 class="text-center">Game Reviews</h1>
 
+    <!-- Filter Section -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <form method="GET" action="">
+                <div class="row">
+                    <!-- game filter -->
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="gameFilter">Filter by Game</label>
+                            <select class="form-control" id="gameFilter" name="game">
+                                <option value="">All Games</option>
+                                {% for game in games %}
+                                <option value="{{ game.id }}"
+                                        {% if game.id== selected_game %} selected {% endif %}>
+                                    {{ game.title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <!-- checkbox for Recommended -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="recommendedFilter">Show Recommended Only</label>
+                            <input type="checkbox" id="recommendedFilter" name="recommended"
+                                   {% if recommended %} checked {% endif %}>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary mt-3">Apply Filter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
     <div class="row">
         <div class="col-12">
             {% for review in reviews %}
-            <div class="card review-card">
+            <div class="card review-card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">This one user id: {{ review.user_id }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted"> this one review id: {{ review.review_id }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ review.review_date }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted">this one game name:{{ review.game_id }}</h6>
-                    <p class="card-text">This one review text {{ review.review_text }}</p>
+                    <h5 class="card-title">User: {{ review.user_id }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">Review ID: {{ review.review_id }}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted">Game: {{ review.game_id }}</h6>
+                    <h6 class="card-subtitle mb-2 text-muted"> {{ review.title }}
+                        {% if review.recommended == "RECOMMENDED" %}
+                        <span class="text-success">Recommended</span>
+                        {% else %}
+                        <span class="text-danger">Not Recommended</span>
+                        {% endif %}
+                    </h6>
+                    <p class="card-text">{{ review.review_text }}</p>
                 </div>
             </div>
             {% else %}
