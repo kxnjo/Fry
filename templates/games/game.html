@@ -21,6 +21,18 @@
             No categories found.
         </div>
     </h5>
-        {% endfor %}
-
+    {% endfor %}
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-sm"></div>
+        <div class="col-sm">
+            <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}">
+                <input type="text" name="user" value="u20" hidden>
+                <input type="text" name="game" value="{{ game.game_id }}" hidden>
+                <button type="submit" class="btn btn-outline-primary">Add to wishlist</button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
