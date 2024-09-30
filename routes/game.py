@@ -20,6 +20,8 @@ def create_connection():
 def view_all_games():
 
     page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort', 'title')  # Default sort is by title
+    sort_order = request.args.get('order', 'asc')  # Default order is ascending
 
     # Define the limit of items per page
     per_page = 10
@@ -27,9 +29,16 @@ def view_all_games():
     # Calculate the offset for the SQL query
     offset = (page - 1) * per_page
 
-    conn = create_connection()
-    cur = conn.cursor()
-    cur.execute('''
+    if sort_by == 'price':
+        order_by = 'g.price'
+    elif sort_by == 'release_date':
+        order_by = 'g.release_date'
+    else:
+        order_by = 'g.title'  # Default is alphabetically by title
+
+    order_direction = 'ASC' if sort_order == 'asc' else 'DESC'
+
+    query = f'''
     SELECT 
         g.game_id,
         g.title,
@@ -37,8 +46,16 @@ def view_all_games():
         g.price
     FROM 
         game g
+    ORDER BY 
+        {order_by} {order_direction}
     LIMIT %s OFFSET %s
-    ''', (per_page, offset))
+    '''
+
+    conn = create_connection()
+    cur = conn.cursor()
+
+    # Execute the query with the limit and offset parameters
+    cur.execute(query, (per_page, offset))
     rows = cur.fetchall()
 
     # Create a list to hold game data
@@ -55,7 +72,7 @@ def view_all_games():
     else:
         print("not found")
 
-    return render_template("games/view_games.html", games = games, page = page)
+    return render_template("games/view_games.html", games=games, page=page, sort_by=sort_by, sort_order=sort_order)
 
 @game_bp.route("/game/<game_id>")
 def view_game(game_id):

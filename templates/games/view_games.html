@@ -2,6 +2,30 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center">Games</h1>
+    <br>
+    <br>
+    <form method="GET" class="mb-3">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="sort_by" class="form-label">Sort by:</label>
+                <select name="sort" id="sort_by" class="form-select">
+                    <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>
+                    <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
+                    <option value="release_date" {% if sort_by == 'release_date' %}selected{% endif %}>Release Date</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="sort_order" class="form-label">Order:</label>
+                <button type="button" onclick="toggleSortOrder()" id="orderButton" class="btn btn-primary">
+                    {% if sort_order == 'asc' %}Ascending{% else %}Descending{% endif %}
+                </button>
+                <input type="hidden" name="order" id="sort_order" value="{{ sort_order }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-secondary mt-4">Sort</button>
+            </div>
+        </div>
+    </form>
 
     <div class="row">
         <div class="col-12">
@@ -23,13 +47,25 @@
         </div>
     </div>
 </div>
-<div class="pagination"></div>
+<div class="pagination">
     {% if page > 1 %}
-    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page-1) }}">Previous</a>
-
+    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page-1, sort=sort_by, order=sort_order) }}">Previous</a>
     {% endif %}
-
-    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page+1) }}">Next</a>
-
+    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page+1, sort=sort_by, order=sort_order) }}">Next</a>
 </div>
+
+<script>
+    function toggleSortOrder() {
+        const orderInput = document.getElementById("sort_order");
+        const orderButton = document.getElementById("orderButton");
+
+        if (orderInput.value === 'asc') {
+            orderInput.value = 'desc';
+            orderButton.textContent = 'Descending'; // Update button text
+        } else {
+            orderInput.value = 'asc';
+            orderButton.textContent = 'Ascending'; // Update button text
+        }
+    }
+</script>
 {% endblock %}
