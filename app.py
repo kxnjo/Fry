@@ -6,6 +6,8 @@ from routes.users import user_bp
 from routes.game import game_bp
 from routes.sample import sample_bp
 from routes.review import review_bp
+from routes.category import category_bp
+from routes.developer import developer_bp
 from routes.friend import friend_bp
 from routes.wishlist import wishlist_bp
 
@@ -17,6 +19,8 @@ app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(game_bp, url_prefix="/game")
 app.register_blueprint(sample_bp, url_prefix="/sample")
 app.register_blueprint(review_bp, url_prefix="/review")
+app.register_blueprint(category_bp, url_prefix="/category")
+app.register_blueprint(developer_bp, url_prefix="/developer")
 app.register_blueprint(friend_bp, url_prefix="/friend")
 app.register_blueprint(wishlist_bp, url_prefix="/wishlist")
 
@@ -25,13 +29,6 @@ app.register_blueprint(wishlist_bp, url_prefix="/wishlist")
 @app.route("/")
 def home():
     return render_template("main/home.html")
-
-
-# # == ALL GAMES ==
-# @app.route("/games")
-# def viewGames():
-#     return render_template("games/viewGames.html")
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

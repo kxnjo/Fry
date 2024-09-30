@@ -1,0 +1,12 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1>Games developed by <u>{{ games[0].developer_name }}</u></h1>
+    <!-- <h5><strong>Developed By:</strong> -->
+    {% for game in games %}
+        <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="text-decoration-none">
+            <h5 class="card-title">{{ game.game_title }}</h5>
+        </a>
+    {% endfor %}
+
+{% endblock %}

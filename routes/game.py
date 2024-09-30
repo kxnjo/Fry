@@ -55,7 +55,7 @@ def view_all_games():
     else:
         print("not found")
 
-    return render_template("games/viewGames.html", games = games, page = page)
+    return render_template("games/view_games.html", games = games, page = page)
 
 @game_bp.route("/game/<game_id>")
 def view_game(game_id):
@@ -88,7 +88,7 @@ def view_game(game_id):
 
     cur.execute('''
     SELECT 
-        c.category_name
+        c.category_id, c.category_name
     FROM 
         category c
     JOIN 
@@ -105,7 +105,8 @@ def view_game(game_id):
     if rows:
         for row in rows:
             category = {
-                "category_name": row[0],
+                "category_id": row[0],
+                "category_name": row[1],
             }
             categories.append(category)
     else:
@@ -113,7 +114,7 @@ def view_game(game_id):
 
     cur.execute('''
     SELECT 
-        d.developer_name
+        d.developer_id, d.developer_name
     FROM 
         developer d
     JOIN 
@@ -130,7 +131,8 @@ def view_game(game_id):
     if rows:
         for row in rows:
             developer = {
-                "developer_name": row[0],
+                "developer_id": row[0],
+                "developer_name": row[1],
             }
             developers.append(developer)
     else:
