@@ -2,29 +2,25 @@
 {% block content %}
 <div class="container mt-5">
     <h1>{{ game.game_title }}</h1>
-    <p><strong>Release Date:</strong> {{ game.game_release_date }}</p>
-    <p><strong>Price:</strong> ${{ game.game_price }}</p>
-    <!-- <p><strong>Description:</strong> {{ game.game_description }}</p> -->
-</div>
-
-<div class="row">
-    <div class="col-12">
+    <h5><strong>Developed By:</strong>
+    {% for developer in developers %}
+        <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="text-decoration-none">
+            {{ developer.developer_name }}{% if not loop.last %}, {% endif %}
+        </a>
+    {% endfor %}
+    </h5>
+    <h5><strong>Release Date:</strong> {{ game.game_release_date }}</h5>
+    <h5><strong>Price:</strong> ${{ game.game_price }}</h5>
+    <h5><strong>Categories:</strong>
         {% for category in categories %}
-        <!-- <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="text-decoration-none"> -->
-            <div class="card game-card">
-                <div class="card-body">
-                    <h5 class="card-title">This one game category: {{ category.category_name }}</h5>
-                </div>
-            </div>
-        <!-- </a> -->
+        <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="text-decoration-none">
+            {{ category.category_name }}{% if not loop.last %}, {% endif %}
+        </a>
         {% else %}
         <div class="alert alert-warning" role="alert">
-            No cats found.
+            No categories found.
         </div>
+    </h5>
         {% endfor %}
-    </div>
-</div>
-</div>
-
 
 {% endblock %}

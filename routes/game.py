@@ -111,5 +111,30 @@ def view_game(game_id):
     else:
         print("not found")
 
-    return render_template("games/game.html", game = game_data, categories = categories)
+    cur.execute('''
+    SELECT 
+        d.developer_name
+    FROM 
+        developer d
+    JOIN 
+        game_developer gd 
+    ON 
+        d.developer_id = gd.developer_id
+    WHERE 
+        gd.game_id = %s
+    ;
+    ''', (game_id,))
+    rows = cur.fetchall()
+
+    developers = []
+    if rows:
+        for row in rows:
+            developer = {
+                "developer_name": row[0],
+            }
+            developers.append(developer)
+    else:
+        print("not found")
+
+    return render_template("games/game.html", game = game_data, categories = categories, developers = developers)
 
