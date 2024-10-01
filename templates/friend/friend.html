@@ -1,25 +1,28 @@
 {% extends "index.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center">Friend List</h1>
+    <h1 class="text-center"> Friend List</h1>
+    <div class="card-body d-flex">
+        <a class="btn btn-primary ms-auto" href="{{ url_for('friendlist_bp.add_friend') }}"> Add Friend</a>
+    </div>
 
     <div class="row">
         <div class="col-12">
-            {% for friend in friend %}
-            <div class="card friend-card">
-                <div class="card-body">
-                    <h5 class="card-title">account id: {{ friend.user1_id }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted"> friend id: {{ friend.user2_id }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted"> friendship date: {{ friend.friendship_date }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted"> account username: {{ friend.username1 }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted"> friend username: {{ friend.username2 }}</h6>
+            <table class="table">
+                {% for friend in friend %}
+                <div class="card friend-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Account Name & ID: {{ friend[3], friend[0] }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted"> Friend Name & ID: {{ friend[4], friend[1] }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted"> Friendship Date: {{ friend[2] }}</h6>
+                    </div>
                 </div>
-            </div>
-            {% else %}
-            <div class="alert alert-warning" role="alert">
-                No friends found.
-            </div>
-            {% endfor %}
+                {% else %}
+                <div class="alert alert-warning" role="alert">
+                    No friends found.
+                </div>
+                {% endfor %}
+            </table>
         </div>
     </div>
 </div>

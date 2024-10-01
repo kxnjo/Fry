@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, render_template
+from flask import Blueprint, render_template, request
 import mysql.connector
 import config
+import datetime
 
 # Create a Blueprint object
-friend_bp = Blueprint("friend_bp", __name__)
+friendlist_bp = Blueprint("friendlist_bp", __name__)
 
 
 def create_connection():
@@ -15,147 +16,83 @@ def create_connection():
         database=config.DATABASE,
     )
 
-'''@friend_bp.route("/view-tables")
-def view_tables():
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor()
-
-        # Step 1: Get all table names
-        cur.execute("SHOW TABLES")
-        tables = cur.fetchall()
-
-        table_details = {}
-
-        # Step 2: Get schema details for each table
-        for (table_name,) in tables:
-            cur.execute(f"DESCRIBE {table_name}")
-            table_details[table_name] = cur.fetchall()
-
-        return jsonify(table_details)
-
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving tables: {e}"
-    finally:
-        cur.close()
-        conn.close()'''
-
-
-'''@friend_bp.route("/view-users")
-def view_users():
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(
-            dictionary=True
-        )  # Use `dictionary=True` to get results as dicts
-
-        # Select all entries from the users table
-        cur.execute("SELECT * FROM users")
-        users = cur.fetchall()
-
-        return jsonify(users)
-
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving users: {e}"
-    finally:
-        cur.close()
-        conn.close()'''
-
-@friend_bp.route("/update-friends")
-def updatefriends():
+@friendlist_bp.route("/view-friends")
+def view_friends():
     conn = create_connection()
     if conn is None:
         return "Failed to connect to database"
     try:
         cur = conn.cursor()
         cur.execute('''
-            SELECT friend.user1_id AS u1, friend.user2_id AS u2, friend.friendship_date AS date,
-                    u1.username AS username1, u2.username AS username2
+            SELECT friend.user1_id , friend.user2_id , friend.friendship_date , u1.username , u2.username 
             FROM friend
             JOIN user u1 ON friend.user1_id = u1.user_id
             JOIN user u2 ON friend.user2_id = u2.user_id
             WHERE friend.user1_id = 'u2';
         ''')
-        rows = cur.fetchall()
+        friend = cur.fetchall()
 
     except mysql.connector.Error as e:
+        # Error handling
         print(f"Error: {e}")
         return f"Error retrieving users: {e}"
     
-    # Create a list to hold review data
-    friend = []
-    if rows:
-        for row in rows:
-            friend_data = {
-                "user1_id": row[0],
-                "user2_id": row[1],
-                "friendship_date": row[2],
-                "username1": row[3],
-                "username2": row[4]
-            }
-            friend.append(friend_data)
-    else:
-        print("not found")
-
+    finally:
+        cur.close()
+        conn.close()
+        
     return render_template("friend/friend.html", friend=friend)
 
-    #finally:
-        #cur.close()
-        #conn.close()
+@friendlist_bp.route("/add-friend", methods=["GET", "POST"])
+def add_friend():
+    if request.method == "POST":
+        conn = create_connection()
+        if conn is None:
+            return "Failed to connect to database"
+        try:
+            cur = conn.cursor()
 
-'''@friend_bp.route("/filter-friendlist")
-def view_users():
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(
-            dictionary=True
-        )  # Use `dictionary=True` to get results as dicts
+            # Get the user and game from the form
+            user1 = request.form["user"]
+            user2 = request.form["friend"]
+            date = datetime.datetime.today().strftime("%Y-%m-%d")
 
-        # Select all entries from the users table
-        cur.execute("SELECT * FROM users")
-        users = cur.fetchall()
+            # Check if user2 exists
+            cur.execute('''
+                SELECT user_id FROM user WHERE username = %s;
+            ''', (user2,))
 
-        return jsonify(users)
+            result = cur.fetchone()
 
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving users: {e}"
-    finally:
-        cur.close()
-        conn.close()'''
+            if result:
+                user2_id = result[0]  # Get the user_id of the friend
 
-'''@friend_bp.route("/add-friend")
-def view_users():
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(
-            dictionary=True
-        )  # Use `dictionary=True` to get results as dicts
+                # Insert a new entry into the friend table
+                cur.execute('''
+                    INSERT INTO friend (user1_id, user2_id, friendship_date)
+                    VALUES (%s, %s, %s);
+                ''', (user1, user2_id, date))  # Use user2_id, not friend_username
 
-        # Select all entries from the users table
-        cur.execute("SELECT * FROM users")
-        users = cur.fetchall()
+                # Commit the transaction
+                conn.commit()
+                return view_friends()
+            
+            else:
+                return "Friend not found in the database"
 
-        return jsonify(users)
 
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving users: {e}"
-    finally:
-        cur.close()
-        conn.close()'''
+        except mysql.connector.Error as e:
+            # Error handling
+            print(f"Error: {e}")
+            return f"Error Addding Friend {e}"
+        
+        finally:
+            cur.close()
+            conn.close()
 
-'''@friend_bp.route("/delete-friends")
+    return render_template("friend/add_friend.html")
+
+'''@friendlist_bp.route("/delete-friends")
 def view_users():
     conn = create_connection()
     if conn is None:

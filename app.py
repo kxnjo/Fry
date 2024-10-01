@@ -8,7 +8,7 @@ from routes.sample import sample_bp
 from routes.review import review_bp
 from routes.category import category_bp
 from routes.developer import developer_bp
-from routes.friend import friend_bp
+from routes.friend import friendlist_bp
 from routes.wishlist import wishlist_bp
 
 app = Flask(__name__)
@@ -21,7 +21,7 @@ app.register_blueprint(sample_bp, url_prefix="/sample")
 app.register_blueprint(review_bp, url_prefix="/review")
 app.register_blueprint(category_bp, url_prefix="/category")
 app.register_blueprint(developer_bp, url_prefix="/developer")
-app.register_blueprint(friend_bp, url_prefix="/friend")
+app.register_blueprint(friendlist_bp, url_prefix="/friendlist")
 app.register_blueprint(wishlist_bp, url_prefix="/wishlist")
 
 
