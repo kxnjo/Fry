@@ -23,17 +23,44 @@ def view_friends():
         return "Failed to connect to database"
     try:
         cur = conn.cursor()
+        user1_id = 'u2'
         cur.execute('''
-            SELECT friend.user1_id , friend.user2_id , friend.friendship_date , u1.username , u2.username 
-            FROM friend
-            JOIN user u1 ON friend.user1_id = u1.user_id
-            JOIN user u2 ON friend.user2_id = u2.user_id
-            WHERE friend.user1_id = 'u2';
-        ''')
+            SELECT 
+                f.user1_id, f.user2_id, f.friendship_date, u1.username , u2.username,
+                IF(f.user1_id = %s, 
+                    GROUP_CONCAT(DISTINCT g2_wanted.title ORDER BY g2_wanted.title ASC),
+                    GROUP_CONCAT(DISTINCT g1_wanted.title ORDER BY g1_wanted.title ASC)),
+                IF(f.user1_id = %s, 
+                    GROUP_CONCAT(DISTINCT g2_owned.title ORDER BY g2_owned.title ASC),
+                    GROUP_CONCAT(DISTINCT g1_owned.title ORDER BY g1_owned.title ASC))
+            FROM friend f
+            JOIN user u1 ON f.user1_id = u1.user_id
+            JOIN user u2 ON f.user2_id = u2.user_id
+            LEFT JOIN wanted_game w1 ON f.user1_id = w1.user_id
+            LEFT JOIN game g1_wanted ON w1.game_id = g1_wanted.game_id
+            LEFT JOIN wanted_game w2 ON f.user2_id = w2.user_id
+            LEFT JOIN game g2_wanted ON w2.game_id = g2_wanted.game_id
+            LEFT JOIN owned_game o1 ON f.user1_id = o1.user_id
+            LEFT JOIN game g1_owned ON o1.game_id = g1_owned.game_id
+            LEFT JOIN owned_game o2 ON f.user2_id = o2.user_id
+            LEFT JOIN game g2_owned ON o2.game_id = g2_owned.game_id
+            WHERE f.user1_id = %s OR f.user2_id = %s
+            GROUP BY f.user1_id, f.user2_id, f.friendship_date, u1.username, u2.username;
+        ''', (user1_id, user1_id, user1_id, user1_id))
         friend = cur.fetchall()
+
+        friend_list = []
+        for friend in friend:
+            if friend[0] == user1_id:
+                # If logged-in user is user1, friend is user2
+                friend_list.append((friend[0], friend[1], friend[2], friend[3], friend[4], friend[5], friend[6]))
+            else:
+                # If logged-in user is user2, friend is user1
+                friend_list.append((friend[1], friend[0], friend[2], friend[4], friend[3], friend[5], friend[6]))
 
     except mysql.connector.Error as e:
         # Error handling
+        conn.rollback()
         print(f"Error: {e}")
         return f"Error retrieving users: {e}"
     
@@ -41,7 +68,7 @@ def view_friends():
         cur.close()
         conn.close()
         
-    return render_template("friend/friend.html", friend=friend)
+    return render_template("friend/friend.html", friend=friend_list)
 
 @friendlist_bp.route("/add-friend", methods=["GET", "POST"])
 def add_friend():
@@ -83,6 +110,7 @@ def add_friend():
 
         except mysql.connector.Error as e:
             # Error handling
+            conn.rollback()
             print(f"Error: {e}")
             return f"Error Addding Friend {e}"
         
@@ -92,25 +120,28 @@ def add_friend():
 
     return render_template("friend/add_friend.html")
 
-'''@friendlist_bp.route("/delete-friends")
-def view_users():
+@friendlist_bp.route("/delete-friends/<user1_id>/<user2_id>", methods=["POST"])
+def delete_friend(user1_id, user2_id):
     conn = create_connection()
     if conn is None:
         return "Failed to connect to database"
     try:
-        cur = conn.cursor(
-            dictionary=True
-        )  # Use `dictionary=True` to get results as dicts
+        cur = conn.cursor(dictionary=True)
 
-        # Select all entries from the users table
-        cur.execute("SELECT * FROM users")
-        users = cur.fetchall()
+        # Execute the SQL statement
+        cur.execute("""
+            DELETE FROM friend
+            WHERE user1_id = %s AND user2_id = %s OR user1_id = %s AND user2_id = %s;
+        """,(user1_id, user2_id, user2_id, user1_id))
 
-        return jsonify(users)
+        conn.commit()
 
     except mysql.connector.Error as e:
+        conn.rollback()
         print(f"Error: {e}")
-        return f"Error retrieving users: {e}"
+        return f"Error deleting friend: {e}"
     finally:
         cur.close()
-        conn.close()'''
+        conn.close()
+
+    return view_friends()

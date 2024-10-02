@@ -15,6 +15,13 @@
                         <h5 class="card-title">Account Name & ID: {{ friend[3], friend[0] }}</h5>
                         <h6 class="card-subtitle mb-2 text-muted"> Friend Name & ID: {{ friend[4], friend[1] }}</h6>
                         <h6 class="card-subtitle mb-2 text-muted"> Friendship Date: {{ friend[2] }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted"> Owned Games: {{ friend[6] }}</h6>
+                        <h6 class="card-subtitle mb-2 text-muted"> WishList: {{ friend[5] }}</h6>
+                        <form action="{{ url_for('friendlist_bp.delete_friend', user1_id=friend[0], user2_id=friend[1]) }}" method="POST" >
+                            <input type="hidden" name="user1_id" value="{{ friend[0] }}">
+                            <input type="hidden" name="user2_id" value="{{ friend[1] }}">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
                     </div>
                 </div>
                 {% else %}
