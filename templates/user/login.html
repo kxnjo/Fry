@@ -1,8 +1,22 @@
 {% extends "index.html" %}
 
-{% block content %}
-<div class="toast-container"></div>
+<!-- {% block script %}
+<script>
+    // Parse the `response` from Flask if it exists
+    const flaskResponse = {{ response | tojson | safe }};
+    
+    // Check if `flaskResponse` is not null and has a message
+    if (flaskResponse && flaskResponse.message) {
+        // Use `alert` to show a basic pop-up message
+        alert(flaskResponse.message);
 
+        // Alternatively, call `showToast` or any other function to handle the response
+        // showToast(flaskResponse.message, flaskResponse.status);
+    }
+</script>
+{% endblock %} -->
+
+{% block content %}
 <section class="h-100">
     <div class="container h-100">
         <div class="row justify-content-sm-center h-100">
@@ -13,6 +27,15 @@
                 <div class="card shadow-lg">
                     <div class="card-body p-5">
                         <h1 class="fs-4 card-title fw-bold mb-4">Login</h1>
+
+                        <!-- alert -->
+                        {% if response != None %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fa-solid fa-triangle-exclamation"></i> {{ response.message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+
                         <form method="POST" class="needs-validation" action="{{ url_for('user_bp.login') }}" novalidate="" autocomplete="off">
                             <div class="mb-3">
                                 <label class="mb-2 text-muted" for="email">E-Mail or Username</label>
@@ -58,18 +81,5 @@
 </section>
 
 <script src="{{ url_for('static', filename='js/login.js') }}"></script>
-<!-- <script>
-    // Ensure response is safely converted to a JSON string, default to an empty object if `response` is not provided
-    const flaskResponse = {{ response|tojson if response else '{}' }};
-    
-    // Parse the `flaskResponse` only if it's not empty
-    if (flaskResponse && flaskResponse.response) {
-        const message = flaskResponse.response;
-        const status = flaskResponse.status === "success" ? "success" : "danger";
-
-        // Show the toast
-        showToast(message, status);
-    }
-</script> -->
 
 {% endblock %}

@@ -28,5 +28,15 @@
         <a class="nav-link" href="{{ url_for('friendlist_bp.view_friends') }}">Friends</a>
       </li>
     </ul>
+
+    <!-- User account button fixed to top right -->
+    <ul class="navbar-nav ms-auto px-3">
+      <li class="nav-item">
+          <a class="nav-link btn btn-primary text-white" href="{{ url_for('user_bp.login') }}">
+            <i class="fa fa-user px-2" aria-hidden="true"></i> Login
+          </a>
+      </li>
+    </ul>
+
   </div>
 </nav>

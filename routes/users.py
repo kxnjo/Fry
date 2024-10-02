@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template, request, url_for, redirect
 import mysql.connector
 import config
 import hashlib
@@ -48,6 +48,7 @@ def user_count():
     return jsonify(getUserNum(cur))
 
 
+# TODO: CREATE SESSION, ENABLE PERSISTENT LOGIN
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -74,12 +75,13 @@ def login():
             if user:
                 if user["password"] == hashed_input_password:
                     response = {"message": "Login successful"}
+                    return redirect(url_for("home"))  # Replace "home_route" with the actual function name
                 else:
-                    response = {"message": "Incorrect password"}
+                    response = {"message": "Incorrect username/password"}
             else:
-                response = {"message": "Incorrect user/password"}
+                response = {"message": "Incorrect username/password"}
 
-            return jsonify(response)
+            return render_template("user/login.html", response=response) # if there is error, return error
 
         except mysql.connector.Error as e:
             print(f"Error: {e}")
@@ -92,9 +94,10 @@ def login():
         # do nothing i guess,, idk what else to do,, load up the page?? :P
         print("visited login page")
 
-    return render_template("user/login.html")
+    return render_template("user/login.html", response=None)
 
 
+# TODO: CREATE SESSION, ENABLE PERSISTENT LOGIN
 @user_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -109,8 +112,8 @@ def register():
             email = request.form["email"]
             password = request.form["password"]
 
-            # TODO: check if there is already an existing user
-            if checkUser(cur, name, email):
+            # check if there is no existing user with same username/email
+            if not checkUser(cur, name, email):
                 # other details
                 uid = f"u{getUserNum(cur) + 1}"
                 role = "user"
@@ -131,9 +134,11 @@ def register():
                 )
                 conn.commit()
 
-                return render_template("user/login.html")
+                # TODO: CREATE SESSION, ENABLE PERSISTENT LOGIN
+                return redirect(url_for("/"))
+
             else:
-                return jsonify("User or email exists! try again.")
+                return render_template("user/register.html", response="Existing username/email available. Try Signing In!")
 
         except mysql.connector.Error as e:
             conn.rollback()

@@ -15,10 +15,15 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
+        <!-- fa fa icons -->
+        <script src="https://kit.fontawesome.com/fb93ce73be.js" crossorigin="anonymous"></script>
+
         <!-- import global index.css and index.js -->
         <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
-        <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+        <link rel="stylesheet" href="{{ url_for('static', filename='styles/toast.css') }}">
 
+        {% block scripts %}
+        {% endblock %}
 	</head>
 	<body>
         {% include 'navbar.html' %}
