@@ -4,10 +4,11 @@ import config
 import hashlib
 import json
 from datetime import date
+from auth_utils import login_required  # persistent login
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
-
+all_users_cache = []
 
 def create_connection():
     # Replace with your database connection details
@@ -61,14 +62,6 @@ def checkUser(cur, name, email):
     }
 
 
-# == USER ROUTES ==
-@user_bp.route("/user-count", methods=["GET", "POST"])
-def user_count():
-    conn = create_connection()
-    cur = conn.cursor()
-    return jsonify(getUserNum(cur))
-
-
 # TODO: CREATE SESSION, ENABLE PERSISTENT LOGIN
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -78,6 +71,7 @@ def login():
         conn = create_connection()
         if conn is None:
             return "Failed to connect to database"
+
         try:
             cur = conn.cursor(dictionary=True)
 
@@ -91,7 +85,7 @@ def login():
             print("before print db")
             # Execute the SQL statement
             cur.execute(
-                "SELECT user_id, username, password FROM user WHERE email = %s OR username = %s",
+                "SELECT user_id, username, password, role FROM user WHERE email = %s OR username = %s",
                 (username_email, username_email),
             )
             user = cur.fetchall()[0] # there should only be ONE username
@@ -109,6 +103,7 @@ def login():
                 # save to session
                 session["user_id"] = user["user_id"]
                 session["username"] = user["username"]
+                session["role"] = user["role"]
                 
                 return redirect(url_for("home"))
             else:
@@ -122,7 +117,7 @@ def login():
 
         except mysql.connector.Error as e:
             print(f"Error: {e}")
-            return f"Error creating table: {e}"
+            return f"Error retrieving table: {e}"
             
     elif request.method == "GET":
         # do nothing i guess,, idk what else to do,, load up the page?? :P
@@ -205,8 +200,83 @@ def forgot():
         print("GET")
     return render_template("user/forgot.html")
 
-# TODO: LOG OUT !!!!!!!
+
 @user_bp.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('home'))
+
+def getAllUsers():
+    allUsers = []
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute("SELECT * from user")
+        allUsers = cur.fetchall()
+
+        # close connection
+        cur.close()
+        conn.close()
+        
+        return allUsers
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+def getUser(uid):
+    user = {}
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute("SELECT * from user WHERE user_id = %s", (session["user_id"]))
+        user = cur.fetchall()[0]
+
+        # close connection
+        cur.close()
+        conn.close()
+        
+        return user
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+
+
+# TODO: USER DASHBOARD, 1 for admin 1 for regular user
+@user_bp.route("/dashboard")
+@login_required
+def dashboard():
+    global all_users_cache 
+    if session["role"] == "admin":
+        if not all_users_cache:
+            all_users_cache = getAllUsers()
+
+        # get the current page number, set default number to start from 1
+        page = request.args.get('page', 1, type=int) 
+        print("this is page", page)
+        users_per_page = 20 # num of users to display per page
+        total_pages = (len(all_users_cache) - 1) // users_per_page + 1 # get the total amt of pages
+
+        # Paginate the users from the cache
+        start = (page - 1) * users_per_page
+        end = start + users_per_page
+        users = all_users_cache[start:end]
+
+        return render_template("user/admin_dashboard.html", users = all_users_cache, page = page, total_pages = total_pages)
+
+    elif session["role"] == "user": 
+        user = getUser()
+        print("user")
+    
+
+# TODO: UPDATE USER
+
+# TODO: DELETE USER

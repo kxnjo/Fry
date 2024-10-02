@@ -1,0 +1,74 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>User Management</h2>
+
+    <!-- Create User Form -->
+    <form id="create-user-form" method="POST" action="/admin/create_user">
+        <!-- Form fields here -->
+    </form>
+
+    <!-- User Table -->
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th scope="col">UID</th>
+                <th scope="col">Username</th>
+                <th scope="col">Email</th>
+                <th scope="col">Date Created</th>
+                <th scope="col">Role</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.user_id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.date_created }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    <!-- Edit User Form -->
+                    <form method="POST" action="/admin/update_user/{{ user.uid }}" class="d-inline">
+                        <button type="submit" class="btn btn-warning btn-sm">Edit</button>
+                    </form>
+
+                    <!-- Delete User Form -->
+                    <form method="POST" action="/admin/delete_user/{{ user.uid }}" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination Controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            <!-- Previous Page Button -->
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('user_bp.dashboard', page=page-1) }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+
+            <!-- Page Number Buttons -->
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('user_bp.dashboard', page=p) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+
+            <!-- Next Page Button -->
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('user_bp.dashboard', page=page+1) }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endblock %}
