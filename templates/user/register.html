@@ -11,6 +11,15 @@
                 <div class="card shadow-lg">
                     <div class="card-body p-5">
                         <h1 class="fs-4 card-title fw-bold mb-4">Register</h1>
+
+                        <!-- alert -->
+                        {% if create_notif != None %}
+                        <div class="alert alert-{{ create_notif['status'] }} alert-dismissible fade show" role="alert">
+                            <i class="fa-solid fa-triangle-exclamation"></i> {{ create_notif['message'] }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+
                         <form method="POST" class="needs-validation" action="{{ url_for('user_bp.register') }}" novalidate="" autocomplete="off">
                             <div class="mb-3">
                                 <label class="mb-2 text-muted" for="name">Name</label>

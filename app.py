@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, jsonify, Blueprint
-import config
+from flask import Flask, render_template, request, jsonify, Blueprint, session
+from Fry import config
 
 # import routes
 from routes.users import user_bp
@@ -12,6 +12,7 @@ from routes.friend import friendlist_bp
 from routes.wishlist import wishlist_bp
 
 app = Flask(__name__)
+app.secret_key = "ifreakinghatethistrimester"  # for session security
 
 # add url route to all endpoints under /users
 # ie. localhost:8000/users/...
@@ -28,7 +29,9 @@ app.register_blueprint(wishlist_bp, url_prefix="/wishlist")
 # routes == MAIN
 @app.route("/")
 def home():
+    print(session)
     return render_template("main/home.html")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

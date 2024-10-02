@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request
 import mysql.connector
 import config
+from auth_utils import login_required  # persistent login
 
 # Create a Blueprint object
 review_bp = Blueprint("review_bp", __name__)
@@ -17,6 +18,7 @@ def create_connection():
 
 
 @review_bp.route("/review-test")
+@login_required
 def check():
     conn = create_connection()
     cur = conn.cursor()

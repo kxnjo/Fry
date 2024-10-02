@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request
 import mysql.connector # type: ignore
 import config
 import datetime
+from auth_utils import login_required  # persistent login
 
 # Create a Blueprint object
 wishlist_bp = Blueprint("wishlist_bp", __name__)
@@ -18,6 +19,7 @@ def create_connection():
 
 
 @wishlist_bp.route("/view-wishlist")
+@login_required
 def view_wishlist():
     conn = create_connection()
     if conn is None:

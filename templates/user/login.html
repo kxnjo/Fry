@@ -1,21 +1,5 @@
 {% extends "index.html" %}
 
-<!-- {% block script %}
-<script>
-    // Parse the `response` from Flask if it exists
-    const flaskResponse = {{ response | tojson | safe }};
-    
-    // Check if `flaskResponse` is not null and has a message
-    if (flaskResponse && flaskResponse.message) {
-        // Use `alert` to show a basic pop-up message
-        alert(flaskResponse.message);
-
-        // Alternatively, call `showToast` or any other function to handle the response
-        // showToast(flaskResponse.message, flaskResponse.status);
-    }
-</script>
-{% endblock %} -->
-
 {% block content %}
 <section class="h-100">
     <div class="container h-100">
@@ -29,9 +13,9 @@
                         <h1 class="fs-4 card-title fw-bold mb-4">Login</h1>
 
                         <!-- alert -->
-                        {% if response != None %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fa-solid fa-triangle-exclamation"></i> {{ response.message }}
+                        {% if login_notif != None %}
+                        <div class="alert alert-{{ login_notif['status'] }} alert-dismissible fade show" role="alert">
+                            <i class="fa-solid fa-triangle-exclamation"></i> {{ login_notif['message'] }}
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                         {% endif %}

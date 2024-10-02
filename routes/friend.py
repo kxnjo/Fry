@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request
 import mysql.connector
 import config
 import datetime
+from auth_utils import login_required  # persistent login
 
 # Create a Blueprint object
 friendlist_bp = Blueprint("friendlist_bp", __name__)
@@ -17,6 +18,7 @@ def create_connection():
     )
 
 @friendlist_bp.route("/view-friends")
+@login_required
 def view_friends():
     conn = create_connection()
     if conn is None:
