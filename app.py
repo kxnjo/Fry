@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, Blueprint, session
-from Fry import config
+import config
 
 # import routes
 from routes.users import user_bp
