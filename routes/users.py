@@ -23,8 +23,6 @@ def create_connection():
 def getUserNum(cur):
     cur.execute("SELECT * from user;")
     return len(cur.fetchall())
-
-
 def checkUser(cur, name, email):
     print("checking user")
     # Check for existing username
@@ -60,9 +58,50 @@ def checkUser(cur, name, email):
             "message": "Username and email are unique."
         }
     }
+def getAllUsers():
+    allUsers = []
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute("SELECT * from user")
+        allUsers = cur.fetchall()
+
+        # close connection
+        cur.close()
+        conn.close()
+        
+        return allUsers
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+def getUser():
+    user = {}
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute("SELECT user_id, username, email from user WHERE user_id = %s", (session["user_id"],))
+        user = cur.fetchall()[0]
+
+        # close connection
+        cur.close()
+        conn.close()
+        
+        return user
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
 
 
-# TODO: CREATE SESSION, ENABLE PERSISTENT LOGIN
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
     notif = request.args.get("login_notif")
@@ -126,7 +165,6 @@ def login():
     return render_template("user/login.html", login_notif=notif)
 
 
-# TODO: CREATE SESSION, ENABLE PERSISTENT LOGIN
 @user_bp.route("/register", methods=["GET", "POST"])
 def register():
     notif = request.args.get("create_notif")
@@ -206,58 +244,15 @@ def logout():
     session.clear()
     return redirect(url_for('home'))
 
-def getAllUsers():
-    allUsers = []
-    # start connection
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(dictionary=True)
-        # execute query
-        cur.execute("SELECT * from user")
-        allUsers = cur.fetchall()
 
-        # close connection
-        cur.close()
-        conn.close()
-        
-        return allUsers
-
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving table: {e}"
-def getUser(uid):
-    user = {}
-    # start connection
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(dictionary=True)
-        # execute query
-        cur.execute("SELECT * from user WHERE user_id = %s", (session["user_id"]))
-        user = cur.fetchall()[0]
-
-        # close connection
-        cur.close()
-        conn.close()
-        
-        return user
-
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving table: {e}"
-
-
-# TODO: USER DASHBOARD, 1 for admin 1 for regular user
+# TODO: USER DASHBOARD, 1 for admin 1 for regular user (IN PROGRESS)
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
     global all_users_cache 
     if session["role"] == "admin":
         if not all_users_cache:
-            all_users_cache = getAllUsers()
+            all_users_cache = getAllUsers() # TODO: do pagination within sql queries?
 
         # get the current page number, set default number to start from 1
         page = request.args.get('page', 1, type=int) 
@@ -272,11 +267,90 @@ def dashboard():
 
         return render_template("user/admin_dashboard.html", users = all_users_cache, page = page, total_pages = total_pages)
 
-    elif session["role"] == "user": 
+    elif session["role"] == "user":
         user = getUser()
-        print("user")
+
+        # TODO: INSERT GAMES OWNED
+            # need: game title, (reference however is displayed in games)
+
+        # TODO: INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,, 
+            # need: game title, review, redirect to game review button
+
+        # TODO: INSERT MUTUAL FRIENDS LIST
+            # need: friend username, redirect to user account button
+
+        return render_template("user/user_dashboard.html", user = user)
     
 
-# TODO: UPDATE USER
+@user_bp.route('/edit-user/<string:user_id>', methods=['POST'])
+@login_required
+def edit_user(user_id):
+    # Retrieve form data
+    username = request.form['username']
+    email = request.form['email']
 
-# TODO: DELETE USER
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute("""
+            UPDATE user SET username = %s, email = %s 
+            WHERE user_id = %s""", 
+            (username, email, session["user_id"],)
+        )
+
+        # save to db
+        conn.commit()
+
+        # close connection
+        cur.close()
+        conn.close()
+
+        print("user updated successfully")
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+
+    return redirect(url_for('user_bp.dashboard'))
+
+
+# TODO: DELETE USER, delete all related relations
+@user_bp.route("/delete_user/<string:user_id>", methods=['POST'])
+@login_required
+def delete_user(user_id):
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+
+        # TODO: delete all friend relations
+        # TODO: delete all related relations
+
+        # delete user
+        cur.execute("""
+            DELETE FROM user
+            WHERE user_id = %s""", 
+            (user_id,)
+        )
+
+        # save to db
+        conn.commit()
+
+        # close connection
+        cur.close()
+        conn.close()
+
+        print("user deleted successfully")
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+
+    session.clear()
+    return redirect(url_for('home'))

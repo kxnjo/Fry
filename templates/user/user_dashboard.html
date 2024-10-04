@@ -1,0 +1,157 @@
+{% extends "index.html" %} {% block content %}
+<div class="container">
+	<div class="row">
+		<!-- Left Column: User Details -->
+		<div class="col-md-4">
+			<!-- User Image -->
+			<div class="card mb-4">
+				<img
+					src="https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
+					alt="User Image"
+					class="card-img-top img-fluid rounded-circle" />
+				<div class="card-body text-center">
+					<h4 class="card-title">{{ user.username }}</h4>
+					<p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
+
+					<!-- Button to Trigger Modal -->
+					<button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal">Edit Account</button>
+
+					<!-- Button to Trigger Delete Modal -->
+					<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal">Delete Account</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Right Column: Carousel for Games, Tables for Reviews and Friends -->
+		<div class="col-md-8">
+			<!-- Carousel for Games Owned -->
+			<div id="gamesCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+				<div class="carousel-inner">
+					{% for game in user.games %}
+					<div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+						<div class="d-flex justify-content-center">
+							<div class="card" style="width: 18rem">
+								<img src="{{ game.image_url }}" class="card-img-top" alt="{{ game.title }}" />
+								<div class="card-body">
+									<h5 class="card-title">{{ game.title }}</h5>
+									<a href="/view-game/{{ game.id }}" class="btn btn-info btn-sm">View Game</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+
+				<!-- Carousel Controls -->
+				<button class="carousel-control-prev" type="button" data-bs-target="#gamesCarousel" data-bs-slide="prev">
+					<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+					<span class="visually-hidden">Previous</span>
+				</button>
+				<button class="carousel-control-next" type="button" data-bs-target="#gamesCarousel" data-bs-slide="next">
+					<span class="carousel-control-next-icon" aria-hidden="true"></span>
+					<span class="visually-hidden">Next</span>
+				</button>
+			</div>
+
+			<!-- Table for Reviews Left by User -->
+			<h3>Your Reviews</h3>
+			<table class="table mb-4">
+				<thead>
+					<tr>
+						<th>Game Title</th>
+						<th>Review</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for review in user.reviews %}
+					<tr>
+						<td>{{ review.game_title }}</td>
+						<td>{{ review.content }}</td>
+						<td>
+							<a href="/edit-review/{{ review.id }}" class="btn btn-warning btn-sm">Edit Review</a>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+
+			<!-- Table for Mutual Friends -->
+			<h3>Mutual Friends</h3>
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Friend's Username</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for friend in user.mutual_friends %}
+					<tr>
+						<td>{{ friend.username }}</td>
+						<td>
+							<a href="/view-profile/{{ friend.id }}" class="btn btn-info btn-sm">View Profile</a>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Modal for Editing User Details -->
+		<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<form action="{{ url_for('user_bp.edit_user', user_id=user.user_id) }}" method="POST">
+						<div class="modal-header">
+							<h5 class="modal-title" id="editUserModalLabel">Edit User Details</h5>
+							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body">
+							<!-- Username Field -->
+							<div class="mb-3">
+								<label for="username" class="form-label">Username</label>
+								<input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required />
+							</div>
+
+							<!-- Email Field -->
+							<div class="mb-3">
+								<label for="email" class="form-label">Email</label>
+								<input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required />
+							</div>
+
+							<!-- Other fields as needed -->
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-primary">Save Changes</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal for Deleting User -->
+		<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="deleteUserModalLabel">Confirm Account Deletion</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<p>Are you sure you want to delete your account? This action cannot be undone.</p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<!-- Form for Deleting User -->
+						<form action="{{ url_for('user_bp.delete_user', user_id=user.user_id) }}" method="POST">
+							<button type="submit" class="btn btn-danger">Confirm Delete</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
