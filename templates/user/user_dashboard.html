@@ -66,6 +66,7 @@
 				<tbody>
 					{% for review in user.reviews %}
 					<tr>
+						<!-- <td><a href="{{ url_for('game_bp.view_game', game_id=review.game_id) }}">{{ review.game_title }}</a></td> -->
 						<td>{{ review.game_title }}</td>
 						<td>{{ review.content }}</td>
 						<td>

@@ -274,7 +274,7 @@ def dashboard():
             # need: game title, (reference however is displayed in games)
 
         # TODO: INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,, 
-            # need: game title, review, redirect to game review button
+            # need: game title, review, redirect to game review button ???
 
         # TODO: INSERT MUTUAL FRIENDS LIST
             # need: friend username, redirect to user account button
