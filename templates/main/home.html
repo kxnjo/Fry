@@ -1,19 +1,63 @@
-{% extends "index.html" %} 
-
-{% block content %}
-<div class="card text-center">
-	<div class="card-header">Featured</div>
-	<div class="card-body">
-		<h5 class="card-title">Welcome To The Amazing World of FryGames</h5>
-		<p style="color: red;" class="card-text">CHANT WITH ME </p>
-		<p style="color: red;" class="card-text">Hou ho xiu yi, si sei wu ma</p>
-		<p style="color: red;" class="card-text">火佛修一，心薩嘸哞 </p>
-		<img src="static/img/incantation.jpeg" alt="incantation" width="300" height="300">
-		<a
-			href="#"
-			class="btn btn-primary"
-			>INCANTATION</a>
+{% extends "index.html" %} {% block content %}
+<div class="container mt-5">
+	<!-- Hero Section -->
+	<div class="jumbotron text-center bg-dark text-white p-5 rounded">
+		<h1 class="display-4">Welcome to FryGames!</h1>
+		<p class="lead">Your one-stop destination for all the best online games.</p>
+		<hr class="my-4" />
+		<p>Explore the latest releases, find your favorite classics, and discover new games to enjoy. Ready to dive in?</p>
+		<a class="btn btn-primary btn-lg" href="{{ url_for('user_bp.login') }}" role="button">Log In</a>
+		<a class="btn btn-success btn-lg" href="{{ url_for('game_bp.view_all_games') }}" role="button">View Games</a>
 	</div>
-	<div class="card-footer text-body-secondary">2 days ago</div>
+
+	<!-- Featured Games Section -->
+	<div class="mt-5">
+		<h2 class="text-center">Featured Games</h2>
+		<div class="row mt-4">
+			<!-- Sample Game Card 1 -->
+			<div class="col-md-4">
+				<div class="card">
+					<img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="Game Image" />
+					<div class="card-body">
+						<h5 class="card-title">Epic Adventure</h5>
+						<p class="card-text">Embark on a thrilling journey through mystical lands in this action-packed adventure game.</p>
+						<a href="{{ url_for('game_bp.view_all_games', game_id=1) }}" class="btn btn-primary">Learn More</a>
+					</div>
+				</div>
+			</div>
+			<!-- Sample Game Card 2 -->
+			<div class="col-md-4">
+				<div class="card">
+					<img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="Game Image" />
+					<div class="card-body">
+						<h5 class="card-title">Puzzle Mania</h5>
+						<p class="card-text">Challenge your mind with hundreds of puzzles, ranging from easy to expert levels.</p>
+						<a href="{{ url_for('game_bp.view_all_games', game_id=2) }}" class="btn btn-primary">Learn More</a>
+					</div>
+				</div>
+			</div>
+			<!-- Sample Game Card 3 -->
+			<div class="col-md-4">
+				<div class="card">
+					<img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="Game Image" />
+					<div class="card-body">
+						<h5 class="card-title">Space Explorer</h5>
+						<p class="card-text">Explore distant galaxies, build your spaceship, and conquer the stars in this open-world space adventure.</p>
+						<a href="{{ url_for('game_bp.view_all_games', game_id=3) }}" class="btn btn-primary">Learn More</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- About Section -->
+	<div class="mt-5 p-4 rounded">
+		<h3>About FryGames</h3>
+		<p>
+			FryGames is a curated online store offering a wide variety of games for all ages and interests. We believe in creating an inclusive gaming community where everyone can find their next adventure, whether you're a casual player or a
+			hardcore gamer.
+		</p>
+		<p>Sign up or log in to access exclusive discounts, explore our game library, and connect with other gamers!</p>
+	</div>
 </div>
 {% endblock %}

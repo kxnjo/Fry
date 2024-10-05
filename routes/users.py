@@ -6,6 +6,9 @@ import json
 from datetime import date
 from auth_utils import login_required  # persistent login
 
+# integration
+from routes.game import get_all_games
+
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
 all_users_cache = []
@@ -127,7 +130,16 @@ def login():
                 "SELECT user_id, username, password, role FROM user WHERE email = %s OR username = %s",
                 (username_email, username_email),
             )
-            user = cur.fetchall()[0] # there should only be ONE username
+            users = cur.fetchall()
+            print(users, len(users))
+            if len(users) == 0: # if user does not exist
+                notif = {
+                    "status": "danger", 
+                    "message": "Incorrect username/password"
+                }   # there should only be ONE username
+                return redirect(url_for("user_bp.login", login_notif=notif)) # if there is error, return error
+            else:
+                user = users[0]
             print("retrieved details")
 
             # close connection
@@ -233,9 +245,39 @@ def register():
 @user_bp.route("/forgot", methods=["GET", "POST"])
 def forgot():
     if request.method == "POST":
-        print("POST")
-    elif request.method == "GET":
-        print("GET")
+        # Retrieve form data
+        username_email = request.form["username_email"]
+        password = request.form["password"]
+        # hash the password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # start connection
+        conn = create_connection()
+        if conn is None:
+            return "Failed to connect to database"
+        try:
+            cur = conn.cursor(dictionary=True)
+            # execute query
+            cur.execute("""
+                UPDATE user SET password = %s
+                WHERE username = %s OR email = %s""", 
+                (hashed_password, username_email, username_email,)
+            )
+            print(cur.fetchall())
+            # save to db
+            conn.commit()
+            print("user pw updated")
+
+            # close connection
+            cur.close()
+            conn.close()
+
+            return redirect(url_for("user_bp.login"))
+
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+            return f"Error retrieving table: {e}"
+    
     return render_template("user/forgot.html")
 
 
@@ -272,6 +314,8 @@ def dashboard():
 
         # TODO: INSERT GAMES OWNED
             # need: game title, (reference however is displayed in games)
+        # games = get_all_games()[:5] TODO: CHANGE THIS TO OWNED GAMES
+        # print(games)
 
         # TODO: INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,, 
             # need: game title, review, redirect to game review button ???
@@ -279,7 +323,7 @@ def dashboard():
         # TODO: INSERT MUTUAL FRIENDS LIST
             # need: friend username, redirect to user account button
 
-        return render_template("user/user_dashboard.html", user = user)
+        return render_template("user/user_dashboard.html", user = user, games=[])
     
 
 @user_bp.route('/edit-user/<string:user_id>', methods=['POST'])
