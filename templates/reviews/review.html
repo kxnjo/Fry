@@ -42,6 +42,7 @@
     <!--User OWN reviews-->
     <div class="row">
         <h3>USER WRITTEN ONES</h3>
+    <a href="{{ url_for('review_bp.edit_reviews')}}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">ADD REVIEW HERE</a>
         <div class="col-12">
             {% for review in user_reviews %}
             <div class="card review-card mb-3">

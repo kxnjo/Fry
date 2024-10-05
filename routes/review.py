@@ -156,7 +156,7 @@ def get_reviews():
 
     # Show all reviews written by user
     cur.execute('''
-        SELECT r.review_id,g.title, r.review_date, r.review_text
+        SELECT r.review_id,g.title, r.review_date, r.review_text, r.recommended
         FROM review r
         JOIN game g ON r.game_id = g.game_id
         WHERE r.user_id = %s
@@ -165,14 +165,19 @@ def get_reviews():
     added_reviews_rows = cur.fetchall()
     user_reviews = []
     for row in added_reviews_rows:
+        if row[4] == 'TRUE':
+            recommended_val = 'RECOMMENDED'
+        else:
+            recommended_val = 'FALSE'
         added_reviews_data = {
             "review_id": row[0],
             "game_id": row[1],
             "review_date": row[2],
-            "review_text": row[3]
+            "review_text": row[3],
+            "recommended": recommended_val
         }
         user_reviews.append(added_reviews_data)
-        # print(user_reviews)
+        print(user_reviews)
     # Close connection
     cur.close()
     conn.close()
@@ -423,10 +428,12 @@ def add_review():
     selected_game = request.args.get('game')
     recommended = request.args.get('recommended')
     review_text = request.args.get('review-text')
-    review_id = request.args.get('review_id')  # Should be None for new reviews
+    # review_id = request.args.get('review_id')  # Should be None for new reviews
+    review_id = request.args.get('review_id') if request.args.get(
+        'review_id') != "None" else None  # Should be None for new reviews
 
     # Determine the recommended value
-    recommended_val = 'true' if recommended == "Recommended" else 'false'
+    recommended_val = 'TRUE' if recommended == "Recommended" else 'FALSE'
 
     print(f"Selected game: {selected_game}")
     print(f"Recommended: {recommended}")
@@ -484,4 +491,4 @@ def delete_review():
         ''', (review_id,))
 
     conn.commit()
-    return "yay"
+    return redirect(url_for('review_bp.get_reviews'))
