@@ -7,7 +7,7 @@ from datetime import date
 from auth_utils import login_required  # persistent login
 
 # integration
-from routes.game import get_all_games
+# from routes.game import get_all_games
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
