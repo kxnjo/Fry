@@ -130,7 +130,16 @@ def login():
                 "SELECT user_id, username, password, role FROM user WHERE email = %s OR username = %s",
                 (username_email, username_email),
             )
-            user = cur.fetchall()[0] # there should only be ONE username
+            users = cur.fetchall()
+            print(users, len(users))
+            if len(users) == 0: # if user does not exist
+                notif = {
+                    "status": "danger", 
+                    "message": "Incorrect username/password"
+                }   # there should only be ONE username
+                return redirect(url_for("user_bp.login", login_notif=notif)) # if there is error, return error
+            else:
+                user = users[0]
             print("retrieved details")
 
             # close connection
@@ -236,7 +245,38 @@ def register():
 @user_bp.route("/forgot", methods=["GET", "POST"])
 def forgot():
     if request.method == "POST":
-        print("POST")
+        # Retrieve form data
+        username_email = request.form["username_email"]
+        password = request.form["password"]
+        # hash the password
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+
+        # start connection
+        conn = create_connection()
+        if conn is None:
+            return "Failed to connect to database"
+        try:
+            cur = conn.cursor(dictionary=True)
+            # execute query
+            cur.execute("""
+                UPDATE user SET password = %s
+                WHERE username = %s OR email = %s""", 
+                (hashed_password, username_email, username_email,)
+            )
+            print(cur.fetchall())
+            # save to db
+            conn.commit()
+            print("user pw updated")
+
+            # close connection
+            cur.close()
+            conn.close()
+
+            return redirect(url_for("user_bp.login"))
+
+        except mysql.connector.Error as e:
+            print(f"Error: {e}")
+            return f"Error retrieving table: {e}"
     
     return render_template("user/forgot.html")
 
