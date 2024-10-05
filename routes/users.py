@@ -6,6 +6,9 @@ import json
 from datetime import date
 from auth_utils import login_required  # persistent login
 
+# integration
+from routes.game import get_all_games
+
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
 all_users_cache = []
@@ -234,8 +237,7 @@ def register():
 def forgot():
     if request.method == "POST":
         print("POST")
-    elif request.method == "GET":
-        print("GET")
+    
     return render_template("user/forgot.html")
 
 
@@ -272,6 +274,8 @@ def dashboard():
 
         # TODO: INSERT GAMES OWNED
             # need: game title, (reference however is displayed in games)
+        # games = get_all_games()[:5] TODO: CHANGE THIS TO OWNED GAMES
+        # print(games)
 
         # TODO: INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,, 
             # need: game title, review, redirect to game review button ???
@@ -279,7 +283,7 @@ def dashboard():
         # TODO: INSERT MUTUAL FRIENDS LIST
             # need: friend username, redirect to user account button
 
-        return render_template("user/user_dashboard.html", user = user)
+        return render_template("user/user_dashboard.html", user = user, games=[])
     
 
 @user_bp.route('/edit-user/<string:user_id>', methods=['POST'])

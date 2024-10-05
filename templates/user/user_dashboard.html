@@ -2,9 +2,9 @@
 <div class="container">
 	<div class="row">
 		<!-- Left Column: User Details -->
-		<div class="col-md-4">
+		<div class="col-md-4 p-3">
 			<!-- User Image -->
-			<div class="card mb-4">
+			<div class="card mb-4 border-0 bg-transparent">
 				<img
 					src="https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
 					alt="User Image"
@@ -23,34 +23,49 @@
 		</div>
 
 		<!-- Right Column: Carousel for Games, Tables for Reviews and Friends -->
-		<div class="col-md-8">
+		<div class="col-md-8 p-3">
+
+			<!-- Header and Carousel Controls -->
+			<div class="d-flex row justify-content-between align-items-center mb-2">
+
+				<!-- Games Owned Header -->
+                <h3 class="col">Games Owned</h3>
+                <!-- Carousel Controls -->
+                <div class="col px-3 d-flex justify-content-end" id="CONTROL STUFF?!?!?!?!?!?!">
+                    <button class="btn btn-link" type="button" data-bs-target="#gamesCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="btn btn-link" type="button" data-bs-target="#gamesCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+
+			</div>
+
 			<!-- Carousel for Games Owned -->
 			<div id="gamesCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
 				<div class="carousel-inner">
-					{% for game in user.games %}
+					{% set game_groups = games | batch(3, fill_with=None) %} {% for game_group in game_groups %}
 					<div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
-						<div class="d-flex justify-content-center">
-							<div class="card" style="width: 18rem">
-								<img src="{{ game.image_url }}" class="card-img-top" alt="{{ game.title }}" />
-								<div class="card-body">
-									<h5 class="card-title">{{ game.title }}</h5>
-									<a href="/view-game/{{ game.id }}" class="btn btn-info btn-sm">View Game</a>
+						<div class="row">
+							{% for game in game_group %} {% if game %}
+							<!-- Game Card (One-third width) -->
+							<div class="col-md-4">
+								<div class="card bg-transparent border-0">
+									<img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="{{ game.game_title }}" />
+									<div class="card-body">
+										<h5 class="card-title">{{ game.game_title }}</h5>
+										<a href="/view-game/{{ game.id }}" class="btn btn-info btn-sm">View Game</a>
+									</div>
 								</div>
 							</div>
+							{% endif %} {% endfor %}
 						</div>
 					</div>
 					{% endfor %}
 				</div>
-
-				<!-- Carousel Controls -->
-				<button class="carousel-control-prev" type="button" data-bs-target="#gamesCarousel" data-bs-slide="prev">
-					<span class="carousel-control-prev-icon" aria-hidden="true"></span>
-					<span class="visually-hidden">Previous</span>
-				</button>
-				<button class="carousel-control-next" type="button" data-bs-target="#gamesCarousel" data-bs-slide="next">
-					<span class="carousel-control-next-icon" aria-hidden="true"></span>
-					<span class="visually-hidden">Next</span>
-				</button>
 			</div>
 
 			<!-- Table for Reviews Left by User -->
@@ -66,7 +81,6 @@
 				<tbody>
 					{% for review in user.reviews %}
 					<tr>
-						<!-- <td><a href="{{ url_for('game_bp.view_game', game_id=review.game_id) }}">{{ review.game_title }}</a></td> -->
 						<td>{{ review.game_title }}</td>
 						<td>{{ review.content }}</td>
 						<td>
@@ -120,8 +134,6 @@
 								<label for="email" class="form-label">Email</label>
 								<input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required />
 							</div>
-
-							<!-- Other fields as needed -->
 						</div>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
