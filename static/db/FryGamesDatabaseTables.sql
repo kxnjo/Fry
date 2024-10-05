@@ -180,6 +180,8 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `owned_game` (
   `user_id` VARCHAR(255) NOT NULL,
   `game_id` VARCHAR(255) NOT NULL,
+  `purchase_date` DATE NOT NULL,
+  `hours_played` FLOAT NOT NULL,
   PRIMARY KEY (`user_id`, `game_id`),
   INDEX `fk_owned_game_game1_idx` (`game_id` ASC) VISIBLE,
   INDEX `fk_owned_game_user1_idx` (`user_id` ASC) VISIBLE,
