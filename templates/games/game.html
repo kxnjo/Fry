@@ -32,6 +32,11 @@
                 <input type="text" name="game" value="{{ game.game_id }}" hidden>
                 <button type="submit" class="btn btn-outline-primary">Add to wishlist</button>
             </form>
+            <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
+                <!-- <input type="text" name="user" value="u20" hidden> -->
+                <input type="text" name="game" value="{{ game.game_id }}" hidden>
+                <button type="submit" class="btn btn-outline-primary">Add to Owned Games</button>
+            </form>
         </div>
     </div>
 </div>

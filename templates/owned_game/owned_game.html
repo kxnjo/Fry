@@ -1,0 +1,28 @@
+{%extends "index.html" %}
+{% block content %}
+
+<div class="container mt-5"></div>
+    <h1 class="text-center">Owned Games</h1>
+
+    <div class="row">
+        <div class="col-12">
+            <table class="table">
+                {% for i in owned_game %}
+                <tr>
+                    <td>
+                        <h6>Game Title: @{{ i[0] }}</h6>
+                        <h6>User: {{ i[1] }}</h6>
+                        <h6>Game: {{ i[2] }}</h6>
+                        <h6>Purchase Date: {{ i[3] }}</h6>
+                        <h6>Hours Played: {{ i[4] }}</h6>
+                    </td>
+                    <!-- <td>
+                        <a href="{{ url_for('wishlist_bp.deleteFromWishlist', user_id=i[3], game_id=i[4]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                    </td> -->
+                <tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

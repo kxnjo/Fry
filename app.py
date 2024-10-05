@@ -10,6 +10,7 @@ from routes.category import category_bp
 from routes.developer import developer_bp
 from routes.friend import friendlist_bp
 from routes.wishlist import wishlist_bp
+from routes.owned_game import owned_game_bp
 
 app = Flask(__name__)
 app.secret_key = "ifreakinghatethistrimester"  # for session security
@@ -24,6 +25,7 @@ app.register_blueprint(category_bp, url_prefix="/category")
 app.register_blueprint(developer_bp, url_prefix="/developer")
 app.register_blueprint(friendlist_bp, url_prefix="/friendlist")
 app.register_blueprint(wishlist_bp, url_prefix="/wishlist")
+app.register_blueprint(owned_game_bp, url_prefix="/owned_game")
 
 
 # routes == MAIN
