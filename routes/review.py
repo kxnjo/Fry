@@ -155,12 +155,13 @@ def get_reviews():
             games.append(game_data)
 
     # Show all reviews written by user
-    cur.execute('''
-        SELECT r.review_id,g.title, r.review_date, r.review_text, r.recommended
-        FROM review r
-        JOIN game g ON r.game_id = g.game_id
-        WHERE r.user_id = %s
-    ''', (session['user_id'],))
+    # cur.execute('''
+    #     SELECT r.review_id,g.title, r.review_date, r.review_text, r.recommended
+    #     FROM review r
+    #     JOIN game g ON r.game_id = g.game_id
+    #     WHERE r.user_id = %s
+    # ''', (session['user_id'],))
+
 
     added_reviews_rows = cur.fetchall()
     user_reviews = []
@@ -197,6 +198,111 @@ def generate_review_id(existing_ids):
         if random_id not in existing_ids:
             print(f'your id is now {random_id}')
             return random_id  # Return the unique ID
+
+
+# def xinhui():
+#     # start connection
+#     print("starting xh")
+#     conn = create_connection()
+#     if conn is None:
+#         return "Failed to connect to database"
+#     try:
+#         cur = conn.cursor()
+#         # Show all reviews written by user
+#         # cur.execute('''
+#         #     SELECT r.review_id,g.title, r.review_date, r.review_text, r.recommended
+#         #     FROM review r
+#         #     JOIN game g ON r.game_id = g.game_id
+#         #     WHERE r.user_id = %s
+#         # ''', (session['user_id'],))
+#
+#         cur.execute('''
+#             SELECT r.review_id,g.title, r.review_date, r.review_text, r.recommended
+#             FROM review r
+#             JOIN game g ON r.game_id = g.game_id
+#             WHERE r.user_id = 'u10'
+#         ''')
+#
+#         added_reviews_rows = cur.fetchall()
+#         if not added_reviews_rows:
+#             print("No reviews found for the user.")
+#             return []
+#
+#         user_reviews = []
+#         for row in added_reviews_rows:
+#             if row[4] == 'TRUE':
+#                 recommended_val = 'RECOMMENDED'
+#             else:
+#                 recommended_val = 'FALSE'
+#             added_reviews_data = {
+#                 "review_id": row[0],
+#                 "game_id": row[1],
+#                 "review_date": row[2],
+#                 "review_text": row[3],
+#                 "recommended": recommended_val
+#             }
+#             user_reviews.append(added_reviews_data)
+#             print("u r in here")
+#     except Exception as e:
+#         return f"An error occurred: {str(e)}"
+#
+#     finally:
+#         if conn:
+#             conn.close()
+#         print("out of xinhui")
+
+def xinhui():
+    # Start connection
+    print("starting xh")
+    conn = create_connection()
+    if conn is None:
+        print("Failed to connect to database: Connection returned None")
+        return "Failed to connect to database"
+
+    try:
+        cur = conn.cursor()
+
+        # Show all reviews written by user
+        cur.execute('''
+                    SELECT r.review_id,g.title, r.review_date, r.review_text, r.recommended
+                    FROM review r
+                    JOIN game g ON r.game_id = g.game_id
+                    WHERE r.user_id = %s
+                    ORDER BY 
+                    r.review_date DESC
+                ''', (session['user_id'],))
+
+        added_reviews_rows = cur.fetchall()
+        if not added_reviews_rows:
+            print("No reviews found for the user.")
+            return []
+
+        user_reviews = []
+        for row in added_reviews_rows:
+            if row[4] == 'TRUE':
+                recommended_val = 'RECOMMENDED'
+            else:
+                recommended_val = 'NOT RECOMMENDED'
+            added_reviews_data = {
+                "review_id": row[0],
+                "game_id": row[1],
+                "review_date": row[2],
+                "review_text": row[3],
+                "recommended": recommended_val
+            }
+            user_reviews.append(added_reviews_data)
+            print("u r in here")
+
+        return user_reviews
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return f"An error occurred: {str(e)}"
+
+    finally:
+        if conn:
+            conn.close()
+        print("out of xinhui")
 
 
 # @review_bp.route("/review-edit")
@@ -418,34 +524,87 @@ def get_id_existence(cur, review_id):
     return count > 0
 
 
-# INSERT/UPDATE REVIEW
-@review_bp.route("review-add", methods=['GET'])
-def add_review():
+# # INSERT/UPDATE REVIEW
+# @review_bp.route("review-add", methods=['GET'])
+# def add_review():
+#     conn = create_connection()
+#     cur = conn.cursor()
+#
+#     # Retrieve selected game from the request
+#     selected_game = request.args.get('game')
+#     recommended = request.args.get('recommended')
+#     review_text = request.args.get('review-text')
+#     # review_id = request.args.get('review_id')  # Should be None for new reviews
+#     review_id = request.args.get('review_id') if request.args.get(
+#         'review_id') != "None" else None  # Should be None for new reviews
+#
+#     # Determine the recommended value
+#     recommended_val = 'TRUE' if recommended == "Recommended" else 'FALSE'
+#
+#     print(f"Selected game: {selected_game}")
+#     print(f"Recommended: {recommended}")
+#     print(f"Review text: {review_text}")
+#     print(f"Review ID (should be None for new review): {review_id}")
+#
+#     # if review_id is None:  # This check is to update existing review
+#     id_check = get_id_existence(cur, review_id)
+#     # WHY DOES if review_id: NOT WORK @ xh, u can try to use if review_id, it doesnt work
+#     # if review_id:
+#     if id_check:
+#         print("i found ID !")
+#         cur.execute('''UPDATE review
+#                        SET recommended = %s, review_text = %s
+#                        WHERE review_id = %s''',
+#                     (recommended_val, review_text, review_id))
+#         print("Updated existing review")
+#
+#     else:
+#         print("i need create new id !")
+#         # Get existing review IDs to generate a new review_id
+#         cur.execute('SELECT review_id FROM review')
+#         id_rows = cur.fetchall()
+#         existing_ids = [row[0] for row in id_rows]
+#
+#         generated_id = generate_review_id(existing_ids)  # Generate new ID
+#         print(f"Generated new review ID: {generated_id}")
+#         date = datetime.datetime.today().strftime("%Y-%m-%d")
+#
+#         # Insert a new review
+#         cur.execute('''INSERT INTO review (review_id, review_text, review_date, user_id, game_id, recommended)
+#                        VALUES (%s, %s, %s, %s, %s, %s)''',
+#                     (generated_id, review_text, date, session['user_id'], selected_game, recommended_val))
+#         print(f"Created new review with ID: {generated_id}")
+#
+#     # Commit the changes
+#     conn.commit()
+#
+#     # Redirect to the edit reviews page with the new review ID
+#     return redirect(url_for('review_bp.get_reviews'))
+
+@review_bp.route('/review-add', methods=['POST'])
+@review_bp.route('review-add/<review_id>', methods=['POST'])
+def add_review(review_id=None):
     conn = create_connection()
     cur = conn.cursor()
 
-    # Retrieve selected game from the request
-    selected_game = request.args.get('game')
-    recommended = request.args.get('recommended')
-    review_text = request.args.get('review-text')
-    # review_id = request.args.get('review_id')  # Should be None for new reviews
-    review_id = request.args.get('review_id') if request.args.get(
-        'review_id') != "None" else None  # Should be None for new reviews
+    # Retrieve selected game and review data from the POST request
+    selected_game = request.form['game']  # Direct access
+    recommended = request.form['recommended']
+    review_text = request.form['review_text']
+    # review_id = request.form['review_id'] if request.form['review_id'] != "None" else None
 
     # Determine the recommended value
     recommended_val = 'TRUE' if recommended == "Recommended" else 'FALSE'
 
-    print(f"Selected game: {selected_game}")
+    # print(f"Selected game: {selected_game}")
     print(f"Recommended: {recommended}")
     print(f"Review text: {review_text}")
     print(f"Review ID (should be None for new review): {review_id}")
 
-    # if review_id is None:  # This check is to update existing review
     id_check = get_id_existence(cur, review_id)
-    # WHY DOES if review_id: NOT WORK @ xh, u can try to use if review_id, it doesnt work
-    # if review_id:
+
     if id_check:
-        print("i found ID !")
+        print("Found ID!")
         cur.execute('''UPDATE review
                        SET recommended = %s, review_text = %s 
                        WHERE review_id = %s''',
@@ -453,7 +612,7 @@ def add_review():
         print("Updated existing review")
 
     else:
-        print("i need create new id !")
+        print("Creating new ID!")
         # Get existing review IDs to generate a new review_id
         cur.execute('SELECT review_id FROM review')
         id_rows = cur.fetchall()
@@ -468,6 +627,7 @@ def add_review():
                        VALUES (%s, %s, %s, %s, %s, %s)''',
                     (generated_id, review_text, date, session['user_id'], selected_game, recommended_val))
         print(f"Created new review with ID: {generated_id}")
+        pass
 
     # Commit the changes
     conn.commit()
@@ -475,13 +635,13 @@ def add_review():
     # Redirect to the edit reviews page with the new review ID
     return redirect(url_for('review_bp.get_reviews'))
 
-
 # Delete Review
-@review_bp.route("review-delete", methods=['GET'])
-def delete_review():
+# @review_bp.route("review-delete/<review_id>", methods=['GET'])
+@review_bp.route("review-delete/<review_id>")
+def delete_review(review_id):
     conn = create_connection()
     cur = conn.cursor()
-    review_id = request.args.get('review_id')  # Should be None for new reviews
+    # review_id = request.args.get('review_id')  # Should be None for new reviews
     if review_id:
         cur.execute('''
         DELETE FROM
@@ -489,6 +649,120 @@ def delete_review():
         WHERE
         review_id = %s
         ''', (review_id,))
-
+    print("doned")
     conn.commit()
-    return redirect(url_for('review_bp.get_reviews'))
+    return redirect(url_for('user_bp.dashboard'))
+
+
+### OLD
+# INSERT/UPDATE REVIEW
+# @review_bp.route("review-add", methods=['GET'])
+# def add_review_old():
+#     conn = create_connection()
+#     cur = conn.cursor()
+#
+#     # Retrieve selected game from the request
+#     selected_game = request.args.get('game')
+#     recommended = request.args.get('recommended')
+#     review_text = request.args.get('review-text')
+#     # review_id = request.args.get('review_id')  # Should be None for new reviews
+#     review_id = request.args.get('review_id') if request.args.get(
+#         'review_id') != "None" else None  # Should be None for new reviews
+#
+#     # Determine the recommended value
+#     recommended_val = 'TRUE' if recommended == "Recommended" else 'FALSE'
+#
+#     print(f"Selected game: {selected_game}")
+#     print(f"Recommended: {recommended}")
+#     print(f"Review text: {review_text}")
+#     print(f"Review ID (should be None for new review): {review_id}")
+#
+#     # if review_id is None:  # This check is to update existing review
+#     id_check = get_id_existence(cur, review_id)
+#     # WHY DOES if review_id: NOT WORK @ xh, u can try to use if review_id, it doesnt work
+#     # if review_id:
+#     if id_check:
+#         print("i found ID !")
+#         cur.execute('''UPDATE review
+#                        SET recommended = %s, review_text = %s
+#                        WHERE review_id = %s''',
+#                     (recommended_val, review_text, review_id))
+#         print("Updated existing review")
+#
+#     else:
+#         print("i need create new id !")
+#         # Get existing review IDs to generate a new review_id
+#         cur.execute('SELECT review_id FROM review')
+#         id_rows = cur.fetchall()
+#         existing_ids = [row[0] for row in id_rows]
+#
+#         generated_id = generate_review_id(existing_ids)  # Generate new ID
+#         print(f"Generated new review ID: {generated_id}")
+#         date = datetime.datetime.today().strftime("%Y-%m-%d")
+#
+#         # Insert a new review
+#         cur.execute('''INSERT INTO review (review_id, review_text, review_date, user_id, game_id, recommended)
+#                        VALUES (%s, %s, %s, %s, %s, %s)''',
+#                     (generated_id, review_text, date, session['user_id'], selected_game, recommended_val))
+#         print(f"Created new review with ID: {generated_id}")
+#
+#     # Commit the changes
+#     conn.commit()
+#
+#     # Redirect to the edit reviews page with the new review ID
+#     return redirect(url_for('review_bp.get_reviews'))
+
+
+# @review_bp.route("/review-edit")
+# def edit_reviews():
+#     conn = create_connection()
+#     cur = conn.cursor()
+#
+#     review_id = request.args.get('review_id')
+#     user_id = session.get('user_id')  # Get user_id from the session
+#     print("Review ID:", review_id)  # Debugging line
+#     print("User ID:", user_id)  # Debugging line
+#
+#     review_info = None  # Initialize to None
+#
+#     if review_id and user_id:
+#         # If review_id is present, fetch the review information
+#         cur.execute('''
+#         SELECT g.title, r.recommended, r.review_text
+#         FROM game g, review r
+#         WHERE r.game_id = g.game_id AND r.review_id = %s AND r.user_id = %s
+#         ''', (review_id, user_id))
+#
+#         review_info = cur.fetchone()  # Fetch the review info
+#         print("Review Info:", review_info)  # Debugging line
+#     else:
+#         # If no review_id, prepare to add a new review
+#         print("No review ID provided, ready to add a new review.")  # Debugging line
+#
+#     # Retrieve games from dropdown, sorted by alphabetical order
+#     cur.execute('''
+#     SELECT game_id, title
+#     FROM game
+#     ORDER BY title ASC
+#     ''')
+#     game_rows = cur.fetchall()
+#
+#     games = []
+#     if game_rows:
+#         for row in game_rows:
+#             game_data = {
+#                 "id": row[0],
+#                 "title": row[1]
+#             }
+#             games.append(game_data)
+#
+#     # Close connection
+#     cur.close()
+#     conn.close()
+#
+#     return render_template(
+#         "reviews/review-edit.html",
+#         games=games,
+#         review_info=review_info,  # This will be None if adding a new review
+#         review_id=review_id  # This will be None when adding a new review
+#     )
