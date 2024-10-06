@@ -2,28 +2,64 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center">Wishlist</h1>
-
     <div class="row">
         <div class="col-12">
-            <table class="table">
-                {% for i in wishlist %}
-                    <tr>
-                        <td>
-                            <a href="{{ url_for('game_bp.view_game', game_id=i[4]) }}" class="link-underline-dark"><h5>{{ i[1] }}</h5><a>
-                            <h6>Date Added: {{ i[2] }}</h6>
-                        </td>
-                        <td>
-                            <a href="{{ url_for('wishlist_bp.deleteFromWishlist', user_id=i[3], game_id=i[4]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
-                        </td>
-                    <tr>
-                {% endfor %}
-            </table>
+            <form method="POST" action="{{ url_for('wishlist_bp.searchWishlist') }}">
+                <div class="input-group rounded">
+                    <input type="search" name="searchInput" class="form-control rounded" placeholder="Search by title, developer or categories" aria-label="Search" aria-describedby="search-addon" required/>
+                    <button type="submit" class="input-group-text border-0" id="search-addon">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+            <br>
+            {% if search == False %}
+                <table class="table">
+                    {% for i in wishlist %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('game_bp.view_game', game_id=i[2]) }}" class="link-underline-dark"><h5>{{ i[0] }}</h5><a>
+                                <h6>Developer name: {{ i[3] }}</h6>
+                                <h6>Categories: {{ i[4] }}</h6>
+                                <h6>Date Added: {{ i[1] }}</h6>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('wishlist_bp.deleteFromWishlist', game_id=i[2]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                            </td>
+                        <tr>
+                    {% endfor %}
+                </table>
+            {% elif search == True %}
+                <div class="row">
+                    <div class="col-10">
+                        <h4>Search results for '{{ string }}':</h4>
+                    </div>
+                    <div class="col-2">
+                        <a type="button" href="{{ url_for('wishlist_bp.view_wishlist') }}" class="btn btn-light">Clear Search</a>
+                    </div>
+                </div>
+                <br>
+                <table class="table">
+                    {% if searchResult %}
+                        {% for x in searchResult %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('game_bp.view_game', game_id=x.game_id) }}" class="link-underline-dark"><h5>{{ x.title }}</h5><a>
+                                    <h6>Developer name: {{ x.developer_name }}</h6>
+                                    <h6>Categories: {{ x.categories }}</h6>
+                                    <h6>Date Added: {{ x.added_date }}</h6>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('wishlist_bp.deleteFromWishlist', game_id=x.game_id) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                                </td>
+                            <tr>
+                        {% endfor %}
+                    {% else %}
+                        <h3>No Result Found.</h3>
+                    {% endif %}
+        </table>
+            {% endif %}
         </div>
-        <a type="button" href="{{ url_for('wishlist_bp.searchWishlist') }}" class="btn btn-primary">test search</a>
-        <h5>Search results for 'Medal' and 'God':</h5>
-        {% for x in searchResult %}
-        <h6>{{x}}</h6>
-        {% endfor %}
     </div>
 </div>
 {% endblock %}
