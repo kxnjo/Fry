@@ -89,7 +89,7 @@ def getAllUsers(start = 0, end = 10):
         # execute query
         print(f"this is start: {start} and end {end}")
         cur.execute("""SELECT * FROM (
-                    SELECT user_id, username, email, created_on, ROW_NUMBER() OVER (ORDER BY user_id) as row_num FROM user) as temp_table
+                    SELECT user_id, username, email, created_on, role, ROW_NUMBER() OVER (ORDER BY user_id) as row_num FROM user) as temp_table
                     WHERE row_num > %s AND row_num <= %s""", (start, end))
         allUsers = cur.fetchall()
 

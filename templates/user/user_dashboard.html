@@ -47,28 +47,34 @@
 			</div>
 
 			<!-- Carousel for Games Owned -->
-			<div id="gamesCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-				<div class="carousel-inner">
-					{% set game_groups = games | batch(3, fill_with=None) %} {% for game_group in game_groups %}
-					<div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
-						<div class="row">
-							{% for game in game_group %} {% if game %}
-							<!-- Game Card (One-third width) -->
-							<div class="col-md-4">
-								<div class="card bg-transparent border-0">
-									<img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="{{ game.game_title }}" />
-									<div class="card-body">
-										<h5 class="card-title">{{ game.game_title }}</h5>
-										<a href="/view-game/{{ game.id }}" class="btn btn-info btn-sm">View Game</a>
-									</div>
-								</div>
-							</div>
-							{% endif %} {% endfor %}
-						</div>
-					</div>
-					{% endfor %}
-				</div>
-			</div>
+            <div class="p-2" id="games_owned">
+                {% if games == None or games|length == 0 %}
+                <h3 class="d-flex">No games owned.</h3>
+                {% else %}
+                <div id="gamesCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% set game_groups = games | batch(3, fill_with=None) %} {% for game_group in game_groups %}
+                        <div class="carousel-item {% if loop.index == 1 %}active{% endif %}">
+                            <div class="row">
+                                {% for game in game_group %} {% if game %}
+                                <!-- Game Card (One-third width) -->
+                                <div class="col-md-4">
+                                    <div class="card bg-transparent border-0">
+                                        <img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="{{ game.game_title }}" />
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ game.game_title }}</h5>
+                                            <a href="/view-game/{{ game.id }}" class="btn btn-info btn-sm">View Game</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %} {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
 
             <div class="p-2" id="reviews">
                 <!-- Table for Reviews Left by User -->
@@ -124,7 +130,7 @@
                 {% endif %}
     
                 {% if mutual_friends | length == 0 %}
-                <h2 class="justify-content-center d-flex">You have no friends 😢</h2>
+                <h3 class="justify-content-center d-flex">You have no friends 😢</h3>
                 {% else %}
                 <table class="table">
                     <thead>
@@ -201,6 +207,7 @@
 				</div>
 			</div>
 		</div>
+
         <!-- Modal for editing review -->
         {% for review in user_reviews %}
         <div class="modal fade" id="editReviewModal{{ review.review_id }}" tabindex="-1"
