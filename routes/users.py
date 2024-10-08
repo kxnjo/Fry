@@ -11,7 +11,7 @@ from auth_utils import login_required  # persistent login
 from routes.review import xinhui
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
-all_users_cache = []
+all_users_num = []
 
 def create_connection():
     # Replace with your database connection details
@@ -22,10 +22,26 @@ def create_connection():
         database=config.DATABASE,
     )
 
+def getUserNum():
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute("SELECT * from user;")
+        total = cur.fetchall()
+        print(f"found this many users {len(total)}")
 
-def getUserNum(cur):
-    cur.execute("SELECT * from user;")
-    return len(cur.fetchall())
+        # close connection
+        cur.close()
+        conn.close()
+        return len(total)
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
 def checkUser(cur, name, email):
     print("checking user")
     # Check for existing username
@@ -61,7 +77,7 @@ def checkUser(cur, name, email):
             "message": "Username and email are unique."
         }
     }
-def getAllUsers():
+def getAllUsers(start = 0, end = 10):
     allUsers = []
     # start connection
     conn = create_connection()
@@ -70,7 +86,10 @@ def getAllUsers():
     try:
         cur = conn.cursor(dictionary=True)
         # execute query
-        cur.execute("SELECT * from user")
+        print(f"this is start: {start} and end {end}")
+        cur.execute("""SELECT * FROM (
+                    SELECT user_id, username, email, created_on, ROW_NUMBER() OVER (ORDER BY user_id) as row_num FROM user) as temp_table
+                    WHERE row_num > %s AND row_num <= %s""", (start, end))
         allUsers = cur.fetchall()
 
         # close connection
@@ -202,7 +221,7 @@ def register():
 
             if status:
                 # other details
-                uid = f"u{getUserNum(cur) + 1}"
+                uid = f"u{getUserNum() + 1}"
                 role = "user"
                 created_on = date.today()
                 # hash the password
@@ -241,7 +260,6 @@ def register():
     return render_template("user/register.html", create_notif=notif)
 
 
-# TODO: FORGET PASSWORD !!!!!
 @user_bp.route("/forgot", methods=["GET", "POST"])
 def forgot():
     if request.method == "POST":
@@ -291,23 +309,25 @@ def logout():
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
-    global all_users_cache 
     if session["role"] == "admin":
-        if not all_users_cache:
-            all_users_cache = getAllUsers() # TODO: do pagination within sql queries?
+        # retrieve the total number of users ONCE !
+        all_users_num = getUserNum()
 
         # get the current page number, set default number to start from 1
         page = request.args.get('page', 1, type=int) 
-        print("this is page", page)
-        users_per_page = 20 # num of users to display per page
-        total_pages = (len(all_users_cache) - 1) // users_per_page + 1 # get the total amt of pages
+        print(f"i am page {page}, all_users_num {all_users_num}")
+
+        # get the total amt of pages
+        users_per_page = 10
+        total_pages = all_users_num // users_per_page + 1 
+        print(f"this is total pages {total_pages}")
 
         # Paginate the users from the cache
         start = (page - 1) * users_per_page
         end = start + users_per_page
-        users = all_users_cache[start:end]
+        all_users = getAllUsers(start, end)
 
-        return render_template("user/admin_dashboard.html", users = all_users_cache, page = page, total_pages = total_pages)
+        return render_template("user/admin_dashboard.html", users = all_users, page = page, total_pages = total_pages)
 
     elif session["role"] == "user":
         user = getUser()
