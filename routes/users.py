@@ -9,6 +9,7 @@ from auth_utils import login_required  # persistent login
 # integration
 # from routes.game import get_all_games
 from routes.review import xinhui
+
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
 all_users_num = []
@@ -101,7 +102,7 @@ def getAllUsers(start = 0, end = 10):
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
-def getUser():
+def getUser(user_id):
     user = {}
     # start connection
     conn = create_connection()
@@ -110,7 +111,7 @@ def getUser():
     try:
         cur = conn.cursor(dictionary=True)
         # execute query
-        cur.execute("SELECT user_id, username, email from user WHERE user_id = %s", (session["user_id"],))
+        cur.execute("SELECT user_id, username, email from user WHERE user_id = %s", (user_id,))
         user = cur.fetchall()[0]
 
         # close connection
@@ -315,12 +316,10 @@ def dashboard():
 
         # get the current page number, set default number to start from 1
         page = request.args.get('page', 1, type=int) 
-        print(f"i am page {page}, all_users_num {all_users_num}")
 
         # get the total amt of pages
         users_per_page = 10
         total_pages = all_users_num // users_per_page + 1 
-        print(f"this is total pages {total_pages}")
 
         # Paginate the users from the cache
         start = (page - 1) * users_per_page
@@ -330,20 +329,26 @@ def dashboard():
         return render_template("user/admin_dashboard.html", users = all_users, page = page, total_pages = total_pages)
 
     elif session["role"] == "user":
-        user = getUser()
+        curr_id = request.args.get('user', session["user_id"], type=str) 
+        games, user_reviews, mutual_friends = None, None, None
 
-        # TODO: INSERT GAMES OWNED
-            # need: game title, (reference however is displayed in games)
-        # games = get_all_games()[:5] TODO: CHANGE THIS TO OWNED GAMES
-        # print(games)
+        # get user details
+        user = getUser(curr_id)
 
-        # TODO: INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,, 
+        # TODO: INSERT GAMES OWNED = = =
+        # need: game title, (reference however is displayed in games)
+        # games = get_all_games()[:5] # TODO: CHANGE THIS TO OWNED GAMES
+        # print(f"this is games {games}")
+
+        # TODO: INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,,  = = =
             # need: game title, review, redirect to game review button ???
         user_reviews = xinhui()
-        # TODO: INSERT MUTUAL FRIENDS LIST
-            # need: friend username, redirect to user account button
 
-        return render_template("user/user_dashboard.html", user = user, games=[], user_reviews = user_reviews)
+        # TODO: INSERT MUTUAL FRIENDS LIST = = =
+            # need: friend username, redirect to user account button
+        mutual_friends = []
+            
+        return render_template("user/user_dashboard.html", user = user, games = games, user_reviews = user_reviews, mutual_friends = mutual_friends)
     
 
 @user_bp.route('/edit-user/<string:user_id>', methods=['POST'])

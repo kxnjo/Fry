@@ -12,12 +12,14 @@
 				<div class="card-body text-center">
 					<h4 class="card-title">{{ user.username }}</h4>
 					<p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
-
+                    
+                    {% if session["user_id"] ==  user.user_id %}
 					<!-- Button to Trigger Modal -->
 					<button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal">Edit Account</button>
 
 					<!-- Button to Trigger Delete Modal -->
 					<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal">Delete Account</button>
+                    {% endif %}
 				</div>
 			</div>
 		</div>
@@ -31,7 +33,7 @@
 				<!-- Games Owned Header -->
                 <h3 class="col">Games Owned</h3>
                 <!-- Carousel Controls -->
-                <div class="col px-3 d-flex justify-content-end" id="CONTROL STUFF?!?!?!?!?!?!">
+                <div class="col px-3 d-flex justify-content-end">
                     <button class="btn btn-link" type="button" data-bs-target="#gamesCarousel" data-bs-slide="prev">
                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                         <span class="visually-hidden">Previous</span>
@@ -68,61 +70,83 @@
 				</div>
 			</div>
 
-			<!-- Table for Reviews Left by User -->
-			<h3>Your Reviews</h3>
-            <table class="table mb-4">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Game Title</th>
-                    <th>Review</th>
-                    <th>Recommmended</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for review in user_reviews %}
-                <tr>
-                    <td>{{ review.review_date}}</td>
-                    <td>{{ review.game_id }}</td>
-                    <td>{{review.review_text}}</td>
-                    <td>{{ review.recommended }}</td>
-                    <td>
-                        <!-- Edit Review Button that opens the corresponding modal -->
-                        <button type="button" class="btn btn-warning btn-sm"
-                                data-bs-toggle="modal"
-                                data-bs-target="#editReviewModal{{ review.review_id }}">
-                            Edit Review
-                        </button>
-                        <!-- Delete Button-->
-                        <a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}"
-                           class="btn btn-danger btn-sm">Delete Review</a>
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+            <div class="p-2" id="reviews">
+                <!-- Table for Reviews Left by User -->
+                {% if session["user_id"] != user.user_id %}
+                <h3>Their Reviews</h3>
+                {% else %}
+                <h3>Your Reviews</h3>
+                {% endif %}
+                <table class="table mb-4">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Game Title</th>
+                        <th>Review</th>
+                        <th>Recommmended</th>
+                        {% if session["user_id"] ==  user.user_id %}
+                        <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for review in user_reviews %}
+                    <tr>
+                        <td>{{ review.review_date}}</td>
+                        <td>{{ review.game_id }}</td>
+                        <td>{{review.review_text}}</td>
+                        <td>{{ review.recommended }}</td>
+                        {% if session["user_id"] ==  user.user_id %}
+                        <td>
+                            <!-- Edit Review Button that opens the corresponding modal -->
+                            <button type="button" class="btn btn-warning btn-sm"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editReviewModal{{ review.review_id }}">
+                                Edit Review
+                            </button>
+                            <!-- Delete Button-->
+                            <a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}"
+                               class="btn btn-danger btn-sm">Delete Review</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-			<!-- Table for Mutual Friends -->
-			<h3>Mutual Friends</h3>
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Friend's Username</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for friend in user.mutual_friends %}
-					<tr>
-						<td>{{ friend.username }}</td>
-						<td>
-							<a href="/view-profile/{{ friend.id }}" class="btn btn-info btn-sm">View Profile</a>
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
+            <div class="p-2" id="mutual-friends">
+                <!-- Table for Mutual Friends -->
+                {% if session["user_id"] != user.user_id %}
+                <h3>Mutual Friends</h3>
+                {% else %}
+                <h3>Your Friends</h3>
+                {% endif %}
+    
+                {% if mutual_friends | length == 0 %}
+                <h2 class="justify-content-center d-flex">You have no friends 😢</h2>
+                {% else %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Friend's Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for friend in user.mutual_friends %}
+                        <tr>
+                            <td>{{ friend.username }}</td>
+                            <td>
+                                <a href="/view-profile/{{ friend.id }}" class="btn btn-info btn-sm">View Profile</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+
 		</div>
 
 		<!-- Modal for Editing User Details -->
