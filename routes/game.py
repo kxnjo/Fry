@@ -213,17 +213,21 @@ def view_game(game_id):
             "false_count": false_count
         }
         
-    # Check if the game is already in the user's wishlist
-    user_id = session['user_id']
-    check_wishlist_query = """
-        SELECT * FROM wanted_game 
-        WHERE user_id = %s AND game_id = %s
-    """
-    cur.execute(check_wishlist_query, (user_id, game_id))
-    result = cur.fetchone()
+    gameInWishlist = False 
 
-    # If result is not None, the game is already in the wishlist
-    gameInWishlist = result is not None
+    if 'user_id' in session:
+
+        # Check if the game is already in the user's wishlist
+        user_id = session['user_id']
+        check_wishlist_query = """
+            SELECT * FROM wanted_game 
+            WHERE user_id = %s AND game_id = %s
+        """
+        cur.execute(check_wishlist_query, (user_id, game_id))
+        result = cur.fetchone()
+
+        # If result is not None, the game is already in the wishlist
+        gameInWishlist = result is not None
 
     return render_template("games/game.html", game=game_data, categories=categories, developers=developers,
                            reviews=reviews, recommended_data = recommended_data, gameInWishlist=gameInWishlist)
