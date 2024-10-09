@@ -23,28 +23,34 @@
     </h5>
     {% endfor %}
 </div>
+
 <div class="container">
     <div class="row">
         <div class="col-sm-8"></div>
         <div class="col-sm">
-            <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}">
-                <input type="text" name="game" value="{{ game.game_id }}" hidden>
-                <button type="submit" class="btn btn-light"
-                {% if gameInWishlist %} disabled {% endif %}>
-                {% if gameInWishlist %} Already Added to Wishlist
-                {% else %} Add to Wishlist 
-                {% endif %}
-                </button>
-            </form>
-            <br>
-            <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
-                <!-- <input type="text" name="user" value="u20" hidden> -->
-                <input type="text" name="game" value="{{ game.game_id }}" hidden>
-                <button type="submit" class="btn btn-outline-primary">Add to Owned Games</button>
-            </form>
+            {% if 'user_id' in session %}
+                <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}">
+                    <input type="text" name="game" value="{{ game.game_id }}" hidden>
+                    <button type="submit" class="btn btn-light"
+                    {% if gameInWishlist %} disabled {% endif %}>
+                    {% if gameInWishlist %} Already Added to Wishlist
+                    {% else %} Add to Wishlist 
+                    {% endif %}
+                    </button>
+                </form>
+                <br>
+                <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
+                    <!-- <input type="text" name="user" value="u20" hidden> -->
+                    <input type="text" name="game" value="{{ game.game_id }}" hidden>
+                    <button type="submit" class="btn btn-outline-primary">Add to Owned Games</button>
+                </form>
+            {%endif%}
         </div>
     </div>
 </div>
+
+<br>
+<br>
 
 <!--Show Reviews-->
 <!-- Show Reviews -->
