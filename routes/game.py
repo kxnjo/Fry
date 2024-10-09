@@ -16,8 +16,9 @@ def create_connection():
     )
 
 
-@game_bp.route("/games")
+@game_bp.route("/games", methods=['GET'])
 def view_all_games():
+    search = request.args.get('query')
     page = request.args.get('page', 1, type=int)
     sort_by = request.args.get('sort', 'title')  # Default sort is by title
     sort_order = request.args.get('order', 'asc')  # Default order is ascending
@@ -37,25 +38,61 @@ def view_all_games():
 
     order_direction = 'ASC' if sort_order == 'asc' else 'DESC'
 
-    query = f'''
-    SELECT 
-        g.game_id,
-        g.title,
-        g.release_date,
-        g.price
-    FROM 
-        game g
-    ORDER BY 
-        {order_by} {order_direction}
-    LIMIT %s OFFSET %s
-    '''
-
     conn = create_connection()
     cur = conn.cursor()
 
-    # Execute the query with the limit and offset parameters
-    cur.execute(query, (per_page, offset))
-    rows = cur.fetchall()
+    if search:
+        query = f'''
+        SELECT 
+            g.game_id,
+            g.title,
+            g.release_date,
+            g.price
+        FROM 
+            game g
+        WHERE
+            g.title 
+        LIKE 
+            %s
+        ORDER BY 
+            {order_by} {order_direction}
+        LIMIT %s OFFSET %s
+        '''
+        search_term = f"{search}%"
+        cur.execute(query, (search_term, per_page, offset))
+        rows = cur.fetchall()
+
+        # Get total number of results for pagination
+        count_query = '''
+        SELECT COUNT(*) FROM game g WHERE g.title LIKE %s
+        '''
+        cur.execute(count_query, (search_term,))
+        total = cur.fetchone()[0]
+
+    else:
+        query = f'''
+        SELECT 
+            g.game_id,
+            g.title,
+            g.release_date,
+            g.price
+        FROM 
+            game g
+        ORDER BY 
+            {order_by} {order_direction}
+        LIMIT %s OFFSET %s
+        '''
+
+        # Execute the query with the limit and offset parameters
+        cur.execute(query, (per_page, offset))
+        rows = cur.fetchall()
+
+        # Get total number of results for pagination
+        count_query = '''
+        SELECT COUNT(*) FROM game g
+        '''
+        cur.execute(count_query)
+        total = cur.fetchone()[0]
 
     # Create a list to hold game data
     games = []
@@ -71,7 +108,8 @@ def view_all_games():
     else:
         print("not found")
 
-    return render_template("games/view_games.html", games=games, page=page, sort_by=sort_by, sort_order=sort_order)
+    return render_template("games/view_games.html", games=games, page=page, sort_by=sort_by, 
+                           sort_order=sort_order, search=search)
 
 
 @game_bp.route("/game/<game_id>")

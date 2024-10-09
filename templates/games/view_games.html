@@ -20,9 +20,14 @@
                     {% if sort_order == 'asc' %}Ascending{% else %}Descending{% endif %}
                 </button>
                 <input type="hidden" name="order" id="sort_order" value="{{ sort_order }}">
+                <button type="submit" class="btn btn-secondary">Sort</button>
             </div>
             <div class="col-md-4">
-                <button type="submit" class="btn btn-secondary mt-4">Sort</button>
+                <label for="search_game" class="form-label">Search:</label>
+                <form method="GET" action="{{ url_for('game_bp.view_all_games') }}" class="d-flex mb-3">
+                    <input class="form-control me-2" type="search" name="query" placeholder="Search for games" aria-label="Search" value="{{ request.args.get('query', '') }}">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
             </div>
         </div>
     </form>
@@ -47,11 +52,18 @@
         </div>
     </div>
 </div>
-<div class="pagination">
-    {% if page > 1 %}
-    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page-1, sort=sort_by, order=sort_order) }}">Previous</a>
-    {% endif %}
-    <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page+1, sort=sort_by, order=sort_order) }}">Next</a>
+
+<br>
+<br>
+
+<div class="text-center">
+    <div class="pagination d-inline-flex">
+        {% if page > 1 %}
+        <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page-1, sort=sort_by, order=sort_order, query=search) }}">Previous</a>
+        {% endif %}
+
+        <a class="nav-link ms-5" href="{{ url_for('game_bp.view_all_games', page=page+1, sort=sort_by, order=sort_order, query=search) }}">Next</a>
+    </div>
 </div>
 
 <script>

@@ -21,13 +21,18 @@
         </div>
     </div>
 </div>
-<div class="pagination"></div>
-    {% if page > 1 %}
-    <a class="nav-link" href="{{ url_for('category_bp.view_all_categories', page=page-1) }}">Previous</a>
 
-    {% endif %}
+<br>
+<br>
 
-    <a class="nav-link" href="{{ url_for('category_bp.view_all_categories', page=page+1) }}">Next</a>
+<div class="text-center">
+    <div class="pagination d-inline-flex"></div>
+        {% if page > 1 %}
+        <a class="nav-link" href="{{ url_for('category_bp.view_all_categories', page=page-1) }}">Previous</a>
 
+        {% endif %}
+
+        <a class="nav-link ms-5" href="{{ url_for('category_bp.view_all_categories', page=page+1) }}">Next</a>
+    </div>
 </div>
 {% endblock %}
