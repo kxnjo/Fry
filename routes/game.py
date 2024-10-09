@@ -108,25 +108,26 @@ def view_all_games():
     else:
         print("not found")
 
-    return render_template("games/view_games.html", games=games, page=page, sort_by=sort_by, 
+    return render_template("games/view_games.html", games=games, page=page, sort_by=sort_by,
                            sort_order=sort_order, search=search)
-
 
 @game_bp.route("/game/<game_id>")
 def view_game(game_id):
     conn = create_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(buffered=True)
+
+    # Fetch game details
     cur.execute('''
-    SELECT 
-        g.game_id,
-        g.title,
-        g.release_date,
-        g.price
-    FROM 
-        game g
-    WHERE 
-        g.game_id = %s
-    LIMIT 1;
+        SELECT
+            g.game_id,
+            g.title,
+            g.release_date,
+            g.price
+        FROM
+            game g
+        WHERE
+            g.game_id = %s
+        LIMIT 1;
     ''', (game_id,))
     game = cur.fetchone()
 
@@ -207,8 +208,6 @@ def view_game(game_id):
             r.review_date DESC
         LIMIT 10
     ''', (game_id,))
-
-    # Create a list to hold review data
     reviews = []
 
     # Fetch the review rows
@@ -230,42 +229,70 @@ def view_game(game_id):
             }
             reviews.append(review_data)
 
-    # count number of recommended / non recommended reviews per game
+    # Count recommended / non-recommended reviews
     cur.execute('''
-        SELECT 
+        SELECT
             SUM(review.recommended = 'TRUE') AS true_count,
             SUM(review.recommended = 'FALSE') AS false_count
-        FROM 
+        FROM
             review
-        WHERE 
-            review.game_id = %s
+        WHERE
+            review.game_id = %s;
     ''', (game_id,))
+    recommended_data = dict(zip(["true_count", "false_count"], cur.fetchone() or (0, 0)))
 
-    recommended_rows = cur.fetchone()
-    if recommended_rows:
-        true_count = recommended_rows[0]
-        false_count = recommended_rows[1]
-        # After fetching the recommended counts
-        recommended_data = {
-            "true_count": true_count,
-            "false_count": false_count
-        }
-        
-    gameInWishlist = False 
+    # Check if the user is logged in
+    user_id = session.get('user_id')
+    gameInWishlist = False
+    get_user_review = None
+    user_owned = False  # Initialize user_owned to False
 
-    if 'user_id' in session:
+    if user_id:
+        # Check if the game is in the user's wishlist
+        cur.execute('''
+            SELECT * FROM wanted_game
+            WHERE user_id = %s AND game_id = %s;
+        ''', (user_id, game_id))
+        gameInWishlist = cur.fetchone() is not None
 
-        # Check if the game is already in the user's wishlist
-        user_id = session['user_id']
-        check_wishlist_query = """
-            SELECT * FROM wanted_game 
-            WHERE user_id = %s AND game_id = %s
-        """
-        cur.execute(check_wishlist_query, (user_id, game_id))
+        print("user id now is ",user_id)
+        print("game id now is ", game_id)
+
+        # Fetch user review
+        cur.execute('''
+            SELECT r.review_id, g.title, r.review_date,r.review_text, r.recommended
+            FROM review r
+            JOIN game g ON g.game_id = r.game_id
+            WHERE r.game_id = %s And r.user_id = %s
+        ''', (game_id, user_id))
+        get_user_review = cur.fetchone()  # Get the review or None
+
+        print("hello ", get_user_review)
+        # Check if the user owns the game
+        cur.execute('''
+            SELECT EXISTS (
+                SELECT 1
+                FROM owned_game
+                WHERE user_id = %s AND game_id = %s
+            )
+        ''', (user_id, game_id))
+
         result = cur.fetchone()
 
+        if result is not None:
+            user_owned = result[0]  # Get the ownership status (0 or 1)
+        else:
+            user_owned = False  # User does not own the game
         # If result is not None, the game is already in the wishlist
         gameInWishlist = result is not None
 
-    return render_template("games/game.html", game=game_data, categories=categories, developers=developers,
-                           reviews=reviews, recommended_data = recommended_data, gameInWishlist=gameInWishlist)
+    return render_template("games/game.html",
+                           game=game_data,
+                           categories=categories,
+                           developers=developers,
+                           reviews=reviews,
+                           recommended_data=recommended_data,
+                           gameInWishlist=gameInWishlist,
+                           user_logged_in=bool(user_id),
+                           user_owned=bool(user_owned),
+                           get_user_review=get_user_review)

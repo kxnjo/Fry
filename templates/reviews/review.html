@@ -39,47 +39,6 @@
         </div>
     </div>
 
-    <!--User OWN reviews-->
-    <div class="row">
-        <h3>USER WRITTEN ONES</h3>
-    <a href="{{ url_for('review_bp.edit_reviews')}}" class="btn btn-primary btn-lg active" role="button" aria-pressed="true">ADD REVIEW HERE</a>
-        <div class="col-12">
-            {% for review in user_reviews %}
-            <div class="card review-card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">Game: {{ review.game_id }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_id }}</h6>
-
-                    {% if review.recommended == "RECOMMENDED" %}
-                    <span class="text-success">Recommended</span>
-                    {% else %}
-                    <span class="text-danger">Not Recommended</span>
-                    {% endif %}
-                    </h6>
-                    <p class="card-text">{{ review.review_text }}</p>
-                </div>
-                <div class="col-3">
-                    <form action="{{ url_for('review_bp.edit_reviews', review_id=review.review_id) }}" method="GET">
-                        <input type="hidden" name="review_id" value="{{ review.review_id }}"> <!-- Corrected input -->
-                        <button type="submit" class="btn btn-primary">Update</button>
-                    </form>
-
-                    <!--                                        <a href="{{ url_for('review_bp.edit_reviews', review_id=review.review_id) }}" class="btn btn-primary">Upd2ate</a>-->
-                    <form action="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}" method="GET">
-                        <input type="hidden" name="review_id" value="{{ review.review_id }}"> <!-- Corrected input -->
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
-                </div>
-            </div>
-            {% else %}
-            <div class="alert alert-warning" role="alert">
-                No reviews found.
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
     <!-- Reviews Section -->
     <div class="row">
         <h3>all reviews</h3>
@@ -87,11 +46,9 @@
             {% for review in reviews %}
             <div class="card review-card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">User: {{ review.user_id }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">Review ID: {{ review.review_id }}</h6>
+                    <h5 class="card-title">{{review.game_id }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted">Game: {{ review.game_id }}</h6>
-                    <h6 class="card-subtitle mb-2 text-muted"> {{ review.title }}
+                    <h6 class="card-subtitle mb-2 text-muted">User: {{ review.user_id }}</h6>
                         {% if review.recommended == "RECOMMENDED" %}
                         <span class="text-success">Recommended</span>
                         {% else %}

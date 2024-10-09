@@ -6,99 +6,81 @@
     <!-- Filter Section -->
     <div class="row mb-3">
         <div class="col-12">
-<!-- Filter Section -->
-<div class="row mb-3">
-    <div class="col-12">
-<!--        <form method="POST" action="{{ url_for('review_bp.add_review') }}">-->
-<!--            <input type="hidden" name="review_id" value="{{ review_id }}"> &lt;!&ndash; Corrected input &ndash;&gt;-->
-<!--            <div class="form-group">-->
-<!--                <label for="gameFilter">Game:</label>-->
-<!--                <select class="form-control" id="gameFilter" name="game">-->
-<!--                    {% for game in games %}-->
-<!--                    <option value="{{ game.id }}"-->
-<!--                            {% if review_info and game.title == review_info[0] %} selected {% endif %}>-->
-<!--                        {{ game.title }}-->
-<!--                    </option>-->
-<!--                    {% endfor %}-->
-<!--                </select>-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--                <label for="exampleFormControlSelect1">Recommended</label>-->
-<!--                <select class="form-control" id="exampleFormControlSelect1" name="recommended">-->
-<!--                    <option value="Recommended" {% if review_info and review_info[1] == "Recommended" %} selected {% endif %}>-->
-<!--                        Recommended-->
-<!--                    </option>-->
-<!--                    <option value="Not Recommended" {% if review_info and review_info[1] == "Not Recommended" %} selected {% endif %}>-->
-<!--                        Not Recommended-->
-<!--                    </option>-->
-<!--                </select>-->
-<!--            </div>-->
-<!--            <div class="form-group">-->
-<!--                <label for="exampleFormControlTextarea1">Review Text</label>-->
-<!--                <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="review_text">{{ review_info[2] if review_info else '' }}</textarea>-->
-<!--            </div>-->
-<!--            <button type="submit" class="btn btn-primary">Submit</button>-->
-<!--        </form>-->
-            <!-- Form for Adding a New Review -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <form method="POST" action="{{ url_for('review_bp.add_review') }}">
-                <div class="form-group">
-                    <label for="gameFilter">Game:</label>
-                    <select class="form-control" id="gameFilter" name="game">
-                        {% for game in games %}
-                        <option value="{{ game.id }}">{{ game.title }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="exampleFormControlSelect1">Recommended</label>
-                    <select class="form-control" id="exampleFormControlSelect1" name="recommended">
-                        <option value="Recommended">Recommended</option>
-                        <option value="Not Recommended">Not Recommended</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="exampleFormControlTextarea1">Review Text</label>
-<textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="review_text"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
-        </div>
-    </div>
-    </div>
-</div>
+            <!-- Filter Section -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            {% if review_info %}
+                            <form method="POST"
+                                  action="{{ url_for('review_bp.add_review', review_id=review_info[0]) }}">
+                                {% else %}
+                                <form method="POST"
+                                      action="{{ url_for('review_bp.add_review') }}">
+                                    {% endif %}
+                                    <div class="form-group">
+                                        <label for="gameFilter">Game:</label>
+                                        <input type="hidden" id="gameId" name="game_id" value="{{selected_game}}">
+                                        <input class="form-control" type="text" id="gameFilter"
+                                               value="{{game_title}}"
+                                               readonly>
+                                    </div>
 
+
+                                    <div class="form-group">
+                                        <label for="exampleFormControlSelect1">Recommended</label>
+                                        <select class="form-control" id="exampleFormControlSelect1" name="recommended">
+                                            <option value="Recommended" {% if review_info and review_info[2]==
+                                            "Recommended" %} selected {% endif %}>
+                                            Recommended
+                                            </option>
+                                            <option value="Not Recommended" {% if review_info and review_info[2]==
+                                            "Not Recommended" %} selected {% endif %}>
+                                            Not Recommended
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exampleFormControlTextarea1">Review Text</label>
+                                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"
+                                                  name="review_text">{{ review_info[3] if review_info else '' }}</textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-<!--    &lt;!&ndash; Reviews Section &ndash;&gt;-->
-<!--    <div class="row">-->
-<!--        <div class="col-12">-->
-<!--            {% for review in reviews %}-->
-<!--            <div class="card review-card mb-3">-->
-<!--                <div class="card-body">-->
-<!--                    <h5 class="card-title">User: {{ review.user_id }}</h5>-->
-<!--                    <h6 class="card-subtitle mb-2 text-muted">Review ID: {{ review.review_id }}</h6>-->
-<!--                    <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>-->
-<!--                    <h6 class="card-subtitle mb-2 text-muted">Game: {{ review.game_id }}</h6>-->
-<!--                    <h6 class="card-subtitle mb-2 text-muted"> {{ review.title }}-->
-<!--                        {% if review.recommended == "RECOMMENDED" %}-->
-<!--                        <span class="text-success">Recommended</span>-->
-<!--                        {% else %}-->
-<!--                        <span class="text-danger">Not Recommended</span>-->
-<!--                        {% endif %}-->
-<!--                    </h6>-->
-<!--                    <p class="card-text">{{ review.review_text }}</p>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            {% else %}-->
-<!--            <div class="alert alert-warning" role="alert">-->
-<!--                No reviews found.-->
-<!--            </div>-->
-<!--            {% endfor %}-->
-<!--        </div>-->
-<!--    </div>-->
+    <!--    &lt;!&ndash; Reviews Section &ndash;&gt;-->
+    <!--    <div class="row">-->
+    <!--        <div class="col-12">-->
+    <!--            {% for review in reviews %}-->
+    <!--            <div class="card review-card mb-3">-->
+    <!--                <div class="card-body">-->
+    <!--                    <h5 class="card-title">User: {{ review.user_id }}</h5>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted">Review ID: {{ review.review_id }}</h6>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted">Game: {{ review.game_id }}</h6>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted"> {{ review.title }}-->
+    <!--                        {% if review.recommended == "RECOMMENDED" %}-->
+    <!--                        <span class="text-success">Recommended</span>-->
+    <!--                        {% else %}-->
+    <!--                        <span class="text-danger">Not Recommended</span>-->
+    <!--                        {% endif %}-->
+    <!--                    </h6>-->
+    <!--                    <p class="card-text">{{ review.review_text }}</p>-->
+    <!--                </div>-->
+    <!--            </div>-->
+    <!--            {% else %}-->
+    <!--            <div class="alert alert-warning" role="alert">-->
+    <!--                No reviews found.-->
+    <!--            </div>-->
+    <!--            {% endfor %}-->
+    <!--        </div>-->
+    <!--    </div>-->
 </div>
 
 {% endblock %}
