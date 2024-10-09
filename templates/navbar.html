@@ -21,18 +21,6 @@
       <li class="nav-item"></li>
         <a class="nav-link" href="{{ url_for('developer_bp.view_all_developers') }}">Developers</a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('wishlist_bp.view_wishlist') }}">Wishlist</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('friendlist_bp.view_friends') }}">Friends</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('user_bp.dashboard') }}">Dashboard</a>
-      </li>
-      <li class="nav-item"></li>
-        <a class="nav-link" href="{{ url_for('owned_game_bp.view_owned_game') }}">Owned Games</a>
-      </li>
     </ul>
 
     {% if not session %}
@@ -46,14 +34,42 @@
     </ul>
     {% else %}
     <!-- User account button fixed to top right -->
+
     <ul class="navbar-nav ms-auto px-3">
-      <li class="nav-item">
-          <a class="nav-link btn btn-primary text-white" href="{{ url_for('user_bp.logout') }}">
-            <i class="fa fa-user px-2" aria-hidden="true"></i> Welcome, {{ session["username"] }}
-          </a>
+
+      <li class="nav-item dropdown text-white">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fa fa-user"></i> Welcome, {{ session["username"] }}
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{{ url_for('user_bp.dashboard') }}"><i class="fa-solid fa-grip"></i> View Dashboard</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('friendlist_bp.view_friends') }}"><i class="fa-solid fa-user-group"></i> Friends</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('wishlist_bp.view_wishlist') }}"><i class="fa-solid fa-heart"></i> Wishlist</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('owned_game_bp.view_owned_game') }}"><i class="fa-solid fa-gamepad"></i> Owned Games</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{{ url_for('user_bp.logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        </ul>
       </li>
+
     </ul>
     {% endif %}
 
   </div>
 </nav>
+
+
+<!-- <li class="nav-item">
+  <a class="nav-link btn btn-primary text-white" href="{{ url_for('user_bp.dashboard') }}">
+    <i class="fa fa-user"></i> Welcome, {{ session["username"] }}
+  </a>
+</li>
+<li class="nav-item">
+  <a class="nav-link btn btn-primary text-white" href="{{ url_for('wishlist_bp.view_wishlist') }}">
+    <i class="fa-solid fa-heart"></i>
+  </a>
+</li>
+<li class="nav-item">
+  <a class="nav-link btn btn-primary text-white" href="{{ url_for('user_bp.logout') }}" alt="Sign out">
+    <i class="fa-solid fa-right-from-bracket"></i>
+  </a>
+</li> -->
