@@ -97,3 +97,53 @@ def add_owned_game():
             conn.close()
 
     return view_owned_game() 
+
+def get_owned_game(user_id):
+    conn = create_connection()
+    if conn is None: 
+        return "Failed to connect to database"
+    try: 
+        cur = conn.cursor() 
+        
+        # view games that the user owns 
+        cur.execute(""" 
+            SELECT 
+                game.title,
+                owned_game.user_id, 
+                owned_game.game_id,
+                owned_game.purchase_date,  
+                owned_game.hours_played
+            FROM 
+                owned_game
+
+            INNER JOIN game ON owned_game.game_id = game.game_id
+            WHERE owned_game.user_id = %s ;
+        """, (user_id,))
+
+        # Fetch owned_games rows
+        rows = cur.fetchall()
+
+        # Create a list to hold game data
+        owned_games = []
+        if rows:
+            for row in rows:
+                game_data = {
+                    "game_title": row[0],
+                    "user_id": row[1],
+                    "game_id": row[2],
+                    "purchase_date": row[3],
+                    "hours_played": row[4]
+                }
+                owned_games.append(game_data)
+        else:
+            print("not found")
+        return owned_games
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving owned_game: {e}"
+    finally: 
+        cur.close() 
+        conn.close()
+
+    return []

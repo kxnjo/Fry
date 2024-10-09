@@ -4,24 +4,59 @@
 		<!-- Left Column: User Details -->
 		<div class="col-md-4 p-3">
 			<!-- User Image -->
-			<div class="card mb-4 border-0 bg-transparent">
-				<img
-					src="https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
-					alt="User Image"
-					class="card-img-top img-fluid rounded-circle" />
-				<div class="card-body text-center">
-					<h4 class="card-title">{{ user.username }}</h4>
-					<p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
+			<div class="card mb-4 border-0 bg-transparent text-center">
+                <div class="d-flex justify-content-center">
+                    <img
+                        src="https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
+                        alt="User Image"
+                        class="card-img-top img-fluid rounded-circle" 
+                        style="max-width: 15vw; height: auto;"/>
+                </div>
+                <div class="card-body text-center">
+                    <h4 class="card-title">{{ user.username }}</h4>
+                    <p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
                     
-                    {% if session["user_id"] ==  user.user_id %}
-					<!-- Button to Trigger Modal -->
-					<button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal">Edit Account</button>
-
-					<!-- Button to Trigger Delete Modal -->
-					<button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal">Delete Account</button>
+                    {% if session["user_id"] == user.user_id %}
+                    <!-- Button to Trigger Modal -->
+                    <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editUserModal">Edit Account</button>
+            
+                    <!-- Button to Trigger Delete Modal -->
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal">Delete Account</button>
                     {% endif %}
-				</div>
-			</div>
+                </div>
+            </div>
+            
+            <div class="p-2" id="mutual-friends">
+                <!-- Table for Mutual Friends -->
+                {% if session["user_id"] != user.user_id %}
+                <h3>Mutual Friends</h3>
+                {% else %}
+                <h3>Your Friends</h3>
+                {% endif %}
+    
+                {% if mutual_friends | length == 0 %}
+                <h5 class="justify-content-center d-flex">You have no friends 😢</h5>
+                {% else %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Friend's Username</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for friend in user.mutual_friends %}
+                        <tr>
+                            <td>{{ friend.username }}</td>
+                            <td>
+                                <a href="/view-profile/{{ friend.id }}" class="btn btn-info btn-sm">View Profile</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
 		</div>
 
 		<!-- Right Column: Carousel for Games, Tables for Reviews and Friends -->
@@ -31,7 +66,7 @@
 			<div class="d-flex row justify-content-between align-items-center mb-2">
 
 				<!-- Games Owned Header -->
-                <h3 class="col">Games Owned</h3>
+                <a class="col" href="{{ url_for('owned_game_bp.view_owned_game') }}"><h3>Games Owned</h3></a>
                 <!-- Carousel Controls -->
                 <div class="col px-3 d-flex justify-content-end">
                     <button class="btn btn-link" type="button" data-bs-target="#gamesCarousel" data-bs-slide="prev">
@@ -63,6 +98,8 @@
                                         <img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="{{ game.game_title }}" />
                                         <div class="card-body">
                                             <h5 class="card-title">{{ game.game_title }}</h5>
+                                            <p>Hours played: {{ game.hours_played }} h</p>
+                                            <p>Purchase date: {{ game.purchase_date }}</p>
                                             <a href="/view-game/{{ game.id }}" class="btn btn-info btn-sm">View Game</a>
                                         </div>
                                     </div>
@@ -108,49 +145,17 @@
                             <button type="button" class="btn btn-warning btn-sm"
                                     data-bs-toggle="modal"
                                     data-bs-target="#editReviewModal{{ review.review_id }}">
-                                Edit Review
+                                Edit
                             </button>
                             <!-- Delete Button-->
                             <a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}"
-                               class="btn btn-danger btn-sm">Delete Review</a>
+                               class="btn btn-danger btn-sm">Delete</a>
                         </td>
                         {% endif %}
                     </tr>
                     {% endfor %}
                     </tbody>
                 </table>
-            </div>
-
-            <div class="p-2" id="mutual-friends">
-                <!-- Table for Mutual Friends -->
-                {% if session["user_id"] != user.user_id %}
-                <h3>Mutual Friends</h3>
-                {% else %}
-                <h3>Your Friends</h3>
-                {% endif %}
-    
-                {% if mutual_friends | length == 0 %}
-                <h3 class="justify-content-center d-flex">You have no friends 😢</h3>
-                {% else %}
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Friend's Username</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for friend in user.mutual_friends %}
-                        <tr>
-                            <td>{{ friend.username }}</td>
-                            <td>
-                                <a href="/view-profile/{{ friend.id }}" class="btn btn-info btn-sm">View Profile</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% endif %}
             </div>
 
 		</div>

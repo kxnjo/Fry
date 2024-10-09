@@ -9,11 +9,13 @@ from auth_utils import login_required  # persistent login
 # integration
 # from routes.game import get_all_games
 from routes.review import xinhui
+from routes.owned_game import get_owned_game
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
 all_users_num = []
 
+# db connections
 def create_connection():
     # Replace with your database connection details
     return mysql.connector.connect(
@@ -23,6 +25,7 @@ def create_connection():
         database=config.DATABASE,
     )
 
+# other functions for accessiblity
 def getUserNum():
     # start connection
     conn = create_connection()
@@ -123,6 +126,34 @@ def getUser(user_id):
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
+def checkuid(uid):
+    userlist = []
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute("SELECT user_id from user WHERE user_id = %s", (uid,))
+        userlist = cur.fetchall()
+
+        # close connection
+        cur.close()
+        conn.close()
+
+        return userlist
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+def getuid():
+    uid = getUserNum() + 1
+
+    while len(checkuid(f"u{uid}")) != 0:
+        uid += 1
+
+    return f"u{uid}"
 
 
 @user_bp.route("/login", methods=["GET", "POST"])
@@ -200,8 +231,6 @@ def login():
 @user_bp.route("/register", methods=["GET", "POST"])
 def register():
     notif = request.args.get("create_notif")
-    print("\n\nthis is notif")
-    print(notif)
 
     if request.method == "POST":
         conn = create_connection()
@@ -222,7 +251,8 @@ def register():
 
             if status:
                 # other details
-                uid = f"u{getUserNum() + 1}"
+                uid = getuid()
+
                 role = "user"
                 created_on = date.today()
                 # hash the password
@@ -306,7 +336,7 @@ def logout():
     return redirect(url_for('home'))
 
 
-# TODO: USER DASHBOARD, 1 for admin 1 for regular user (IN PROGRESS)
+# TODO: USER DASHBOARD
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -335,13 +365,10 @@ def dashboard():
         # get user details
         user = getUser(curr_id)
 
-        # TODO: INSERT GAMES OWNED = = =
-        # need: game title, (reference however is displayed in games)
-        # games = get_all_games()[:5] # TODO: CHANGE THIS TO OWNED GAMES
-        # print(f"this is games {games}")
+        # INSERT GAMES OWNED = = =
+        games = get_owned_game(session["user_id"])
 
-        # TODO: INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,,  = = =
-            # need: game title, review, redirect to game review button ???
+        # INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,,  = = =
         user_reviews = xinhui()
 
         # TODO: INSERT MUTUAL FRIENDS LIST = = =
@@ -357,6 +384,7 @@ def edit_user(user_id):
     # Retrieve form data
     username = request.form['username']
     email = request.form['email']
+    print(f"username retrieved: {username}, email retrieved: {email}, user_id: {user_id}")
 
     # start connection
     conn = create_connection()
@@ -364,11 +392,12 @@ def edit_user(user_id):
         return "Failed to connect to database"
     try:
         cur = conn.cursor(dictionary=True)
+        print(f"updating user {username}")
         # execute query
         cur.execute("""
             UPDATE user SET username = %s, email = %s 
             WHERE user_id = %s""", 
-            (username, email, session["user_id"],)
+            (username, email, user_id,)
         )
 
         # save to db
@@ -421,5 +450,8 @@ def delete_user(user_id):
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
 
-    session.clear()
-    return redirect(url_for('home'))
+    if user_id == session["user_id"]:
+        session.clear()
+        return redirect(url_for('home'))
+    
+    return redirect(request.referrer or url_for('user_bp.dashboard'))
