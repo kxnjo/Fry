@@ -100,7 +100,7 @@
                                             <h5 class="card-title">{{ game.game_title }}</h5>
                                             <p>Hours played: {{ game.hours_played }} h</p>
                                             <p>Purchase date: {{ game.purchase_date }}</p>
-                                            <a href="/view-game/{{ game.id }}" class="btn btn-info btn-sm">View Game</a>
+                                            <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="btn btn-info btn-sm">View Game</a>
                                         </div>
                                     </div>
                                 </div>
