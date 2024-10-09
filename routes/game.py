@@ -253,21 +253,19 @@ def view_game(game_id):
             SELECT * FROM wanted_game
             WHERE user_id = %s AND game_id = %s;
         ''', (user_id, game_id))
-        gameInWishlist = cur.fetchone() is not None
 
-        print("user id now is ",user_id)
-        print("game id now is ", game_id)
+        gameInWishlist = cur.fetchone() is not None  # Correctly check wishlist
 
         # Fetch user review
         cur.execute('''
-            SELECT r.review_id, g.title, r.review_date,r.review_text, r.recommended
+            SELECT r.review_id, g.title, r.review_date, r.review_text, r.recommended
             FROM review r
             JOIN game g ON g.game_id = r.game_id
-            WHERE r.game_id = %s And r.user_id = %s
+            WHERE r.game_id = %s AND r.user_id = %s
         ''', (game_id, user_id))
+
         get_user_review = cur.fetchone()  # Get the review or None
 
-        print("hello ", get_user_review)
         # Check if the user owns the game
         cur.execute('''
             SELECT EXISTS (
@@ -278,13 +276,7 @@ def view_game(game_id):
         ''', (user_id, game_id))
 
         result = cur.fetchone()
-
-        if result is not None:
-            user_owned = result[0]  # Get the ownership status (0 or 1)
-        else:
-            user_owned = False  # User does not own the game
-        # If result is not None, the game is already in the wishlist
-        gameInWishlist = result is not None
+        user_owned = result[0] if result is not None else False  # Check ownership
 
     return render_template("games/game.html",
                            game=game_data,
