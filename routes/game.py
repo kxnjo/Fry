@@ -250,7 +250,7 @@ def view_game(game_id):
     if user_id:
         # Check if the game is in the user's wishlist
         cur.execute('''
-            SELECT * FROM wanted_game
+            SELECT 1 FROM wanted_game
             WHERE user_id = %s AND game_id = %s;
         ''', (user_id, game_id))
 

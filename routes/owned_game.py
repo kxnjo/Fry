@@ -64,8 +64,6 @@ def add_owned_game():
         try: 
             cur = conn.cursor() 
             
-            # retrieve selected game? lol
-            # selected_gameID = request.args.get('game')
             game = request.form["game"]
             date = datetime.datetime.today().strftime("%Y-%m-%d")
             hours = 0
@@ -145,5 +143,30 @@ def get_owned_game(user_id):
     finally: 
         cur.close() 
         conn.close()
-
     return []
+
+@owned_game_bp.route("/delete-from-owned_game/<game_id>", methods=["GET"])
+def delete_owned_game(game_id):
+    conn = create_connection()
+
+    if conn is None: 
+        return "Failed to connect to database"
+    try: 
+        cur = conn.cursor() 
+        
+        if game_id: 
+            cur.execute('''
+            DELETE FROM 
+            owned_game 
+            WHERE
+            game_id = %s
+            ''', (game_id, ))
+        print("game deleted")
+        conn.commit()
+    finally: 
+            cur.close() 
+            conn.close()
+
+    return view_owned_game()
+
+        
