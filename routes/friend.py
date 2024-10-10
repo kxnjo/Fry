@@ -71,13 +71,13 @@ def view_friends():
                 JOIN user u ON
                     (u.user_id = mf.user1_id OR u.user_id = mf.user2_id)
                 WHERE (
-                    (mf.user1_id = %s AND mf.user2_id IN (
-                        SELECT user2_id FROM friend WHERE user1_id = %s
+                    (mf.user1_id = %s AND EXISTS (
+                        SELECT 1 FROM friend WHERE user1_id = %s AND user2_id = mf.user2_id
                     )) OR
-                    (mf.user2_id = %s AND mf.user1_id IN (
-                        SELECT user1_id FROM friend WHERE user2_id = %s
-                    ))
-                ) AND u.user_id NOT IN (%s, %s)
+                    (mf.user2_id = %s AND EXISTS (
+                        SELECT 1 FROM friend WHERE user2_id = %s AND user1_id = mf.user1_id
+                    ))) 
+                    AND u.user_id NOT IN (%s, %s)
             ''', (user_id, friend_id, user_id, friend_id, user_id, friend_id))
 
             # Get all mutual friends for each friend in the friend list
