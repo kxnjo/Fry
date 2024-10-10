@@ -9,38 +9,37 @@
     <div class="row">
         <div class="col-12">
             <table class="table">
-                {% for friend in friend %}
-                <div class="card friend-card">
-                    <div class="card-body">
-                        <h5 class="card-title">Account Name & ID: {{ friend[3], friend[0] }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted"> Friend Name & ID: {{ friend[4], friend[1] }}</h6>
-                        <h6 class="card-subtitle mb-2 text-muted"> Friendship Date: {{ friend[2] }}</h6>
-                        <h6 class="card-subtitle mb-2 text-muted"> Owned Games: {{ friend[6] }}</h6>
-                        <h6 class="card-subtitle mb-2 text-muted"> WishList: {{ friend[5] }}</h6>
-                        <h6 class="card-subtitle mb-2 text-muted"> Mutual Friend:</h6>
-                        {% if friend[7] and friend[7] != "None" %}
-                        {% for mutual_friend in friend[7].split(',') %}
-                        <a href="{{ url_for('user_bp.dashboard', user=friend[7]) }}" 
-                        class="text-decoration-none">
-                            {{ mutual_friend }}{% if not loop.last %}, {% endif %}
-                            </a>
-                        {% endfor %}
-                        {% endif %}
-                        <form action="{{ url_for('friendlist_bp.delete_friend', user1_id=friend[0], user2_id=friend[1]) }}" method="POST" >
-                            <input type="hidden" name="user1_id" value="{{ friend[0] }}">
-                            <input type="hidden" name="user2_id" value="{{ friend[1] }}">
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                        </form>
+                {% for friend, mutuals in friend_data %}
+                    <div class="card friend-card">
+                        <div class="card-body">
+                            <h5 class="card-title" style="color: thistle;">{{ friend[3] }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Friendship Date: {{ friend[2] }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">Owned Games: {{ friend[5] }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">WishList: {{ friend[4] }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">Mutual Friends:</h6>
+                            {% if mutuals %}
+                                {% for mutual in mutuals %}
+                                    <a href="{{ url_for('user_bp.dashboard', user=mutual[0]) }}" class="text-decoration-none">
+                                        {{ mutual[1] }}
+                                    </a>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <span style="color:greenyellow">None</span>
+                            {% endif %}
+                            <form action="{{ url_for('friendlist_bp.delete_friend', user1_id=friend[0], user2_id=friend[1]) }}" method="POST">
+                                <input type="hidden" name="user1_id" value="{{ friend[0] }}">
+                                <input type="hidden" name="user2_id" value="{{ friend[1] }}">
+                                <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
                 {% else %}
-                <div class="alert alert-warning" role="alert">
-                    No friends found.
-                </div>
+                    <div class="alert alert-warning" role="alert">
+                        No friends found.
+                    </div>
                 {% endfor %}
             </table>
         </div>
     </div>
-</div>
 
 {% endblock %}

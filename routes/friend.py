@@ -55,15 +55,21 @@ def view_friends():
 
         friend_list = []
         for friend in friends:
-            # Determine friend ID and main user ID
-            friend_id = friend[1] if friend[0] == user_id else friend[0]
-            friend_data = (friend[0], friend[1], friend[2], friend[3], friend[4], friend[5], friend[6])
+            if friend[0] == user_id:
+                friend_list.append((friend[0], friend[1], friend[2], friend[4], friend[5], friend[6]))
+            else:
+                friend_list.append((friend[1], friend[0], friend[2], friend[3], friend[5], friend[6]))
 
-            # Get mutual friends
+
+        # Get mutual friends
+        mutual_friends = []
+        for friend in friend_list:
+            friend_id = friend[1]  # user2_id
             cur.execute('''
-                SELECT GROUP_CONCAT(DISTINCT u.username ORDER BY u.username ASC)
+                SELECT DISTINCT u.user_id, u.username
                 FROM friend mf
-                JOIN user u ON (u.user_id = mf.user1_id OR u.user_id = mf.user2_id)
+                JOIN user u ON 
+                    (u.user_id = mf.user1_id OR u.user_id = mf.user2_id)
                 WHERE (
                     (mf.user1_id = %s AND mf.user2_id IN (
                         SELECT user2_id FROM friend WHERE user1_id = %s
@@ -74,12 +80,9 @@ def view_friends():
                 ) AND u.user_id NOT IN (%s, %s)
             ''', (user_id, friend_id, user_id, friend_id, user_id, friend_id))
 
-            mutual_friends = cur.fetchone()
-            mutual_friends_list = mutual_friends[0] if mutual_friends and mutual_friends[0] else "None"
-
-            # Append friend data with mutual friends to friend_list
-            friend_list.append(friend_data + (mutual_friends_list,))
-
+            # Get all mutual friends for each friend in the friend list
+            mutual_friends.append(cur.fetchall())  
+            
     except mysql.connector.Error as e:
         # Error handling
         conn.rollback()
@@ -90,7 +93,7 @@ def view_friends():
         cur.close()
         conn.close()
         
-    return render_template("friend/friend.html", friend=friend_list)
+    return render_template("friend/friend.html", friend_data=zip(friend_list, mutual_friends))
 
 
 @friendlist_bp.route("/add-friend", methods=["GET", "POST"])
