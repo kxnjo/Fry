@@ -1,4 +1,13 @@
-from flask import Blueprint, jsonify, render_template, request, url_for, redirect, session
+from flask import (
+    Blueprint,
+    jsonify,
+    render_template,
+    request,
+    url_for,
+    redirect,
+    session,
+    flash,
+)
 import mysql.connector
 import config
 import hashlib
@@ -15,6 +24,7 @@ from routes.owned_game import get_owned_game
 user_bp = Blueprint("user_bp", __name__)
 all_users_num = []
 
+
 # db connections
 def create_connection():
     # Replace with your database connection details
@@ -24,6 +34,7 @@ def create_connection():
         password=config.PASSWORD,
         database=config.DATABASE,
     )
+
 
 # other functions for accessiblity
 def getUserNum():
@@ -46,42 +57,38 @@ def getUserNum():
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
+
+
 def checkUser(cur, name, email):
-    print("checking user")
+    msg, status = "", ""
+    unique = True
+
     # Check for existing username
     cur.execute("SELECT user_id FROM user WHERE username = %s", (name,))
     user_by_name = cur.fetchall()
-    
-    if len(user_by_name) >   0:
-        return {
-            "status": False,
-            "response": {
-                "status": "danger", 
-                "message": "Username is already taken! Please choose a different username."
-            }
-        }
+
+    if len(user_by_name) > 0:
+        msg = "Username is already taken! Please choose a different username."
+        status = "warning"
+        unique = False
+
+        return {"msg": msg, "status": status, "unique": unique}
 
     # Check for existing email
     cur.execute("SELECT user_id FROM user WHERE email = %s", (email,))
     user_by_email = cur.fetchall()
 
     if len(user_by_email) > 0:
-        return {
-            "status": False,
-            "response": {
-                "status": "danger", 
-                "message": "Email is already registered! Please use a different email."
-            }
-        }
+        msg = "Email is already registered! Please use a different email."
+        status = "warning"
+        unique = False
 
-    return {
-        "status": True,
-        "response": {
-            "status": "success", 
-            "message": "Username and email are unique."
-        }
-    }
-def getAllUsers(start = 0, end = 10):
+        return {"msg": msg, "status": status, "unique": unique}
+
+    return {"msg": msg, "status": status, "unique": unique}
+
+
+def getAllUsers(start=0, end=10):
     allUsers = []
     # start connection
     conn = create_connection()
@@ -91,20 +98,25 @@ def getAllUsers(start = 0, end = 10):
         cur = conn.cursor(dictionary=True)
         # execute query
         print(f"this is start: {start} and end {end}")
-        cur.execute("""SELECT * FROM (
+        cur.execute(
+            """SELECT * FROM (
                     SELECT user_id, username, email, created_on, role, ROW_NUMBER() OVER (ORDER BY user_id) as row_num FROM user) as temp_table
-                    WHERE row_num > %s AND row_num <= %s""", (start, end))
+                    WHERE row_num > %s AND row_num <= %s""",
+            (start, end),
+        )
         allUsers = cur.fetchall()
 
         # close connection
         cur.close()
         conn.close()
-        
+
         return allUsers
 
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
+
+
 def getUser(user_id):
     user = {}
     # start connection
@@ -114,18 +126,22 @@ def getUser(user_id):
     try:
         cur = conn.cursor(dictionary=True)
         # execute query
-        cur.execute("SELECT user_id, username, email from user WHERE user_id = %s", (user_id,))
+        cur.execute(
+            "SELECT user_id, username, email from user WHERE user_id = %s", (user_id,)
+        )
         user = cur.fetchall()[0]
 
         # close connection
         cur.close()
         conn.close()
-        
+
         return user
 
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
+
+
 def checkuid(uid):
     userlist = []
     # start connection
@@ -147,6 +163,8 @@ def checkuid(uid):
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
+
+
 def getuid():
     uid = getUserNum() + 1
 
@@ -158,8 +176,6 @@ def getuid():
 
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
-    notif = request.args.get("login_notif")
-
     if request.method == "POST":
         conn = create_connection()
         if conn is None:
@@ -175,63 +191,39 @@ def login():
             # hash the password
             hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
 
-            print("before print db")
             # Execute the SQL statement
             cur.execute(
                 "SELECT user_id, username, password, role FROM user WHERE email = %s OR username = %s",
                 (username_email, username_email),
             )
-            users = cur.fetchall()
-            print(users, len(users))
-            if len(users) == 0: # if user does not exist
-                notif = {
-                    "status": "danger", 
-                    "message": "Incorrect username/password"
-                }   # there should only be ONE username
-                return redirect(url_for("user_bp.login", login_notif=notif)) # if there is error, return error
-            else:
-                user = users[0]
-            print("retrieved details")
-
-            # close connection
+            user = cur.fetchone()
             cur.close()
             conn.close()
-            print("closed connection")
 
-            print(user)
+            if not user or user["password"] != hashed_input_password:
+                flash("Incorrect username/password", "danger")
+                return redirect(url_for("user_bp.login"))
 
-            if user and user["password"] == hashed_input_password:
-                print("the user email and password correct")
-                # save to session
-                session["user_id"] = user["user_id"]
-                session["username"] = user["username"]
-                session["role"] = user["role"]
-                
-                return redirect(url_for("home"))
-            else:
-                print("the user password wrong")
-                notif = {
-                    "status": "danger", 
-                    "message": "Incorrect username/password"
-                }
+            # save to session
+            session["user_id"] = user["user_id"]
+            session["username"] = user["username"]
+            session["role"] = user["role"]
 
-            return redirect(url_for("user_bp.login", login_notif=notif)) # if there is error, return error
+            return redirect(url_for("home"))
 
         except mysql.connector.Error as e:
-            print(f"Error: {e}")
-            return f"Error retrieving table: {e}"
-            
+            flash(f"Error retrieving table: {e}", "danger")
+            return redirect(url_for("user_bp.login"))
+
     elif request.method == "GET":
         # do nothing i guess,, idk what else to do,, load up the page?? :P
         print("visited login page")
 
-    return render_template("user/login.html", login_notif=notif)
+    return render_template("user/login.html")
 
 
 @user_bp.route("/register", methods=["GET", "POST"])
 def register():
-    notif = request.args.get("create_notif")
-
     if request.method == "POST":
         conn = create_connection()
         if conn is None:
@@ -246,10 +238,13 @@ def register():
 
             # check if there is no existing user with same username/email
             checkUnique = checkUser(cur, name, email)
-            status = checkUnique["status"]
-            responsnotife = checkUnique["response"]
+            print(checkUnique)
 
-            if status:
+            if not checkUnique["unique"]:
+                flash(checkUnique["msg"], checkUnique["status"])
+                return redirect(url_for("user_bp.register"))
+
+            else:
                 # other details
                 uid = getuid()
 
@@ -271,11 +266,9 @@ def register():
                 )
                 conn.commit()
 
-                return redirect(url_for("user_bp.login", create_notif=notif)) # send them back to login page #TODO: display notif message
-
-            else:
-                print("sending back to register")
-                return redirect(url_for("user_bp.register", create_notif=notif))
+                return redirect(
+                    url_for("user_bp.login")
+                )  # send them back to login page
 
         except mysql.connector.Error as e:
             conn.rollback()
@@ -284,11 +277,8 @@ def register():
         finally:
             cur.close()
             conn.close()
-    if request.method == "GET":
-        print("ITS GETTING")
-        print(type(notif))
 
-    return render_template("user/register.html", create_notif=notif)
+    return render_template("user/register.html")
 
 
 @user_bp.route("/forgot", methods=["GET", "POST"])
@@ -307,15 +297,19 @@ def forgot():
         try:
             cur = conn.cursor(dictionary=True)
             # execute query
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE user SET password = %s
-                WHERE username = %s OR email = %s""", 
-                (hashed_password, username_email, username_email,)
+                WHERE username = %s OR email = %s""",
+                (
+                    hashed_password,
+                    username_email,
+                    username_email,
+                ),
             )
             print(cur.fetchall())
             # save to db
             conn.commit()
-            print("user pw updated")
 
             # close connection
             cur.close()
@@ -326,14 +320,14 @@ def forgot():
         except mysql.connector.Error as e:
             print(f"Error: {e}")
             return f"Error retrieving table: {e}"
-    
+
     return render_template("user/forgot.html")
 
 
 @user_bp.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for('home'))
+    return redirect(url_for("home"))
 
 
 # TODO: USER DASHBOARD
@@ -345,21 +339,26 @@ def dashboard():
         all_users_num = getUserNum()
 
         # get the current page number, set default number to start from 1
-        page = request.args.get('page', 1, type=int) 
+        page = request.args.get("page", 1, type=int)
 
         # get the total amt of pages
         users_per_page = 10
-        total_pages = all_users_num // users_per_page + 1 
+        total_pages = all_users_num // users_per_page + 1
 
         # Paginate the users from the cache
         start = (page - 1) * users_per_page
         end = start + users_per_page
         all_users = getAllUsers(start, end)
 
-        return render_template("user/admin_dashboard.html", users = all_users, page = page, total_pages = total_pages)
+        return render_template(
+            "user/admin_dashboard.html",
+            users=all_users,
+            page=page,
+            total_pages=total_pages,
+        )
 
     elif session["role"] == "user":
-        curr_id = request.args.get('user', session["user_id"], type=str) 
+        curr_id = request.args.get("user", session["user_id"], type=str)
         games, user_reviews, mutual_friends = None, None, None
 
         # get user details
@@ -372,19 +371,27 @@ def dashboard():
         user_reviews = xinhui()
 
         # TODO: INSERT MUTUAL FRIENDS LIST = = =
-            # need: friend username, redirect to user account button
+        # need: friend username, redirect to user account button
         mutual_friends = []
-            
-        return render_template("user/user_dashboard.html", user = user, games = games, user_reviews = user_reviews, mutual_friends = mutual_friends)
-    
 
-@user_bp.route('/edit-user/<string:user_id>', methods=['POST'])
+        return render_template(
+            "user/user_dashboard.html",
+            user=user,
+            games=games,
+            user_reviews=user_reviews,
+            mutual_friends=mutual_friends,
+        )
+
+
+@user_bp.route("/edit-user/<string:user_id>", methods=["POST"])
 @login_required
 def edit_user(user_id):
     # Retrieve form data
-    username = request.form['username']
-    email = request.form['email']
-    print(f"username retrieved: {username}, email retrieved: {email}, user_id: {user_id}")
+    username = request.form["username"]
+    email = request.form["email"]
+    print(
+        f"username retrieved: {username}, email retrieved: {email}, user_id: {user_id}"
+    )
 
     # start connection
     conn = create_connection()
@@ -394,10 +401,15 @@ def edit_user(user_id):
         cur = conn.cursor(dictionary=True)
         print(f"updating user {username}")
         # execute query
-        cur.execute("""
+        cur.execute(
+            """
             UPDATE user SET username = %s, email = %s 
-            WHERE user_id = %s""", 
-            (username, email, user_id,)
+            WHERE user_id = %s""",
+            (
+                username,
+                email,
+                user_id,
+            ),
         )
 
         # save to db
@@ -413,11 +425,11 @@ def edit_user(user_id):
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
 
-    return redirect(url_for('user_bp.dashboard'))
+    return redirect(url_for("user_bp.dashboard"))
 
 
 # TODO: DELETE USER, delete all related relations
-@user_bp.route("/delete_user/<string:user_id>", methods=['POST'])
+@user_bp.route("/delete_user/<string:user_id>", methods=["POST"])
 @login_required
 def delete_user(user_id):
     conn = create_connection()
@@ -425,16 +437,13 @@ def delete_user(user_id):
         return "Failed to connect to database"
     try:
         cur = conn.cursor(dictionary=True)
-        # execute query
-
-        # TODO: delete all friend relations
-        # TODO: delete all related relations
 
         # delete user
-        cur.execute("""
+        cur.execute(
+            """
             DELETE FROM user
-            WHERE user_id = %s""", 
-            (user_id,)
+            WHERE user_id = %s""",
+            (user_id,),
         )
 
         # save to db
@@ -452,6 +461,6 @@ def delete_user(user_id):
 
     if user_id == session["user_id"]:
         session.clear()
-        return redirect(url_for('home'))
-    
-    return redirect(request.referrer or url_for('user_bp.dashboard'))
+        return redirect(url_for("home"))
+
+    return redirect(request.referrer or url_for("user_bp.dashboard"))
