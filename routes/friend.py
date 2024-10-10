@@ -56,19 +56,19 @@ def view_friends():
         friend_list = []
         for friend in friends:
             if friend[0] == user_id:
-                friend_list.append((friend[0], friend[1], friend[2], friend[4], friend[5], friend[6]))
+                friend_list.append((friend[1], friend[2], friend[4], friend[5], friend[6]))
             else:
-                friend_list.append((friend[1], friend[0], friend[2], friend[3], friend[5], friend[6]))
+                friend_list.append((friend[0], friend[2], friend[3], friend[5], friend[6]))
 
 
         # Get mutual friends
         mutual_friends = []
         for friend in friend_list:
-            friend_id = friend[1]  # user2_id
+            friend_id = friend[0]
             cur.execute('''
                 SELECT DISTINCT u.user_id, u.username
                 FROM friend mf
-                JOIN user u ON 
+                JOIN user u ON
                     (u.user_id = mf.user1_id OR u.user_id = mf.user2_id)
                 WHERE (
                     (mf.user1_id = %s AND mf.user2_id IN (
@@ -81,7 +81,7 @@ def view_friends():
             ''', (user_id, friend_id, user_id, friend_id, user_id, friend_id))
 
             # Get all mutual friends for each friend in the friend list
-            mutual_friends.append(cur.fetchall())  
+            mutual_friends.append(cur.fetchall())
             
     except mysql.connector.Error as e:
         # Error handling

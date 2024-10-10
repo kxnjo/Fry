@@ -12,10 +12,10 @@
                 {% for friend, mutuals in friend_data %}
                     <div class="card friend-card">
                         <div class="card-body">
-                            <h5 class="card-title" style="color: thistle;">{{ friend[3] }}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">Friendship Date: {{ friend[2] }}</h6>
-                            <h6 class="card-subtitle mb-2 text-muted">Owned Games: {{ friend[5] }}</h6>
-                            <h6 class="card-subtitle mb-2 text-muted">WishList: {{ friend[4] }}</h6>
+                            <h5 class="card-title" style="color: thistle;">{{ friend[2] }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Friendship Date: {{ friend[1] }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">Owned Games: {{ friend[4] }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">WishList: {{ friend[3] }}</h6>
                             <h6 class="card-subtitle mb-2 text-muted">Mutual Friends:</h6>
                             {% if mutuals %}
                                 {% for mutual in mutuals %}
