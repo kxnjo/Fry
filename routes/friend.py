@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, session
 import mysql.connector
 import config
 import datetime
@@ -21,20 +21,22 @@ def create_connection():
 @login_required
 def view_friends():
     conn = create_connection()
+    user_id=session["user_id"]
     if conn is None:
         return "Failed to connect to database"
     try:
         cur = conn.cursor()
-        user1_id = 'u2'
         cur.execute('''
             SELECT 
-                f.user1_id, f.user2_id, f.friendship_date, u1.username , u2.username,
-                IF(f.user1_id = %s, 
+                f.user1_id, f.user2_id, f.friendship_date, u1.username, u2.username,
+                IF(f.user1_id = %s,
                     GROUP_CONCAT(DISTINCT g2_wanted.title ORDER BY g2_wanted.title ASC),
-                    GROUP_CONCAT(DISTINCT g1_wanted.title ORDER BY g1_wanted.title ASC)),
-                IF(f.user1_id = %s, 
+                    GROUP_CONCAT(DISTINCT g1_wanted.title ORDER BY g1_wanted.title ASC)
+                ) AS wanted_games,
+                IF(f.user1_id = %s,
                     GROUP_CONCAT(DISTINCT g2_owned.title ORDER BY g2_owned.title ASC),
-                    GROUP_CONCAT(DISTINCT g1_owned.title ORDER BY g1_owned.title ASC))
+                    GROUP_CONCAT(DISTINCT g1_owned.title ORDER BY g1_owned.title ASC)
+                ) AS owned_games
             FROM friend f
             JOIN user u1 ON f.user1_id = u1.user_id
             JOIN user u2 ON f.user2_id = u2.user_id
@@ -48,17 +50,35 @@ def view_friends():
             LEFT JOIN game g2_owned ON o2.game_id = g2_owned.game_id
             WHERE f.user1_id = %s OR f.user2_id = %s
             GROUP BY f.user1_id, f.user2_id, f.friendship_date, u1.username, u2.username;
-        ''', (user1_id, user1_id, user1_id, user1_id))
-        friend = cur.fetchall()
+        ''', (user_id, user_id, user_id, user_id))
+        friends = cur.fetchall()
 
         friend_list = []
-        for friend in friend:
-            if friend[0] == user1_id:
-                # If logged-in user is user1, friend is user2
-                friend_list.append((friend[0], friend[1], friend[2], friend[3], friend[4], friend[5], friend[6]))
-            else:
-                # If logged-in user is user2, friend is user1
-                friend_list.append((friend[1], friend[0], friend[2], friend[4], friend[3], friend[5], friend[6]))
+        for friend in friends:
+            # Determine friend ID and main user ID
+            friend_id = friend[1] if friend[0] == user_id else friend[0]
+            friend_data = (friend[0], friend[1], friend[2], friend[3], friend[4], friend[5], friend[6])
+
+            # Get mutual friends
+            cur.execute('''
+                SELECT GROUP_CONCAT(DISTINCT u.username ORDER BY u.username ASC)
+                FROM friend mf
+                JOIN user u ON (u.user_id = mf.user1_id OR u.user_id = mf.user2_id)
+                WHERE (
+                    (mf.user1_id = %s AND mf.user2_id IN (
+                        SELECT user2_id FROM friend WHERE user1_id = %s
+                    )) OR
+                    (mf.user2_id = %s AND mf.user1_id IN (
+                        SELECT user1_id FROM friend WHERE user2_id = %s
+                    ))
+                ) AND u.user_id NOT IN (%s, %s)
+            ''', (user_id, friend_id, user_id, friend_id, user_id, friend_id))
+
+            mutual_friends = cur.fetchone()
+            mutual_friends_list = mutual_friends[0] if mutual_friends and mutual_friends[0] else "None"
+
+            # Append friend data with mutual friends to friend_list
+            friend_list.append(friend_data + (mutual_friends_list,))
 
     except mysql.connector.Error as e:
         # Error handling
@@ -72,6 +92,7 @@ def view_friends():
         
     return render_template("friend/friend.html", friend=friend_list)
 
+
 @friendlist_bp.route("/add-friend", methods=["GET", "POST"])
 def add_friend():
     if request.method == "POST":
@@ -81,8 +102,8 @@ def add_friend():
         try:
             cur = conn.cursor()
 
-            # Get the user and game from the form
-            user1 = request.form["user"]
+            # Get the user and friend from the form
+            user1 = session["user_id"]
             user2 = request.form["friend"]
             date = datetime.datetime.today().strftime("%Y-%m-%d")
 
