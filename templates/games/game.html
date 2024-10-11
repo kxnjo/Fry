@@ -93,7 +93,7 @@
                 <button type="submit" class="btn btn-primary">Add Review</button>
             </form>
             {% endif %}
-        {% else %}
+        {% elif user_logged_in %}
         <div class="alert alert-warning" role="alert">
             You can only leave a review after owning the game.
         </div>
