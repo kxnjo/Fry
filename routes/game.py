@@ -293,13 +293,16 @@ def view_game(game_id):
             change_date ASC
     ''', (game_id,))
     price_changes = cur.fetchall()
+    print(price_changes)
 
     # Prepare data for the graph
     dates = []
     prices = []
 
     for change in price_changes:
-        dates.append(change[1])  # Extract and format change_date
+        # Extract and format change_date to 'dd-mm-yyyy'
+        formatted_date = change[1].strftime('%d-%m-%Y')
+        dates.append(formatted_date)  # Append formatted date
         final_price = change[2] - (change[2] * (change[3] / 100))  # Apply discount to base_price
         prices.append(final_price)
 

@@ -145,7 +145,7 @@ def get_owned_game(user_id):
         conn.close()
     return []
 
-@owned_game_bp.route("/delete-from-owned_game/<game_id>", methods=["GET"])
+@owned_game_bp.route("/delete-from-owned_game/<game_id>")
 def delete_owned_game(game_id):
     conn = create_connection()
 
@@ -166,7 +166,7 @@ def delete_owned_game(game_id):
     finally: 
             cur.close() 
             conn.close()
-
-    return view_owned_game()
+            
+    return redirect(request.referrer or url_for('game_bp.view_game', game_id=game))
 
         

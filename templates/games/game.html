@@ -36,34 +36,36 @@
             <div class="d-flex flex-column">
                 <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}" class="mb-2">
                     <input type="text" name="game" value="{{ game.game_id }}" hidden>
-                    <button type="submit" class="btn btn-light "
+                    <button type="submit" class="btn btn-light" style="width: 210px;"
                             {% if gameInWishlist %} disabled {% endif %}>
                         {% if gameInWishlist %} Already Added to Wishlist
                         {% else %} Add to Wishlist
                         {% endif %}
                     </button>
                 </form>
-                <!-- {% if user_owned %}
-                <form method="POST" action="{{ url_for('owned_game_bp.delete_owned_game', game_id=game.game_id) }}">
+                {% if user_owned %}
+                <!-- <form method="POST" action="{{ url_for('owned_game_bp.delete_owned_game', game_id=game.game_id) }}">
                     <input type="text" name="game" value="{{ game.game_id }}" hidden>
                     <button type="submit" class="btn btn-light ">Uninstall</button>
-                </form>    
+                </form>     -->
+                <a href="{{ url_for('owned_game_bp.delete_owned_game', game_id=game.game_id) }}"
+                    class="btn btn-danger" style="width: 210px; ">Delete</a>
                 {% else %}
                 <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
                     <input type="text" name="game" value="{{ game.game_id }}" hidden>
-                    <button type="submit" class="btn btn-light ">Install</button>
+                    <button type="submit" class="btn btn-light" style="width: 210px;">Purchase</button>
                 </form>                
-                {% endif %} -->
+                {% endif %}
 
-                <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
+                <!-- <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
                     <input type="text" name="game" value="{{ game.game_id }}" hidden>
                     <button type="submit" class="btn btn-light "
                             {% if user_owned %} disabled {% endif %}>
-                        {% if user_owned %} Installed
+                        {% if user_owned %} Purchased 
                         {% else %} Install
                         {% endif %}
                     </button>
-                </form>
+                </form> -->
             </div>
             </div>
             {% endif %}
@@ -105,16 +107,33 @@
             scales: {
                 y: {
                     beginAtZero: false,  // Ensure it does not start at 0
-                    min: minPrice - 1,       // Set the minimum value for the Y-axis
+                    min: minPrice - 0.1, // Set the minimum value for the Y-axis
                     title: {
                         display: true,
-                        text: 'Price (in $)'
+                        text: 'Price (in $)',
+                        color: 'white' // Change Y-axis title to white
+                    },
+                    ticks: {
+                        color: 'white' // Change Y-axis ticks to white
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: 'white' // Change X-axis ticks to white
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'white' // Change legend label color to white
                     }
                 }
             }
         }
     });
 </script>
+
 
 <br>
 <br>
