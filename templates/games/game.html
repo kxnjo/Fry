@@ -74,20 +74,25 @@
 
 <br>
 <!-- Price History Graph -->
-<div class="container mt-5">
+<div class="container mt-5" style="max-height: 350px;"> <!-- Adjust the height here -->
     <h3>Price History</h3>
-    <canvas id="priceChart"></canvas>
+    <canvas id="priceChart" ></canvas> <!-- Canvas height adjusted -->
 </div>
+
 
 <script>
     var ctx = document.getElementById('priceChart').getContext('2d');
+
+    // Calculate the minimum price from the prices array
+    var minPrice = Math.min(...{{ prices | tojson }});
+
     var priceChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: {{ dates | tojson }}, // Pass 'dates' list from Flask
+            labels: {{ dates | tojson }},
             datasets: [{
                 label: 'Price (in $)',
-                data: {{ prices | tojson }}, // Pass 'prices' list from Flask
+                data: {{ prices | tojson }},
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 fill: true,
@@ -95,15 +100,23 @@
             }]
         },
         options: {
+            responsive: true,
+            maintainAspectRatio: false,  // Allow custom height
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: false,  // Ensure it does not start at 0
+                    min: minPrice - 1,       // Set the minimum value for the Y-axis
+                    title: {
+                        display: true,
+                        text: 'Price (in $)'
+                    }
                 }
             }
         }
     });
 </script>
 
+<br>
 <br>
 
 <!-- Show Reviews -->
