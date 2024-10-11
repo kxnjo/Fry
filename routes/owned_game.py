@@ -94,7 +94,7 @@ def add_owned_game():
             cur.close() 
             conn.close()
 
-    return view_owned_game() 
+    return redirect(url_for('game_bp.view_game', game_id=game))
 
 def get_owned_game(user_id):
     conn = create_connection()

@@ -278,6 +278,32 @@ def view_game(game_id):
         result = cur.fetchone()
         user_owned = result[0] if result is not None else False  # Check ownership
 
+    # get price history data 
+    cur.execute('''
+        SELECT 
+            price_id, 
+            change_date, 
+            base_price, 
+            discount 
+        FROM 
+            price_change
+        WHERE 
+            game_id = %s
+        ORDER BY 
+            change_date ASC
+    ''', (game_id,))
+    price_changes = cur.fetchall()
+
+    # Prepare data for the graph
+    dates = []
+    prices = []
+
+    for change in price_changes:
+        dates.append(change[1])  # Extract and format change_date
+        final_price = change[2] - (change[2] * (change[3] / 100))  # Apply discount to base_price
+        prices.append(final_price)
+
+
     return render_template("games/game.html",
                            game=game_data,
                            categories=categories,
@@ -287,4 +313,6 @@ def view_game(game_id):
                            gameInWishlist=gameInWishlist,
                            user_logged_in=bool(user_id),
                            user_owned=bool(user_owned),
-                           get_user_review=get_user_review)
+                           get_user_review=get_user_review,
+                           dates=dates,
+                           prices=prices)
