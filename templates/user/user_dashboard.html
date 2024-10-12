@@ -248,8 +248,8 @@
                             <div class="mb-3">
                                 <div class="form-group">
                                     <label for="reviewText{{ review.review_id }}">Review Text</label>
-                                    <textarea class="form-control" id="reviewText{{ review.review_id }}" rows="3"
-                                              name="review_text">{{ review.review_text }}</textarea>
+                                    <textarea class="form-control" id="reviewText{{ review.review_id }}" rows="3" maxlength="5000" oninput="updateCharCount('{{ review.review_id }}')" name="review_text">{{ review.review_text }}</textarea>
+                                    <small id="charCount{{ review.review_id }}" class="form-text text-muted">0 characters</small>
                                 </div>
                             </div>
 
@@ -285,7 +285,7 @@
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title" id="deleteReviewModal{{ review_id }}">Confirm Review Deletion</h5>
+						<h5 class="modal-title" id="deleteReviewModalLabel{{ review_id }}">Confirm Review Deletion</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
@@ -302,4 +302,21 @@
         {% endfor %}
 	</div>
 </div>
+<script>
+    function updateCharCount(reviewId) {
+        const textarea = document.getElementById(`reviewText${reviewId}`);
+        const charCountSpan = document.getElementById(`charCount${reviewId}`);
+        const currentLength = textarea.value.length;
+        console.log("hello");
+        charCountSpan.textContent = `${currentLength}/5000 characters`;
+    }
+
+    // Initialize the character count when the page loads
+    document.addEventListener("DOMContentLoaded", function() {
+        {% for review in user_reviews %}
+        updateCharCount('{{ review.review_id }}');  // Initialize the count for any pre-filled text
+        {% endfor %}
+    });
+
+</script>
 {% endblock %}
