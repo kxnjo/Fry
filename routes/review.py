@@ -22,128 +22,86 @@ def create_connection():
     )
 
 
+# @review_bp.route("/review-test")
+# def pagination():
+#     total_reviews_count = getReviewsNum()
+#
+#     # Get the current page and filter parameters from the request
+#     page = request.args.get("page", 1, type=int)
+#     selected_game = request.args.get("game", None, type=int)
+#     recommended = request.args.get("recommended", None)
+#
+#     # Get total number of pages required
+#     reviews_per_page = 10
+#     total_pages_required = (total_reviews_count // reviews_per_page) + 1
+#
+#     start = (page - 1) * reviews_per_page
+#     end = start + reviews_per_page
+#
+#     # Get filtered reviews
+#     all_reviews = getReviewList(start, end, selected_game, recommended)
+#     print(all_reviews)
+#
+#     conn = create_connection()
+#     cur = conn.cursor()
+#
+#     # retrieve games from dropdown, sort by alphabetical order
+#     cur.execute('''
+#     SELECT
+#         game_id, title
+#     FROM
+#         game
+#     ORDER BY
+#         title ASC
+#     ''')
+#
+#     game_rows = cur.fetchall()
+#     games = []
+#     if game_rows:
+#         for row in game_rows:
+#             game_data = {
+#                 "id": row[0],
+#                 "title": row[1]
+#             }
+#             games.append(game_data)
+#     return render_template(
+#         "reviews/review.html",
+#         reviews=all_reviews,
+#         page=page,
+#         total_pages=total_pages_required,
+#         games=games,
+#         selected_game=selected_game,
+#         recommended=recommended
+#     )
 @review_bp.route("/review-test")
-@login_required
-def get_reviews():
+def pagination():
+
+
+    # Get the current page and filter parameters from the request
+    page = request.args.get("page", 1, type=int)
+    selected_game = request.args.get("game")
+    recommended = request.args.get("recommended")
+
+    total_reviews_count = getReviewsNum(selected_game,recommended)
+    # Get total number of pages required
+    reviews_per_page = 10
+    total_pages_required = (total_reviews_count // reviews_per_page) + 1
+
+    start = (page - 1) * reviews_per_page
+    end = start + reviews_per_page
+
+    # Get filtered reviews
+    all_reviews = getReviewList(start, end, selected_game, recommended)
+    print(all_reviews)
+
     conn = create_connection()
     cur = conn.cursor()
 
-    # Retrieve selected game from the request
-    selected_game = request.args.get('game')
-    recommended = request.args.get('recommended')
-
-    # user selected game AND tick 'recommended' checkbox
-    if selected_game and recommended:
-        sql_query = f'''
-        SELECT 
-            review.review_id, 
-            review.review_text, 
-            review.review_date, 
-            user.username, 
-            game.title,
-            review.recommended
-        FROM 
-            review
-        JOIN 
-            user ON review.user_id = user.user_id
-        JOIN 
-            game ON review.game_id = game.game_id
-        WHERE
-            user.username IN (
-                SELECT DISTINCT user.username
-                FROM review
-                JOIN user ON review.user_id = user.user_id
-            ) AND (game.game_id = '{selected_game}') AND review.recommended = 'TRUE'
-        ORDER BY
-            review.review_date DESC
-        LIMIT 10
-        '''
-    # user selected game but never tick 'recommended' checkbox
-    elif selected_game:
-        sql_query = f'''
-        SELECT 
-            review.review_id, 
-            review.review_text, 
-            review.review_date, 
-            user.username, 
-            game.title,
-            review.recommended
-        FROM 
-            review
-        JOIN 
-            user ON review.user_id = user.user_id
-        JOIN 
-            game ON review.game_id = game.game_id
-        WHERE
-            user.username IN (
-                SELECT DISTINCT user.username
-                FROM review
-                JOIN user ON review.user_id = user.user_id
-            ) AND (game.game_id = '{selected_game}')
-        ORDER BY
-            review.review_date DESC
-        LIMIT 10
-        '''
-
-    # default show all without filters
-    else:
-        sql_query = '''
-        SELECT 
-            review.review_id, 
-            review.review_text, 
-            review.review_date, 
-            user.username, 
-            game.title,
-            review.recommended
-        FROM 
-            review
-        JOIN 
-            user ON review.user_id = user.user_id
-        JOIN 
-            game ON review.game_id = game.game_id
-        WHERE
-            user.username IN (
-                SELECT DISTINCT user.username
-                FROM review
-                JOIN user ON review.user_id = user.user_id
-            )
-        ORDER BY
-            RAND()
-        LIMIT 10
-        '''
-
-    cur.execute(sql_query)
-
-    # Fetch the review rows
-    review_rows = cur.fetchall()
-
-    # Create a list to hold review data
-    reviews = []
-    if review_rows:
-        for row in review_rows:
-            if row[5] == 'TRUE':
-                recommended_val = "RECOMMENDED"
-            else:
-                recommended_val = "NOT RECOMMENDED"
-
-            review_data = {
-                "review_id": row[0],
-                "review_text": row[1],
-                "review_date": row[2],
-                "user_id": row[3],
-                "game_id": row[4],
-                "recommended": recommended_val
-            }
-            reviews.append(review_data)
-
-    # retrieve games from dropdown, sort by alphabetical order
+    # Retrieve games from dropdown, sorted alphabetically
     cur.execute('''
-    SELECT 
-        game_id, title 
-    FROM 
-        game
-    ORDER BY
-        title ASC
+    SELECT game_id, title
+    FROM game
+    ORDER BY title ASC
     ''')
 
     game_rows = cur.fetchall()
@@ -156,33 +114,263 @@ def get_reviews():
             }
             games.append(game_data)
 
-    added_reviews_rows = cur.fetchall()
-    user_reviews = []
-    for row in added_reviews_rows:
-        if row[4] == 'TRUE':
-            recommended_val = 'RECOMMENDED'
-        else:
-            recommended_val = 'FALSE'
-        added_reviews_data = {
-            "review_id": row[0],
-            "game_id": row[1],
-            "review_date": row[2],
-            "review_text": row[3],
-            "recommended": recommended_val
-        }
-        user_reviews.append(added_reviews_data)
-        print(user_reviews)
-    # Close connection
+    return render_template(
+        "reviews/review.html",
+        reviews=all_reviews,
+        page=page,
+        total_pages=total_pages_required,
+        games=games,
+        selected_game=selected_game,
+        recommended=recommended
+    )
+
+def getReviewsNum(selected_game=None,recommended=None):
+    conn = create_connection()
+    cur = conn.cursor()
+    query = '''
+        SELECT COUNT(*) as total_rows
+        FROM review
+    '''
+    params = []
+    if selected_game and recommended:
+        query += "WHERE game_id = %s AND recommended ='TRUE'"
+        params.append(selected_game)
+    elif selected_game:
+        query += "WHERE game_id = %s"
+        params.append(selected_game)
+    elif recommended:
+        query += "WHERE recommended = 'TRUE'"
+
+    if selected_game or recommended:
+        cur.execute(query,tuple(params))
+    else:
+        cur.execute(query)
+
+    total_reviews_count = cur.fetchone()  # This returns a tuple like (1159,)
+
+    exact_count = total_reviews_count[0]  # Access the first element of the tuple
+
+    # Print count
+    print(f'Total number of reviews: {exact_count}')  # This will print just 1159
+
     cur.close()
     conn.close()
 
-    return render_template(
-        "reviews/review.html",
-        reviews=reviews,
-        games=games,
-        selected_game=selected_game,
-        user_reviews=user_reviews
-    )
+    return exact_count
+
+def getReviewList(start=0, end=10, game=None, recommended=None):
+    conn = create_connection()
+    cur = conn.cursor()
+
+    # Base query
+    query = '''
+    SELECT * FROM (
+        SELECT game_id, review_date, user_id, recommended, review_text, ROW_NUMBER() OVER (ORDER BY review_id) as row_num 
+        FROM review 
+    ) as temp_table
+    WHERE row_num > %s AND row_num <= %s
+    '''
+
+    # Parameters for the query
+    params = [start, end]
+
+    # Add game filter if selected
+    if game:
+        query += " AND game_id = %s"
+        params.append(game)
+
+    # Add recommended filter if checked
+    if recommended:
+        query += " AND recommended = 'TRUE'"
+
+    cur.execute(query, params)
+
+    all_reviews_data = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    # Create a list to hold review data
+    reviews = []
+    if all_reviews_data:
+        for row in all_reviews_data:
+            review_data = {
+                "game_id": row[0],
+                "review_date": row[1],
+                "user_id": row[2],
+                "recommended": row[3],
+                "review_text": row[4]
+            }
+            reviews.append(review_data)
+
+    return reviews
+
+
+
+
+
+
+# @review_bp.route("/review-test")
+# @login_required
+# def get_reviews():
+#     conn = create_connection()
+#     cur = conn.cursor()
+#
+#     # Retrieve selected game from the request
+#     selected_game = request.args.get('game')
+#     recommended = request.args.get('recommended')
+#
+#     # user selected game AND tick 'recommended' checkbox
+#     if selected_game and recommended:
+#         sql_query = f'''
+#         SELECT
+#             review.review_id,
+#             review.review_text,
+#             review.review_date,
+#             user.username,
+#             game.title,
+#             review.recommended
+#         FROM
+#             review
+#         JOIN
+#             user ON review.user_id = user.user_id
+#         JOIN
+#             game ON review.game_id = game.game_id
+#         WHERE
+#             user.username IN (
+#                 SELECT DISTINCT user.username
+#                 FROM review
+#                 JOIN user ON review.user_id = user.user_id
+#             ) AND (game.game_id = '{selected_game}') AND review.recommended = 'TRUE'
+#         ORDER BY
+#             review.review_date DESC
+#         LIMIT 10
+#         '''
+#     # user selected game but never tick 'recommended' checkbox
+#     elif selected_game:
+#         sql_query = f'''
+#         SELECT
+#             review.review_id,
+#             review.review_text,
+#             review.review_date,
+#             user.username,
+#             game.title,
+#             review.recommended
+#         FROM
+#             review
+#         JOIN
+#             user ON review.user_id = user.user_id
+#         JOIN
+#             game ON review.game_id = game.game_id
+#         WHERE
+#             user.username IN (
+#                 SELECT DISTINCT user.username
+#                 FROM review
+#                 JOIN user ON review.user_id = user.user_id
+#             ) AND (game.game_id = '{selected_game}')
+#         ORDER BY
+#             review.review_date DESC
+#         LIMIT 10
+#         '''
+#
+#     # default show all without filters
+#     else:
+#         sql_query = '''
+#         SELECT
+#             review.review_id,
+#             review.review_text,
+#             review.review_date,
+#             user.username,
+#             game.title,
+#             review.recommended
+#         FROM
+#             review
+#         JOIN
+#             user ON review.user_id = user.user_id
+#         JOIN
+#             game ON review.game_id = game.game_id
+#         WHERE
+#             user.username IN (
+#                 SELECT DISTINCT user.username
+#                 FROM review
+#                 JOIN user ON review.user_id = user.user_id
+#             )
+#         ORDER BY
+#             RAND()
+#         LIMIT 10
+#         '''
+#
+#     cur.execute(sql_query)
+#
+#     # Fetch the review rows
+#     review_rows = cur.fetchall()
+#
+#     # Create a list to hold review data
+#     reviews = []
+#     if review_rows:
+#         for row in review_rows:
+#             if row[5] == 'TRUE':
+#                 recommended_val = "RECOMMENDED"
+#             else:
+#                 recommended_val = "NOT RECOMMENDED"
+#
+#             review_data = {
+#                 "review_id": row[0],
+#                 "review_text": row[1],
+#                 "review_date": row[2],
+#                 "user_id": row[3],
+#                 "game_id": row[4],
+#                 "recommended": recommended_val
+#             }
+#             reviews.append(review_data)
+#
+#     # retrieve games from dropdown, sort by alphabetical order
+#     cur.execute('''
+#     SELECT
+#         game_id, title
+#     FROM
+#         game
+#     ORDER BY
+#         title ASC
+#     ''')
+#
+#     game_rows = cur.fetchall()
+#     games = []
+#     if game_rows:
+#         for row in game_rows:
+#             game_data = {
+#                 "id": row[0],
+#                 "title": row[1]
+#             }
+#             games.append(game_data)
+#
+#     added_reviews_rows = cur.fetchall()
+#     user_reviews = []
+#     for row in added_reviews_rows:
+#         if row[4] == 'TRUE':
+#             recommended_val = 'RECOMMENDED'
+#         else:
+#             recommended_val = 'FALSE'
+#         added_reviews_data = {
+#             "review_id": row[0],
+#             "game_id": row[1],
+#             "review_date": row[2],
+#             "review_text": row[3],
+#             "recommended": recommended_val
+#         }
+#         user_reviews.append(added_reviews_data)
+#         print(user_reviews)
+#     # Close connection
+#     cur.close()
+#     conn.close()
+#
+#     return render_template(
+#         "reviews/review.html",
+#         reviews=reviews,
+#         games=games,
+#         selected_game=selected_game,
+#         user_reviews=user_reviews
+#     )
 
 
 def generate_review_id(existing_ids):

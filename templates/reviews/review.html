@@ -47,14 +47,14 @@
             <div class="card review-card mb-3">
                 <div class="card-body">
                     <h5 class="card-title">{{review.game_id }}</h5>
+
                     <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
                     <h6 class="card-subtitle mb-2 text-muted">User: {{ review.user_id }}</h6>
-                        {% if review.recommended == "RECOMMENDED" %}
+                        {% if review.recommended == "TRUE" %}
                         <span class="text-success">Recommended</span>
                         {% else %}
                         <span class="text-danger">Not Recommended</span>
                         {% endif %}
-                    </h6>
                     <p class="card-text">{{ review.review_text }}</p>
                 </div>
             </div>
@@ -65,6 +65,31 @@
             {% endfor %}
         </div>
     </div>
+        <!-- Pagination Controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            <!-- Previous Page Button -->
+            <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('review_bp.pagination', page=page-1, game=selected_game, recommended=recommended) }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+
+            <!-- Page Number Buttons -->
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('review_bp.pagination', page=p, game=selected_game, recommended=recommended) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+
+            <!-- Next Page Button -->
+            <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('review_bp.pagination', page=page+1, game=selected_game, recommended=recommended) }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 </div>
 
 {% endblock %}

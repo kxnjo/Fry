@@ -30,12 +30,14 @@
                 <!-- Table for Mutual Friends -->
                 {% if session["user_id"] != user.user_id %}
                 <h3>Mutual Friends</h3>
+                {% set no_friends_message = "You have no mutual friends 😢" %}
                 {% else %}
                 <h3>Your Friends</h3>
+                {% set no_friends_message = "You have no friends 😢" %}
                 {% endif %}
-    
+
                 {% if mutual_friends | length == 0 %}
-                <h5 class="justify-content-center d-flex">You have no friends 😢</h5>
+                <h5 class="justify-content-center d-flex">{{ no_friends_message }}</h5>
                 {% else %}
                 <table class="table">
                     <thead>
