@@ -32,12 +32,9 @@ def view_wishlist():
                 g.title, 
                 wg.added_date, 
                 wg.game_id,
-                GROUP_CONCAT(DISTINCT d.developer_name SEPARATOR ', ') AS developer_name,
                 GROUP_CONCAT(DISTINCT c.category_name SEPARATOR ', ') AS categories 
             FROM wanted_game wg
             INNER JOIN game g ON wg.game_id = g.game_id
-            INNER JOIN game_developer gd ON wg.game_id = gd.game_id
-            INNER JOIN developer d ON gd.developer_id = d.developer_id
             INNER JOIN game_category gc ON wg.game_id = gc.game_id
             INNER JOIN category c ON gc.category_id = c.category_id
             WHERE wg.user_id = %s
@@ -75,18 +72,20 @@ def recommendGame(user_id):
             SELECT 
                 g.title,
                 g.game_id,
-                GROUP_CONCAT(DISTINCT d.developer_name SEPARATOR ', ') AS developer_name,
                 GROUP_CONCAT(DISTINCT c.category_name SEPARATOR ', ') AS categories 
             FROM game g
-            INNER JOIN game_developer gd ON g.game_id = gd.game_id
-            INNER JOIN developer d ON gd.developer_id = d.developer_id
             INNER JOIN game_category gc ON g.game_id = gc.game_id
             INNER JOIN category c ON gc.category_id = c.category_id
-            WHERE c.category_name IN (  SELECT DISTINCT c.category_name
-                                        FROM wanted_game wg
-                                        INNER JOIN game_category gc ON wg.game_id = gc.game_id
-                                        INNER JOIN category c ON gc.category_id = c.category_id
-                                        WHERE wg.user_id = '{}')
+            WHERE g.game_id IN (SELECT g2.game_id 
+                                FROM game g2
+                                INNER JOIN game_category gc2 ON g2.game_id = gc2.game_id
+                                INNER JOIN category c2 ON gc2.category_id = c2.category_id
+                                WHERE c2.category_name IN ( SELECT DISTINCT c.category_name
+                                                        FROM wanted_game wg
+                                                        INNER JOIN game_category gc ON wg.game_id = gc.game_id
+                                                        INNER JOIN category c ON gc.category_id = c.category_id
+                                                        WHERE wg.user_id = '{}') 
+                                )
             AND g.game_id NOT IN (  SELECT wg.game_id
                                     FROM wanted_game wg
                                     WHERE wg.user_id = '{}')
@@ -193,10 +192,10 @@ def searchWishlist():
             
             string = request.form["searchInput"]
             
+            # To search whole word
             search_table_query1 = """
                 SELECT 
                     g.title, 
-                    GROUP_CONCAT(DISTINCT d.developer_name SEPARATOR ', ') AS developer_name,
                     GROUP_CONCAT(DISTINCT c.category_name SEPARATOR ', ') AS categories, 
                     wg.game_id,
                     wg.added_date
@@ -205,19 +204,18 @@ def searchWishlist():
                 INNER JOIN 
                     game g ON wg.game_id = g.game_id
                 INNER JOIN 
-                    game_developer gd ON wg.game_id = gd.game_id
-                INNER JOIN 
-                    developer d ON gd.developer_id = d.developer_id
-                INNER JOIN 
                     game_category gc ON wg.game_id = gc.game_id
                 INNER JOIN 
                     category c ON gc.category_id = c.category_id
                 WHERE 
                     wg.user_id = '{}'
-                AND 
-                    (
-                        (g.title LIKE "%{}%" OR d.developer_name LIKE "%{}%" OR c.category_name LIKE "%{}%")
-                    )
+                AND wg.game_id IN (SELECT g2.game_id 
+                                    FROM game g2
+                                    INNER JOIN game_category gc2 ON g2.game_id = gc2.game_id
+                                    INNER JOIN category c2 ON gc2.category_id = c2.category_id
+                                    WHERE 
+                                        g2.title LIKE "%{}%" OR c2.category_name LIKE "%{}%"
+                                    )
                 GROUP BY 
                     g.title, wg.game_id;
             """.format(session['user_id'], string, string, string)
@@ -228,10 +226,10 @@ def searchWishlist():
             searchResult = cur.fetchall()
             
             if (searchResult == []):
+                # To split string and search individual word
                 search_table_query2 = """
                     SELECT 
                         g.title, 
-                        GROUP_CONCAT(DISTINCT d.developer_name SEPARATOR ', ') AS developer_name,
                         GROUP_CONCAT(DISTINCT c.category_name SEPARATOR ', ') AS categories, 
                         wg.game_id,
                         wg.added_date
@@ -240,34 +238,33 @@ def searchWishlist():
                     INNER JOIN 
                         game g ON wg.game_id = g.game_id
                     INNER JOIN 
-                        game_developer gd ON wg.game_id = gd.game_id
-                    INNER JOIN 
-                        developer d ON gd.developer_id = d.developer_id
-                    INNER JOIN 
                         game_category gc ON wg.game_id = gc.game_id
                     INNER JOIN 
                         category c ON gc.category_id = c.category_id
                     WHERE 
                         wg.user_id = '{}'
-                    AND 
-                        (
+                    AND wg.game_id IN (SELECT g2.game_id 
+                                    FROM game g2
+                                    INNER JOIN game_category gc2 ON g2.game_id = gc2.game_id
+                                    INNER JOIN category c2 ON gc2.category_id = c2.category_id
+                                    WHERE (
                 """.format(session['user_id'])
                 
                 count = len(string.split())
                 for i in string.split():
                     search_table_query2 += """
-                        (g.title LIKE "%{}%" OR d.developer_name LIKE "%{}%" OR c.category_name LIKE "%{}%")
+                        (g.title LIKE "%{}%" OR c2.category_name LIKE "%{}%")
                         """.format(i, i, i)
                     count -= 1
                     if count != 0:
                         search_table_query2 += "OR"
                 
                 search_table_query2 += """
-                        )
+                        ))
                     GROUP BY 
                         g.title, wg.game_id;
                     """
-
+                
                 # Execute the SQL statement
                 cur.execute(search_table_query2)
                 
