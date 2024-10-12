@@ -6,6 +6,63 @@ import config
 game_bp = Blueprint("game_bp", __name__)
 
 
+def getGameNum():
+     # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute(
+            """
+            SELECT * 
+            FROM game;
+        """
+        )
+        total = cur.fetchall()
+        print(f"found this many games {len(total)}")
+
+        # close connection
+        cur.close()
+        conn.close()
+        return len(total)
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+def getGames(start=0, end=10):
+    allGames = []
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        print(f"this is start: {start} and end {end}")
+        cur.execute(
+            """
+                SELECT * FROM (
+                    SELECT game_id, title, release_date, price,
+                    ROW_NUMBER() OVER (ORDER BY game_id) as row_num 
+                    FROM game) as temp_table
+                WHERE row_num > %s AND row_num <= %s
+            """,
+            (start, end),
+        )
+        allGames = cur.fetchall()
+
+        # close connection
+        cur.close()
+        conn.close()
+
+        return allGames
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+
 def create_connection():
     # Replace with your database connection details
     return mysql.connector.connect(
@@ -319,3 +376,48 @@ def view_game(game_id):
                            get_user_review=get_user_review,
                            dates=dates,
                            prices=prices)
+
+
+@game_bp.route("/edit-game", methods=["POST"])
+def edit_game():
+    # Retrieve form data
+    game_id = request.form["game_id"]
+    title = request.form["game_title"]
+    price = request.form["game_price"]
+    print(
+        f"game_id retrieved: {game_id}, title: {title}, price: {price}"
+    )
+
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute(
+            """
+                UPDATE game SET title = %s, price = %.2f
+                WHERE game_id = %s
+            """,
+            (
+                title,
+                price,
+                game_id,
+            ),
+        )
+
+        # save to db    
+        conn.commit()
+
+        # close connection
+        cur.close()
+        conn.close()
+
+        print("game updated successfully")
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
+
+    return redirect(request.referrer or url_for("user_bp.dashboard"))

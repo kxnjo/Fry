@@ -20,6 +20,7 @@ from auth_utils import login_required  # persistent login
 from routes.review import xinhui
 from routes.owned_game import get_owned_game
 from routes.friend import get_dashboard_mutual_friends
+from routes.game import getGameNum, getGames
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
@@ -108,7 +109,7 @@ def checkUser(cur, name, email):
     return {"msg": msg, "status": status, "unique": unique}
 
 
-def getAllUsers(start=0, end=10):
+def getUsers(start=0, end=10):
     allUsers = []
     # start connection
     conn = create_connection()
@@ -375,27 +376,45 @@ def logout():
 @login_required
 def dashboard():
     if session["role"] == "admin":
-        # retrieve the total number of users ONCE !
-        all_users_num = getUserNum()
-
-        # get the current page number, set default number to start from 1
+        # Get the current page number, set default to start from 1
+        filter_type = request.args.get("filter_type", "accounts", type=str)
         page = request.args.get("page", 1, type=int)
 
-        # get the total amt of pages
-        users_per_page = 10
-        total_pages = all_users_num // users_per_page + 1
+        # Default variables for pagination
+        all_users = []
+        all_games = []
 
-        # Paginate the users from the cache
-        start = (page - 1) * users_per_page
-        end = start + users_per_page
-        all_users = getAllUsers(start, end)
+        # User pagination logic
+        all_users_num = getUserNum()  # Retrieve the total number of users
+        user_num_per_page = 10
+        user_total_pages = (all_users_num + user_num_per_page - 1) // user_num_per_page  # Calculate total pages
+
+        # Paginate the users
+        user_start = (page - 1) * user_num_per_page
+        user_end = user_start + user_num_per_page
+        all_users = getUsers(user_start, user_end)  # Get users for current page
+
+        # Game pagination logic
+        all_games_num = getGameNum()  # Retrieve the total number of games
+        game_num_per_page = 50
+        game_total_pages = (all_games_num + game_num_per_page - 1) // game_num_per_page  # Calculate total pages
+
+        # Paginate the games
+        game_start = (page - 1) * game_num_per_page
+        game_end = game_start + game_num_per_page
+        all_games = getGames(game_start, game_end)  # Get games for current page
+
+        print(f"this is all games: {all_games}, total_pages: {game_total_pages}")
 
         return render_template(
             "user/admin_dashboard.html",
             users=all_users,
-            page=page,
-            total_pages=total_pages,
+            user_total_pages=user_total_pages,
+            games=all_games,
+            game_total_pages=game_total_pages,
+            page=page  # Pass the current page to the template
         )
+
 
     elif session["role"] == "user":
         curr_id = request.args.get("user_id", session["user_id"], type=str)
@@ -423,7 +442,7 @@ def dashboard():
             user=user,
             games=games,
             user_reviews=user_reviews,
-            mutual_friends=mutual_friends,
+            mutual_friends=mutual_friends
         )
 
 
@@ -470,7 +489,7 @@ def edit_user(user_id):
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
 
-    return redirect(url_for("user_bp.dashboard"))
+    return redirect(request.referrer or url_for("user_bp.dashboard"))
 
 
 @user_bp.route("/delete_user/<string:user_id>")
