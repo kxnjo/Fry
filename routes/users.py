@@ -412,7 +412,8 @@ def dashboard():
             user_total_pages=user_total_pages,
             games=all_games,
             game_total_pages=game_total_pages,
-            page=page  # Pass the current page to the template
+            page=page,  # Pass the current page to the template,
+            filter_type=filter_type
         )
 
 

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session
+from flask import Blueprint, render_template, request, session, redirect ,url_for
 import mysql.connector
 import config
 
@@ -378,16 +378,15 @@ def view_game(game_id):
                            prices=prices)
 
 
-@game_bp.route("/edit-game", methods=["POST"])
-def edit_game():
+@game_bp.route("/edit-game/<game_id>", methods=["POST"])
+def edit_game(game_id):
     # Retrieve form data
     game_id = request.form["game_id"]
-    title = request.form["game_title"]
-    price = request.form["game_price"]
+    title = request.form["title"]
+    price = request.form["price"]
     print(
         f"game_id retrieved: {game_id}, title: {title}, price: {price}"
     )
-
     # start connection
     conn = create_connection()
     if conn is None:
@@ -397,7 +396,7 @@ def edit_game():
         # execute query
         cur.execute(
             """
-                UPDATE game SET title = %s, price = %.2f
+                UPDATE game SET title = %s, price = %s
                 WHERE game_id = %s
             """,
             (
@@ -407,7 +406,7 @@ def edit_game():
             ),
         )
 
-        # save to db    
+        # save to db
         conn.commit()
 
         # close connection
@@ -420,4 +419,4 @@ def edit_game():
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
 
-    return redirect(request.referrer or url_for("user_bp.dashboard"))
+    return redirect(url_for("user_bp.dashboard"))
