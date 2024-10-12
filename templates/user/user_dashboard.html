@@ -45,11 +45,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for friend in user.mutual_friends %}
+                        {% for friend in mutual_friends %}
                         <tr>
-                            <td>{{ friend.username }}</td>
+                            <td>{{ friend[1] }}</td>
                             <td>
-                                <a href="/view-profile/{{ friend.id }}" class="btn btn-info btn-sm">View Profile</a>
+                                <a href="{{ url_for('user_bp.dashboard', user_id = friend[0]) }}" class="btn btn-info btn-sm">View Profile</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -82,9 +82,12 @@
 			</div>
 
 			<!-- Carousel for Games Owned -->
-            <div class="p-2" id="games_owned">
+            <div class="p-2" id="games_owned" style="min-height: 300px;">
                 {% if games == None or games|length == 0 %}
-                <h3 class="d-flex">No Games Purchased.</h3>
+                <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+                    <h3>No Games Purchased 😔</h3>
+                </div>
+
                 {% else %}
                 <div id="gamesCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
                     <div class="carousel-inner">
@@ -113,13 +116,19 @@
                 {% endif %}
             </div>
 
-            <div class="p-2" id="reviews">
+            <div class="p-2" id="reviews" style="min-height: 300px;">
                 <!-- Table for Reviews Left by User -->
                 {% if session["user_id"] != user.user_id %}
                 <h3>Their Reviews</h3>
                 {% else %}
                 <h3>Your Reviews</h3>
                 {% endif %}
+
+                {% if user_reviews | length == 0 %}
+                <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+                    <h5>No Reviews Yet</h5>
+                </div>
+                {% else %}
                 <table class="table mb-4">
                     <thead>
                     <tr>
@@ -149,8 +158,10 @@
                                     Edit
                                 </button>
                                 <!-- Delete Button -->
-                                <a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}"
-                                class="btn btn-danger btn-sm">Delete</a>
+                                <button type="button" class="btn btn-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteReviewModal{{review_id}}"
+                                class="btn btn-danger btn-sm">Delete</button>
                             </div>
                         </td>
                         {% endif %}
@@ -158,6 +169,7 @@
                     {% endfor %}
                     </tbody>
                 </table>
+                {% endif %}
             </div>
 
 		</div>
@@ -207,9 +219,7 @@
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
 						<!-- Form for Deleting User -->
-						<form action="{{ url_for('user_bp.delete_user', user_id=user.user_id) }}" method="POST">
-							<button type="submit" class="btn btn-danger">Confirm Delete</button>
-						</form>
+						<a href="{{ url_for('user_bp.delete_user', user_id=user.user_id) }}" class="btn btn-danger">Confirm Delete</a>
 					</div>
 				</div>
 			</div>
@@ -258,16 +268,35 @@
                             <button type="submit" class="btn btn-primary">Save Changes</button>
                         </div>
                     </form>
-                    <!-- Delete Form -->
-                    <form action="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}" method="POST">
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                        </div>
-                    </form>
+                    <div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<!-- Form for Deleting User -->
+						<a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}" class="btn btn-danger">Delete Review</a>
+					</div>
                 </div>
             </div>
         </div>
+
+
+		<!-- Modal for Deleting User -->
+		<div class="modal fade" id="deleteReviewModal{{ review_id }}" tabindex="-1" aria-labelledby="deleteReviewModal{{ review_id }}" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="deleteReviewModal{{ review_id }}">Confirm Review Deletion</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<p>Are you sure you want to delete your review? This action cannot be undone.</p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<!-- Form for Deleting User -->
+						<a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}" class="btn btn-danger">Confirm Delete</a>
+					</div>
+				</div>
+			</div>
+		</div>
         {% endfor %}
 	</div>
 </div>

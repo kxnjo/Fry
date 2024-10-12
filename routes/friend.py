@@ -146,7 +146,7 @@ def add_friend():
 
     return render_template("friend/add_friend.html")
 
-@friendlist_bp.route("/delete-friends/<user1_id>/<user2_id>", methods=["POST"])
+@friendlist_bp.route("/delete-friends/<user1_id>/<user2_id>")
 def delete_friend(user1_id, user2_id):
     conn = create_connection()
     if conn is None:
@@ -171,3 +171,37 @@ def delete_friend(user1_id, user2_id):
         conn.close()
 
     return view_friends()
+
+def get_mutual_friends(user_id, friend_id):
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT DISTINCT u.user_id, u.username
+            FROM friend mf
+            JOIN user u ON
+                (u.user_id = mf.user1_id OR u.user_id = mf.user2_id)
+            WHERE (
+                (mf.user1_id = %s AND EXISTS (
+                    SELECT 1 FROM friend WHERE user1_id = %s AND user2_id = mf.user2_id
+                )) OR
+                (mf.user2_id = %s AND EXISTS (
+                    SELECT 1 FROM friend WHERE user2_id = %s AND user1_id = mf.user1_id
+                ))) 
+                AND u.user_id NOT IN (%s, %s)
+        ''', (user_id, friend_id, user_id, friend_id, user_id, friend_id))
+
+        # Get all mutual friends for each friend in the friend list
+        friends = cur.fetchall()
+
+    except mysql.connector.Error as e:
+        conn.rollback()
+        print(f"Error: {e}")
+        return f"Error deleting friend: {e}"
+    finally:
+        cur.close()
+        conn.close()
+
+    return friends

@@ -125,9 +125,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <!-- Form for Deleting User -->
-                    <form action="{{ url_for('user_bp.delete_user', user_id=user.user_id) }}" method="POST">
-                        <button type="submit" class="btn btn-danger">Confirm Delete</button>
-                    </form>
+                    <a href="{{ url_for('user_bp.delete_user', user_id=user.user_id) }}" class="btn btn-danger">Confirm Delete</a>
                 </div>
             </div>
         </div>

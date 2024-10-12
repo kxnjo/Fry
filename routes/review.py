@@ -193,9 +193,11 @@ def generate_review_id(existing_ids):
             return random_id  # Return the unique ID
 
 
-def xinhui():
+def xinhui(user_id):
     # Start connection
     print("starting xh")
+    print(f"retrieving reviews from {user_id}")
+
     conn = create_connection()
     if conn is None:
         print("Failed to connect to database: Connection returned None")
@@ -212,7 +214,7 @@ def xinhui():
                     WHERE r.user_id = %s
                     ORDER BY 
                     r.review_date DESC
-                ''', (session['user_id'],))
+                ''', (user_id,))
 
         added_reviews_rows = cur.fetchall()
         if not added_reviews_rows:

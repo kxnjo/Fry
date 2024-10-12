@@ -19,6 +19,7 @@ from auth_utils import login_required  # persistent login
 # from routes.game import get_all_games
 from routes.review import xinhui
 from routes.owned_game import get_owned_game
+from routes.friend import get_mutual_friends
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
@@ -45,7 +46,12 @@ def getUserNum():
     try:
         cur = conn.cursor(dictionary=True)
         # execute query
-        cur.execute("SELECT * from user;")
+        cur.execute(
+            """
+            SELECT * 
+            FROM user;
+        """
+        )
         total = cur.fetchall()
         print(f"found this many users {len(total)}")
 
@@ -64,7 +70,14 @@ def checkUser(cur, name, email):
     unique = True
 
     # Check for existing username
-    cur.execute("SELECT user_id FROM user WHERE username = %s", (name,))
+    cur.execute(
+        """
+        SELECT user_id 
+        FROM user 
+        WHERE username = %s
+    """,
+        (name,),
+    )
     user_by_name = cur.fetchall()
 
     if len(user_by_name) > 0:
@@ -75,7 +88,14 @@ def checkUser(cur, name, email):
         return {"msg": msg, "status": status, "unique": unique}
 
     # Check for existing email
-    cur.execute("SELECT user_id FROM user WHERE email = %s", (email,))
+    cur.execute(
+        """
+        SELECT user_id 
+        FROM user 
+        WHERE email = %s
+    """,
+        (email,),
+    )
     user_by_email = cur.fetchall()
 
     if len(user_by_email) > 0:
@@ -99,9 +119,13 @@ def getAllUsers(start=0, end=10):
         # execute query
         print(f"this is start: {start} and end {end}")
         cur.execute(
-            """SELECT * FROM (
-                    SELECT user_id, username, email, created_on, role, ROW_NUMBER() OVER (ORDER BY user_id) as row_num FROM user) as temp_table
-                    WHERE row_num > %s AND row_num <= %s""",
+            """
+                SELECT * FROM (
+                    SELECT user_id, username, email, created_on, role, 
+                    ROW_NUMBER() OVER (ORDER BY user_id) as row_num 
+                    FROM user) as temp_table
+                WHERE row_num > %s AND row_num <= %s
+            """,
             (start, end),
         )
         allUsers = cur.fetchall()
@@ -127,7 +151,12 @@ def getUser(user_id):
         cur = conn.cursor(dictionary=True)
         # execute query
         cur.execute(
-            "SELECT user_id, username, email from user WHERE user_id = %s", (user_id,)
+            """
+                SELECT user_id, username, email
+                FROM user 
+                WHERE user_id = %s
+            """,
+            (user_id,),
         )
         user = cur.fetchall()[0]
 
@@ -151,7 +180,14 @@ def checkuid(uid):
     try:
         cur = conn.cursor(dictionary=True)
         # execute query
-        cur.execute("SELECT user_id from user WHERE user_id = %s", (uid,))
+        cur.execute(
+            """
+            SELECT user_id 
+            FROM user 
+            WHERE user_id = %s
+        """,
+            (uid,),
+        )
         userlist = cur.fetchall()
 
         # close connection
@@ -193,7 +229,11 @@ def login():
 
             # Execute the SQL statement
             cur.execute(
-                "SELECT user_id, username, password, role FROM user WHERE email = %s OR username = %s",
+                """
+                    SELECT user_id, username, password, role 
+                    FROM user 
+                    WHERE email = %s OR username = %s
+                """,
                 (username_email, username_email),
             )
             user = cur.fetchone()
@@ -299,8 +339,9 @@ def forgot():
             # execute query
             cur.execute(
                 """
-                UPDATE user SET password = %s
-                WHERE username = %s OR email = %s""",
+                    UPDATE user SET password = %s
+                    WHERE username = %s OR email = %s
+                """,
                 (
                     hashed_password,
                     username_email,
@@ -358,21 +399,25 @@ def dashboard():
         )
 
     elif session["role"] == "user":
-        curr_id = request.args.get("user", session["user_id"], type=str)
+        curr_id = request.args.get("user_id", session["user_id"], type=str)
         games, user_reviews, mutual_friends = None, None, None
 
         # get user details
         user = getUser(curr_id)
 
         # INSERT GAMES OWNED = = =
-        games = get_owned_game(session["user_id"])
+        games = get_owned_game(curr_id)
 
         # INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,,  = = =
-        user_reviews = xinhui()
+        user_reviews = xinhui(curr_id)
 
-        # TODO: INSERT MUTUAL FRIENDS LIST = = =
-        # need: friend username, redirect to user account button
-        mutual_friends = []
+        # INSERT MUTUAL FRIENDS LIST = = =
+        if curr_id == session["user_id"]: 
+            mutual_friends = get_mutual_friends(curr_id, curr_id)
+        else:
+            mutual_friends = get_mutual_friends(curr_id, session["user_id"])
+
+        print(f"this is mutual friends from zx {mutual_friends}")
 
         return render_template(
             "user/user_dashboard.html",
@@ -403,8 +448,9 @@ def edit_user(user_id):
         # execute query
         cur.execute(
             """
-            UPDATE user SET username = %s, email = %s 
-            WHERE user_id = %s""",
+                UPDATE user SET username = %s, email = %s 
+                WHERE user_id = %s
+            """,
             (
                 username,
                 email,
@@ -428,8 +474,7 @@ def edit_user(user_id):
     return redirect(url_for("user_bp.dashboard"))
 
 
-# TODO: DELETE USER, delete all related relations
-@user_bp.route("/delete_user/<string:user_id>", methods=["POST"])
+@user_bp.route("/delete_user/<string:user_id>")
 @login_required
 def delete_user(user_id):
     conn = create_connection()
@@ -441,8 +486,9 @@ def delete_user(user_id):
         # delete user
         cur.execute(
             """
-            DELETE FROM user
-            WHERE user_id = %s""",
+                DELETE FROM user
+                WHERE user_id = %s
+            """,
             (user_id,),
         )
 

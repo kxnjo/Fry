@@ -13,7 +13,7 @@ from routes.wishlist import wishlist_bp
 from routes.owned_game import owned_game_bp
 
 app = Flask(__name__)
-app.secret_key = "ifreakinghatethistrimester"  # for session security
+app.secret_key = "INF2003DatabaseProject"  # for session security
 
 # add url route to all endpoints under /users
 # ie. localhost:8000/users/...
@@ -31,7 +31,6 @@ app.register_blueprint(owned_game_bp, url_prefix="/owned_game")
 # routes == MAIN
 @app.route("/")
 def home():
-    print(session)
     return render_template("main/home.html")
 
 

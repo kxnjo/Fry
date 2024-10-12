@@ -1,22 +1,112 @@
 {% extends "index.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h1 class="text-center">Search Your Friend</h1>
-
-    <div class="row">
-        <div class="col-12">
-            <div class="card text-center p-3">
-                <form method="POST" action="{{ url_for('friendlist_bp.add_friend') }}">
-                        <div class="d-flex justify-content-center">
-                            <input id="friend" name="friend" type="text" class="form-control" placeholder="Enter Your Friend's Profile Name">
-                            <input type="text" name="user" value="u2" hidden>
-                            <button type="submit" class="btn btn-primary ms-auto">Add</button>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">Find and Add Friends</h1>
+                    
+                    <form method="POST" action="{{ url_for('friendlist_bp.add_friend') }}" class="mb-4">
+                        <div class="input-group">
+                            <input id="friend" name="friend" type="text" class="form-control" placeholder="Enter your friend's profile name" aria-label="Friend's profile name" required>
+                            <input type="hidden" name="user" value="u2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>Add Friend
+                            </button>
                         </div>
                     </form>
-                    <a class="btn btn-primary ms-auto" href="{{ url_for('friendlist_bp.view_friends') }}"> Back</a>
-                    <h1 class="text-center">Suggested Friend</h1>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('friendlist_bp.view_friends') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Friend List
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Suggested Friends</h2>
+                    <div id="suggested-friends" class="row row-cols-1 row-cols-md-2 g-4">
+                        {% for friend in suggested %}
+                            <div class="col">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ friend.name }}</h5>
+                                        <p class="card-text">
+                                            {% if friend.mutual_friends %}
+                                                {{ friend.mutual_friends }} mutual friend{% if friend.mutual_friends != 1 %}s{% endif %}
+                                            {% else %}
+                                                No mutual friends
+                                            {% endif %}
+                                        </p>
+                                        <button class="btn btn-sm btn-outline-primary add-friend-btn" data-friend-id="{{ friend.id }}">
+                                            <i class="fas fa-user-plus me-2"></i>Add Friend
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-12">
+                                <p class="text-center text-muted">No suggested friends at the moment.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+    .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+    .add-friend-btn {
+        transition: all 0.3s ease;
+    }
+    .add-friend-btn:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Placeholder for potential AJAX friend addition
+    document.querySelectorAll('.add-friend-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const friendId = this.getAttribute('data-friend-id');
+            // Here you would typically send an AJAX request to add the friend
+            console.log('Adding friend with ID:', friendId);
+            // After successful addition, you might want to update the UI
+            this.textContent = 'Friend Added';
+            this.disabled = true;
+        });
+    });
+</script>
 {% endblock %}
