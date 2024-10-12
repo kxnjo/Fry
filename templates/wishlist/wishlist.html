@@ -40,12 +40,12 @@
                         {% for i in gameRecommendation %}
                         <div class="col-sm-4">
                             <div class="card" style="height: 12rem;">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ i[0] }}</h5>
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title"><a href="{{ url_for('game_bp.view_game', game_id=i[1]) }}" class="link-underline-dark">{{ i[0] }}</a></h5>
                                     <h6 class="card-subtitle mb-2 text-muted">Categories: {{ i[2] }}</h6>
-                                    <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}" class="mb-2">
+                                    <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}" class="mb-2  position-absolute bottom-0 start-50 translate-middle-x">
                                         <input type="text" name="game" value="{{ i[1] }}" hidden>
-                                        <button type="submit" class="btn btn-light" style="width: 210px;">Add to Wishlist</button>
+                                        <button type="submit" class="btn btn-light">Add to Wishlist</button>
                                     </form>
                                 </div>
                             </div>
