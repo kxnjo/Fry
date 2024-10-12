@@ -26,8 +26,6 @@ def view_wishlist():
         return "Failed to connect to database"
     try:
         cur = conn.cursor()
-        
-        print(session['user_id'])
 
         get_table_query = """
             SELECT 
@@ -54,6 +52,8 @@ def view_wishlist():
         wishlist = cur.fetchall()
         
         print(wishlist)
+        
+        gameRecommendation = recommendGame(session['user_id'])
 
     except mysql.connector.Error as e:
         print(f"Error: {e}")
@@ -62,7 +62,51 @@ def view_wishlist():
         cur.close()
         conn.close()
     
-    return render_template("wishlist/wishlist.html", wishlist=wishlist, search = False)
+    return render_template("wishlist/wishlist.html", wishlist=wishlist, search = False, gameRecommendation=gameRecommendation)
+
+def recommendGame(user_id):
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor()
+        
+        recommendation_query = """
+            SELECT 
+                g.title,
+                g.game_id,
+                GROUP_CONCAT(DISTINCT d.developer_name SEPARATOR ', ') AS developer_name,
+                GROUP_CONCAT(DISTINCT c.category_name SEPARATOR ', ') AS categories 
+            FROM game g
+            INNER JOIN game_developer gd ON g.game_id = gd.game_id
+            INNER JOIN developer d ON gd.developer_id = d.developer_id
+            INNER JOIN game_category gc ON g.game_id = gc.game_id
+            INNER JOIN category c ON gc.category_id = c.category_id
+            WHERE c.category_name IN (  SELECT DISTINCT c.category_name
+                                        FROM wanted_game wg
+                                        INNER JOIN game_category gc ON wg.game_id = gc.game_id
+                                        INNER JOIN category c ON gc.category_id = c.category_id
+                                        WHERE wg.user_id = '{}')
+            AND g.game_id NOT IN (  SELECT wg.game_id
+                                    FROM wanted_game wg
+                                    WHERE wg.user_id = '{}')
+            GROUP BY g.game_id
+            ORDER BY RAND()
+            LIMIT 6; 
+        """.format(user_id, user_id)
+        
+        cur.execute(recommendation_query)
+        
+        recommendation = cur.fetchall()
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving wanted_games: {e}"
+    finally:
+        cur.close()
+        conn.close()
+    
+    return recommendation
 
 @wishlist_bp.route("/add-to-wishlist", methods=["GET", "POST"])
 def addToWishlist():
@@ -76,8 +120,6 @@ def addToWishlist():
             user = session['user_id']
             game = request.form["game"]
             date = datetime.datetime.today().strftime("%Y-%m-%d")
-            
-            print("this is the date:", date)
             
             insert_table_query = """
                 INSERT INTO wanted_game (user_id, game_id, added_date) 
@@ -184,8 +226,6 @@ def searchWishlist():
             cur.execute(search_table_query1)
             
             searchResult = cur.fetchall()
-            print("RESULT 1 here:")
-            print(searchResult)
             
             if (searchResult == []):
                 search_table_query2 = """
@@ -232,8 +272,6 @@ def searchWishlist():
                 cur.execute(search_table_query2)
                 
                 searchResult = cur.fetchall()
-                print("RESULT:")
-                print(searchResult)   
 
         except mysql.connector.Error as e:
             conn.rollback()

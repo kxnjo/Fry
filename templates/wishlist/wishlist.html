@@ -15,20 +15,46 @@
             <br>
             {% if search == False %}
                 <table class="table">
-                    {% for i in wishlist %}
-                        <tr>
-                            <td>
-                                <a href="{{ url_for('game_bp.view_game', game_id=i[2]) }}" class="link-underline-dark"><h5>{{ i[0] }}</h5><a>
-                                <h6>Developer name: {{ i[3] }}</h6>
-                                <h6>Categories: {{ i[4] }}</h6>
-                                <h6>Date Added: {{ i[1] }}</h6>
-                            </td>
-                            <td>
-                                <a href="{{ url_for('wishlist_bp.deleteFromWishlist', game_id=i[2]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
-                            </td>
-                        <tr>
-                    {% endfor %}
+                    {% if wishlist != [] %}
+                        {% for i in wishlist %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('game_bp.view_game', game_id=i[2]) }}" class="link-underline-dark"><h5>{{ i[0] }}</h5><a>
+                                    <h6>Developer name: {{ i[3] }}</h6>
+                                    <h6>Categories: {{ i[4] }}</h6>
+                                    <h6>Date Added: {{ i[1] }}</h6>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('wishlist_bp.deleteFromWishlist', game_id=i[2]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                                </td>
+                            <tr>
+                        {% endfor %}
+                    {% else %}
+                        <h3>No games in wishlist yet.</h3>
+                    {% endif %}
                 </table>
+                <br>
+                {% if wishlist != [] %}
+                    <h5>Games Recommendation:</h5>
+                    <br>
+                    <div class="row">
+                        {% for i in gameRecommendation %}
+                        <div class="col-sm-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ i[0] }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">Developers: {{ i[2] }}</h6>
+                                    <p class="card-text">Categories: {{ i[3] }}</p>
+                                    <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}" class="mb-2">
+                                        <input type="text" name="game" value="{{ i[1] }}" hidden>
+                                        <button type="submit" class="btn btn-light" style="width: 210px;">Add to Wishlist</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             {% elif search == True %}
                 <div class="row">
                     <div class="col-10">
