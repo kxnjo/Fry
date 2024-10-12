@@ -371,7 +371,6 @@ def logout():
     return redirect(url_for("home"))
 
 
-# TODO: USER DASHBOARD
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():

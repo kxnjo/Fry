@@ -28,9 +28,11 @@
 		{% block scripts %} {% endblock %}
 	</head>
 	<body>
+		
 		{% include 'navbar.html' %}
-
-		<div class="container p-5" style="min-height: 700px">{% block content %} {% endblock %}</div>
+		<div class="container p-5" style="min-height: 700px">
+			{% block content %} {% endblock %}
+		</div>
 
 		{% include 'footer.html' %}
 	</body>
