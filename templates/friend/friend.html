@@ -96,7 +96,7 @@
 						{% if mutuals %}
 						<div class="mutual-friend-list">
 							{% for mutual in mutuals %}
-							<a href="{{ url_for('user_bp.dashboard', user=mutual[0]) }}" class="badge bg-info text-decoration-none me-1 mb-1"> {{ mutual[1] }} </a>
+							<a href="{{ url_for('user_bp.dashboard', user_id =mutual[0]) }}" class="badge bg-info text-decoration-none me-1 mb-1"> {{ mutual[1] }} </a>
 							{% endfor %}
 						</div>
 						{% else %}

@@ -10,7 +10,6 @@
                     <form method="POST" action="{{ url_for('friendlist_bp.add_friend') }}" class="mb-4">
                         <div class="input-group">
                             <input id="friend" name="friend" type="text" class="form-control" placeholder="Enter your friend's profile name" aria-label="Friend's profile name" required>
-                            <input type="hidden" name="user" value="u2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-user-plus me-2"></i>Add Friend
                             </button>
@@ -33,29 +32,27 @@
                 <div class="card-body">
                     <h2 class="card-title text-center mb-4">Suggested Friends</h2>
                     <div id="suggested-friends" class="row row-cols-1 row-cols-md-2 g-4">
-                        {% for friend in suggested %}
+                        {% if suggested_friends %}
+                        {% for friend in suggested_friends %}
                             <div class="col">
                                 <div class="card h-100">
                                     <div class="card-body">
-                                        <h5 class="card-title">{{ friend.name }}</h5>
-                                        <p class="card-text">
-                                            {% if friend.mutual_friends %}
-                                                {{ friend.mutual_friends }} mutual friend{% if friend.mutual_friends != 1 %}s{% endif %}
-                                            {% else %}
-                                                No mutual friends
-                                            {% endif %}
-                                        </p>
-                                        <button class="btn btn-sm btn-outline-primary add-friend-btn" data-friend-id="{{ friend.id }}">
-                                            <i class="fas fa-user-plus me-2"></i>Add Friend
-                                        </button>
+                                        <h5 class="card-title">{{ friend[1] }}</h5>
+                                        <form method="POST" action="{{ url_for('friendlist_bp.add_friend') }}" >
+                                            <input type="hidden" name="friend" value="{{ friend[1] }}">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-user-plus me-2"></i>Add Friend
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
-                        {% else %}
-                            <div class="col-12">
-                                <p class="text-center text-muted">No suggested friends at the moment.</p>
-                            </div>
                         {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <p class="text-center text-muted">No suggested friends at the moment.</p>
+                        </div>
+                    {% endif %}
                     </div>
                 </div>
             </div>

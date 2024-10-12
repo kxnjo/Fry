@@ -49,7 +49,7 @@ def view_friends():
             LEFT JOIN owned_game o2 ON f.user2_id = o2.user_id
             LEFT JOIN game g2_owned ON o2.game_id = g2_owned.game_id
             WHERE f.user1_id = %s OR f.user2_id = %s
-            GROUP BY f.user1_id, f.user2_id, f.friendship_date, u1.username, u2.username;
+            GROUP BY f.user1_id, f.user2_id, f.friendship_date, u1.username, u2.username
         ''', (user_id, user_id, user_id, user_id))
         friends = cur.fetchall()
 
@@ -98,53 +98,97 @@ def view_friends():
 
 @friendlist_bp.route("/add-friend", methods=["GET", "POST"])
 def add_friend():
-    if request.method == "POST":
-        conn = create_connection()
-        if conn is None:
-            return "Failed to connect to database"
-        try:
-            cur = conn.cursor()
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
 
-            # Get the user and friend from the form
-            user1 = session["user_id"]
-            user2 = request.form["friend"]
+    suggested_friends = []  # Initialize suggested_friends
+
+    try:
+        cur = conn.cursor()
+        user1 = session["user_id"]
+
+        if request.method == "POST":
+            # Check if a friend was selected from suggestions
+            friend_id = request.form.get("friend_id")
             date = datetime.datetime.today().strftime("%Y-%m-%d")
 
-            # Check if user2 exists
-            cur.execute('''
-                SELECT user_id FROM user WHERE username = %s;
-            ''', (user2,))
+            if friend_id:
+                # Check if they're already friends
+                cur.execute('''
+                    SELECT * FROM friend 
+                    WHERE (user1_id = %s AND user2_id = %s) OR (user1_id = %s AND user2_id = %s)
+                ''', (user1, friend_id, friend_id, user1))
+                
+                if cur.fetchone():
+                    return "You are already friends with this user."
 
+                # Insert a new entry into the friend table
+                cur.execute('''
+                    INSERT INTO friend (user1_id, user2_id, friendship_date)
+                    VALUES (%s, %s, %s)
+                ''', (user1, friend_id, date))
+
+                conn.commit()
+                return view_friends()  # Redirect to view friends after adding
+
+            # For adding friends through username search
+            user2 = request.form.get("friend")
+
+            # Check if user2 exists
+            cur.execute('SELECT user_id FROM user WHERE username = %s;', (user2,))
             result = cur.fetchone()
 
             if result:
                 user2_id = result[0]  # Get the user_id of the friend
 
+                # Check if they're already friends
+                cur.execute('''
+                    SELECT * FROM friend 
+                    WHERE (user1_id = %s AND user2_id = %s) OR (user1_id = %s AND user2_id = %s)
+                ''', (user1, user2_id, user2_id, user1))
+                
+                if cur.fetchone():
+                    return "You are already friends with this user."
+
                 # Insert a new entry into the friend table
                 cur.execute('''
                     INSERT INTO friend (user1_id, user2_id, friendship_date)
-                    VALUES (%s, %s, %s);
-                ''', (user1, user2_id, date))  # Use user2_id, not friend_username
+                    VALUES (%s, %s, %s)
+                ''', (user1, user2_id, date))
 
-                # Commit the transaction
                 conn.commit()
                 return view_friends()
-            
             else:
                 return "Friend not found in the database"
 
+        # Query to give friends suggestions
+        cur.execute('''
+            SELECT u.user_id, u.username
+            FROM user u
+            WHERE u.user_id != %s
+            AND NOT EXISTS (
+                SELECT 1
+                FROM friend f
+                WHERE (f.user1_id = u.user_id AND f.user2_id = %s)
+                OR (f.user2_id = u.user_id AND f.user1_id = %s))
+            ORDER BY RAND()
+            LIMIT 4
+        ''', (user1, user1, user1))
 
-        except mysql.connector.Error as e:
-            # Error handling
-            conn.rollback()
-            print(f"Error: {e}")
-            return f"Error Addding Friend {e}"
-        
-        finally:
-            cur.close()
-            conn.close()
+        suggested_friends = cur.fetchall()
 
-    return render_template("friend/add_friend.html")
+    except mysql.connector.Error as e:
+        # Error handling
+        conn.rollback()
+        print(f"Error: {e}")
+        return f"Error: {e}"
+    
+    finally:
+        cur.close()
+        conn.close()
+
+    return render_template("friend/add_friend.html", suggested_friends=suggested_friends)
 
 @friendlist_bp.route("/delete-friends/<user1_id>/<user2_id>")
 def delete_friend(user1_id, user2_id):
@@ -172,7 +216,7 @@ def delete_friend(user1_id, user2_id):
 
     return view_friends()
 
-def get_mutual_friends(user_id, friend_id):
+def get_dashboard_mutual_friends(user_id, friend_id):
     conn = create_connection()
     if conn is None:
         return "Failed to connect to database"

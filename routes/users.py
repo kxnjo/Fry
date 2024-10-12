@@ -19,7 +19,7 @@ from auth_utils import login_required  # persistent login
 # from routes.game import get_all_games
 from routes.review import xinhui
 from routes.owned_game import get_owned_game
-from routes.friend import get_mutual_friends
+from routes.friend import get_dashboard_mutual_friends
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
@@ -412,9 +412,9 @@ def dashboard():
 
         # INSERT MUTUAL FRIENDS LIST = = =
         if curr_id == session["user_id"]: 
-            mutual_friends = get_mutual_friends(curr_id, curr_id)
+            mutual_friends = get_dashboard_mutual_friends(curr_id, curr_id)
         else:
-            mutual_friends = get_mutual_friends(curr_id, session["user_id"])
+            mutual_friends = get_dashboard_mutual_friends(curr_id, session["user_id"])
 
         print(f"this is mutual friends from zx {mutual_friends}")
 
