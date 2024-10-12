@@ -17,7 +17,7 @@ from auth_utils import login_required  # persistent login
 
 # integration
 # from routes.game import get_all_games
-from routes.review import xinhui
+from routes.review import user_written_reviews
 from routes.owned_game import get_owned_game
 from routes.friend import get_dashboard_mutual_friends
 from routes.game import getGameNum, getGames
@@ -428,7 +428,7 @@ def dashboard():
         games = get_owned_game(curr_id)
 
         # INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,,  = = =
-        user_reviews = xinhui(curr_id)
+        user_reviews = user_written_reviews(curr_id)
 
         # INSERT MUTUAL FRIENDS LIST = = =
         if curr_id == session["user_id"]: 
@@ -490,7 +490,7 @@ def edit_user(user_id):
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
 
-    return redirect(request.referrer or url_for("user_bp.dashboard"))
+    return redirect(url_for("user_bp.dashboard"))
 
 
 @user_bp.route("/delete_user/<string:user_id>")
