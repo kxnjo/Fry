@@ -41,10 +41,9 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="review_text_area">Review Text</label>
-                                        <textarea class="form-control" id="review_text_area" rows="3" oninput ="updateCharCount()" maxlength="5000"
+                                        <label for="exampleFormControlTextarea1">Review Text</label>
+                                        <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"
                                                   name="review_text">{{ review_info[3] if review_info else '' }}</textarea>
-                                        <small id="charCount" class="form-text text-muted">0 characters</small>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Submit</button>
                                 </form>
@@ -54,19 +53,34 @@
             </div>
         </div>
     </div>
+
+    <!--    &lt;!&ndash; Reviews Section &ndash;&gt;-->
+    <!--    <div class="row">-->
+    <!--        <div class="col-12">-->
+    <!--            {% for review in reviews %}-->
+    <!--            <div class="card review-card mb-3">-->
+    <!--                <div class="card-body">-->
+    <!--                    <h5 class="card-title">User: {{ review.user_id }}</h5>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted">Review ID: {{ review.review_id }}</h6>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted">Game: {{ review.game_id }}</h6>-->
+    <!--                    <h6 class="card-subtitle mb-2 text-muted"> {{ review.title }}-->
+    <!--                        {% if review.recommended == "RECOMMENDED" %}-->
+    <!--                        <span class="text-success">Recommended</span>-->
+    <!--                        {% else %}-->
+    <!--                        <span class="text-danger">Not Recommended</span>-->
+    <!--                        {% endif %}-->
+    <!--                    </h6>-->
+    <!--                    <p class="card-text">{{ review.review_text }}</p>-->
+    <!--                </div>-->
+    <!--            </div>-->
+    <!--            {% else %}-->
+    <!--            <div class="alert alert-warning" role="alert">-->
+    <!--                No reviews found.-->
+    <!--            </div>-->
+    <!--            {% endfor %}-->
+    <!--        </div>-->
+    <!--    </div>-->
 </div>
-<script>
-    function updateCharCount() {
-        const textarea = document.getElementById(`review_text_area`);
-        const charCountSpan = document.getElementById(`charCount`);
-        const currentLength = textarea.value.length;
-        charCountSpan.textContent = `${currentLength}/5000 characters`;
-    }
 
-    // Initialize the character count when the page loads
-    document.addEventListener("DOMContentLoaded", function() {
-        updateCharCount();  // Initialize the count for any pre-filled text
-    });
-
-</script>
 {% endblock %}
