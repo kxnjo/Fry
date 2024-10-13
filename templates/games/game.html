@@ -44,10 +44,6 @@
                     </button>
                 </form>
                 {% if user_owned %}
-                <!-- <form method="POST" action="{{ url_for('owned_game_bp.delete_owned_game', game_id=game.game_id) }}">
-                    <input type="text" name="game" value="{{ game.game_id }}" hidden>
-                    <button type="submit" class="btn btn-light ">Uninstall</button>
-                </form>     -->
                 <a href="{{ url_for('owned_game_bp.delete_owned_game', game_id=game.game_id) }}"
                     class="btn btn-danger" style="width: 210px; ">Delete</a>
                 {% else %}
@@ -56,16 +52,6 @@
                     <button type="submit" class="btn btn-light" style="width: 210px;">Purchase</button>
                 </form>                
                 {% endif %}
-
-                <!-- <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
-                    <input type="text" name="game" value="{{ game.game_id }}" hidden>
-                    <button type="submit" class="btn btn-light "
-                            {% if user_owned %} disabled {% endif %}>
-                        {% if user_owned %} Purchased 
-                        {% else %} Install
-                        {% endif %}
-                    </button>
-                </form> -->
             </div>
             </div>
             {% endif %}
@@ -76,7 +62,7 @@
 
 <br>
 <!-- Price History Graph -->
-<div class="container mt-5" style="max-height: 350px;"> <!-- Adjust the height here -->
+<div class="container mt-5" style="max-height: 350px;"> 
     <h3>Price History</h3>
     <canvas id="priceChart" ></canvas> <!-- Canvas height adjusted -->
 </div>
@@ -162,6 +148,8 @@
         </div>
     </div>
 </div>
+
+<!-- Price history graph -->
 <script>
     var ctx = document.getElementById('priceChart').getContext('2d');
 
