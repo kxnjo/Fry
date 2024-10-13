@@ -19,13 +19,16 @@ def create_connection():
 
 @friendlist_bp.route("/view-friends")
 @login_required
+# Function to view friends
 def view_friends():
+    # Create a connection to the database
     conn = create_connection()
-    user_id=session["user_id"]
+    user_id=session["user_id"] # Get the user_id from the session
     if conn is None:
-        return "Failed to connect to database"
+        return "Failed to connect to database" # Return an error message if connection fails
     try:
         cur = conn.cursor()
+        # Query to retrieve friends names and friendship date, and games they own and in wishlist
         cur.execute('''
             SELECT 
                 f.user1_id, f.user2_id, f.friendship_date, u1.username, u2.username,
@@ -51,10 +54,11 @@ def view_friends():
             WHERE f.user1_id = %s OR f.user2_id = %s
             GROUP BY f.user1_id, f.user2_id, f.friendship_date, u1.username, u2.username
         ''', (user_id, user_id, user_id, user_id))
-        friends = cur.fetchall()
+        friends = cur.fetchall() # Get all friends
 
         friend_list = []
         for friend in friends:
+            # Get the friend's user_id, username, friendship_date, owned_games, and wanted_games
             if friend[0] == user_id:
                 friend_list.append((friend[1], friend[2], friend[4], friend[5], friend[6]))
             else:
@@ -64,7 +68,8 @@ def view_friends():
         # Get mutual friends
         mutual_friends = []
         for friend in friend_list:
-            friend_id = friend[0]
+            friend_id = friend[0] # Get the friend's user_id
+            # Query to get mutual friends
             cur.execute('''
                 SELECT DISTINCT u.user_id, u.username
                 FROM friend mf
@@ -90,6 +95,7 @@ def view_friends():
         return f"Error retrieving users: {e}"
     
     finally:
+        # Close the cursor and connection
         cur.close()
         conn.close()
         
@@ -97,16 +103,19 @@ def view_friends():
 
 
 @friendlist_bp.route("/add-friend", methods=["GET", "POST"])
+# Function to add a friend
 def add_friend():
+    # Create a connection to the database
     conn = create_connection()
     if conn is None:
-        return "Failed to connect to database"
+        return "Failed to connect to database" # Return an error message if connection fails
 
     try:
         cur = conn.cursor()
+        # Get the user_id from the session
         user1 = session["user_id"]
 
-        suggested_friends = []  # Initialize suggested_friends
+        suggested_friends = []
         # Query to give friends suggestions
         cur.execute('''
             SELECT u.user_id, u.username
@@ -121,8 +130,9 @@ def add_friend():
             LIMIT 4
         ''', (user1, user1, user1))
 
-        suggested_friends = cur.fetchall()
+        suggested_friends = cur.fetchall() # Get all suggested friends
 
+        # Check if the form was submitted (POST request), selected from suggestions or searched by username
         if request.method == "POST":
             # Check if a friend was selected from suggestions
             friend_id = request.form.get("friend_id")
@@ -136,7 +146,7 @@ def add_friend():
                 ''', (user1, friend_id, friend_id, user1))
                 
                 if cur.fetchone():
-                    error_message = "You are already friends with this user."
+                    error_message = "You are already friends with this user." # Return an error message if they're already friends
                     return render_template("friend/add_friend.html", suggested_friends=suggested_friends, error=error_message)
 
                 # Insert a new entry into the friend table
@@ -145,7 +155,7 @@ def add_friend():
                     VALUES (%s, %s, %s)
                 ''', (user1, friend_id, date))
 
-                conn.commit()
+                conn.commit() # Commit the changes into the database
                 return view_friends()  # Redirect to view friends after adding
 
             # For adding friends through username search
@@ -165,7 +175,7 @@ def add_friend():
                 ''', (user1, user2_id, user2_id, user1))
                 
                 if cur.fetchone():
-                    error_message = "You are already friends with this user."
+                    error_message = "You are already friends with this user." # Return an error message if they're already friends
                     return render_template("friend/add_friend.html", suggested_friends=suggested_friends, error=error_message)
 
                 # Insert a new entry into the friend table
@@ -174,10 +184,10 @@ def add_friend():
                     VALUES (%s, %s, %s)
                 ''', (user1, user2_id, date))
 
-                conn.commit()
-                return view_friends()
+                conn.commit() # Commit the changes into the database
+                return view_friends() # Redirect to view friends after adding
             else:
-                error_message = "Friend not found"
+                error_message = "Friend not found" # Return an error message if the friend is not found
                 return render_template("friend/add_friend.html", suggested_friends=suggested_friends, error=error_message)
 
 
@@ -194,22 +204,25 @@ def add_friend():
     return render_template("friend/add_friend.html", suggested_friends=suggested_friends)
 
 @friendlist_bp.route("/delete-friends/<user1_id>/<user2_id>")
+# Function to delete a friend
 def delete_friend(user1_id, user2_id):
+    # Create a connection to the database
     conn = create_connection()
     if conn is None:
-        return "Failed to connect to database"
+        return "Failed to connect to database" # Return an error message if connection fails
     try:
         cur = conn.cursor(dictionary=True)
 
-        # Execute the SQL statement
+        # Query to delete a friend
         cur.execute("""
             DELETE FROM friend
             WHERE user1_id = %s AND user2_id = %s OR user1_id = %s AND user2_id = %s;
         """,(user1_id, user2_id, user2_id, user1_id))
 
-        conn.commit()
+        conn.commit() # Commit the changes into the database
 
     except mysql.connector.Error as e:
+        # Error handling
         conn.rollback()
         print(f"Error: {e}")
         return f"Error deleting friend: {e}"
@@ -217,14 +230,17 @@ def delete_friend(user1_id, user2_id):
         cur.close()
         conn.close()
 
-    return view_friends()
+    return view_friends() # Redirect to view friends after deleting
 
+# Function to get mutual friends for the user dashboard
 def get_dashboard_mutual_friends(user_id, friend_id):
+    # Create a connection to the database
     conn = create_connection()
     if conn is None:
-        return "Failed to connect to database"
+        return "Failed to connect to database" # Return an error message if connection fails
     try:
         cur = conn.cursor()
+        # Query to get mutual friends
         cur.execute('''
             SELECT DISTINCT u.user_id, u.username
             FROM friend mf
@@ -244,6 +260,7 @@ def get_dashboard_mutual_friends(user_id, friend_id):
         friends = cur.fetchall()
 
     except mysql.connector.Error as e:
+        # Error handling
         conn.rollback()
         print(f"Error: {e}")
         return f"Error deleting friend: {e}"
@@ -251,4 +268,4 @@ def get_dashboard_mutual_friends(user_id, friend_id):
         cur.close()
         conn.close()
 
-    return friends
+    return friends # Return the mutual friends
