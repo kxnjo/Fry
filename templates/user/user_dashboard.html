@@ -243,6 +243,7 @@
                             <!-- Hidden input to pass the review ID -->
                             <input type="hidden" name="review_id" value="{{review.review_id}}">
                             <input type ="hidden" name="game_id" value=" {{review.game_id}}">
+                            <input type="hidden" name="source" value="dashboard">
 
                             <!-- Review Text Field -->
                             <div class="mb-3">
@@ -270,11 +271,6 @@
                             <button type="submit" class="btn btn-primary">Save Changes</button>
                         </div>
                     </form>
-                    <div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-						<!-- Form for Deleting User -->
-						<a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}" class="btn btn-danger">Delete Review</a>
-					</div>
                 </div>
             </div>
         </div>
@@ -294,7 +290,7 @@
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
 						<!-- Form for Deleting User -->
-						<a href="{{ url_for('review_bp.delete_review', review_id=review.review_id) }}" class="btn btn-danger">Confirm Delete</a>
+<a href="{{ url_for('review_bp.delete_review', review_id=review.review_id, game_id='', source='dashboard') }}" class="btn btn-danger">Delete Review</a>
 					</div>
 				</div>
 			</div>

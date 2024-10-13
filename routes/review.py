@@ -323,6 +323,7 @@ def add_review(review_id=None):
     recommended = request.form['recommended'] # contain the recommended value
     review_text = request.form['review_text'] # contain the review_text content
 
+    source = request.form['source']
     # Determine the recommended value
     recommended_val = 'TRUE' if recommended == "Recommended" else 'FALSE'
 
@@ -361,16 +362,23 @@ def add_review(review_id=None):
     # Ensure selected_game has no leading/trailing spaces
     selected_game = selected_game.strip()
 
-    # Redirect to the edit reviews page with the new review ID
-    return redirect(url_for('game_bp.view_game', game_id=selected_game))
+    # Redirect based on the source
+    if source == 'dashboard':
+        return redirect(url_for('user_bp.dashboard'))
+    else:
+        return redirect(url_for('game_bp.view_game', game_id=selected_game))
 
 
 # Delete Review
 # @review_bp.route("review-delete/<review_id>", methods=['GET'])
-@review_bp.route("review-delete/<review_id>")
+@review_bp.route("review-delete/<review_id>", methods=['GET'])
 def delete_review(review_id):
     conn = create_connection()
     cur = conn.cursor()
+
+    # Retrieve game_id and source from URL query parameters
+    game_id = request.args.get('game_id')
+    source = request.args.get('source')
 
     if review_id:
         cur.execute('''
@@ -381,4 +389,10 @@ def delete_review(review_id):
         ''', (review_id,))
 
     conn.commit()
-    return redirect(url_for('user_bp.dashboard'))
+
+    # Redirect based on the source
+    if source == 'dashboard':
+        return redirect(url_for('user_bp.dashboard'))
+    else:
+        return redirect(url_for('game_bp.view_game', game_id=game_id))
+
