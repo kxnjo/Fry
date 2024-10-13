@@ -507,7 +507,6 @@ def edit_user(user_id):
         return "Failed to connect to database"
     try:
         cur = conn.cursor(dictionary=True)
-        print(f"updating user {username}")
         # execute query
         cur.execute(
             """

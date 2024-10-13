@@ -33,7 +33,6 @@ def get_reviews():
 
     # Get filtered reviews
     all_reviews = getReviewList(start, end, selected_game, recommended)
-    print(all_reviews)
 
     conn = create_connection()
     cur = conn.cursor(buffered=True)
@@ -185,7 +184,6 @@ def generate_review_id(existing_ids):
         # generate a new review_id
         random_id = f"r{random.randint(1000000, 99999999)}"
         if random_id not in existing_ids:
-            print(f'your id is now {random_id}')
             return random_id  # Return the unique ID
 
 

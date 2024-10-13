@@ -389,9 +389,7 @@ def edit_game(game_id):
     game_id = request.form["game_id"]
     title = request.form["title"]
     price = request.form["price"]
-    print(
-        f"game_id retrieved: {game_id}, title: {title}, price: {price}"
-    )
+    
     # start connection
     conn = create_connection()
     if conn is None:

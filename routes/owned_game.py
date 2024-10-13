@@ -161,7 +161,6 @@ def delete_owned_game(game_id):
             WHERE
             game_id = %s
             ''', (game_id, ))
-        print("game deleted")
         conn.commit()
     finally: 
             cur.close() 
