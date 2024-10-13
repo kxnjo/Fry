@@ -3,6 +3,7 @@
 <div class="container mt-5">
     <h1 class="text-center">Categories</h1>
 
+    <!-- loop through categories to get all categories -->
     <div class="row">
         <div class="col-12">
             {% for category in categories %}
@@ -25,6 +26,7 @@
 <br>
 <br>
 
+<!-- pagination -->
 <div class="text-center">
     <div class="pagination d-inline-flex"></div>
         {% if page > 1 %}

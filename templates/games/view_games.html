@@ -4,6 +4,8 @@
     <h1 class="text-center">Games</h1>
     <br>
     <br>
+
+    <!-- sorting and searching -->
     <form method="GET" class="mb-3">
         <div class="row">
             <div class="col-md-4">
@@ -32,6 +34,7 @@
         </div>
     </form>
 
+    <!-- display game info -->
     <div class="row">
         <div class="col-12">
             {% for game in games %}
@@ -56,6 +59,7 @@
 <br>
 <br>
 
+<!-- pagination -->
 <div class="text-center">
     <div class="pagination d-inline-flex">
         {% if page > 1 %}
@@ -66,6 +70,7 @@
     </div>
 </div>
 
+<!-- sorting options javascript -->
 <script>
     function toggleSortOrder() {
         const orderInput = document.getElementById("sort_order");

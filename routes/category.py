@@ -15,7 +15,7 @@ def create_connection():
         database=config.DATABASE,
     )
 
-
+# route to view all categories
 @category_bp.route("/categories")
 def view_all_categories():
 
@@ -27,6 +27,7 @@ def view_all_categories():
     # Calculate the offset for the SQL query
     offset = (page - 1) * per_page
 
+    # query to select all categories with limit and offset
     conn = create_connection()
     cur = conn.cursor()
     cur.execute('''
@@ -53,9 +54,11 @@ def view_all_categories():
 
     return render_template("categories/view_categories.html", categories = categories, page = page)
 
+# route to view individual category page
 @category_bp.route("/category/<category_id>")
 def view_category(category_id):
 
+    # query to select specific developer
     conn = create_connection()
     cur = conn.cursor()
     cur.execute('''
@@ -79,7 +82,6 @@ def view_category(category_id):
     games = []
     if rows:
         for row in rows:
-            print(row)
             game_data = {
                 "game_id": row[0], 
                 "game_title": row[1],   

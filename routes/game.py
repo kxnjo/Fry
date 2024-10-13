@@ -31,6 +31,7 @@ def getGameNum():
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
+
 def getGames(start=0, end=10):
     allGames = []
     # start connection
@@ -72,7 +73,7 @@ def create_connection():
         database=config.DATABASE,
     )
 
-
+# route to view games page
 @game_bp.route("/games", methods=['GET'])
 def view_all_games():
     search = request.args.get('query')
@@ -98,6 +99,7 @@ def view_all_games():
     conn = create_connection()
     cur = conn.cursor()
 
+    # query for when there is search condition
     if search:
         query = f'''
         SELECT 
@@ -126,6 +128,7 @@ def view_all_games():
         cur.execute(count_query, (search_term,))
         total = cur.fetchone()[0]
 
+    # query for when there is no search condition
     else:
         query = f'''
         SELECT 
@@ -168,6 +171,7 @@ def view_all_games():
     return render_template("games/view_games.html", games=games, page=page, sort_by=sort_by,
                            sort_order=sort_order, search=search)
 
+# route to view individual game page
 @game_bp.route("/game/<game_id>")
 def view_game(game_id):
     conn = create_connection()
@@ -198,6 +202,7 @@ def view_game(game_id):
         "game_price": game[3]
     }
 
+    # fetch categories for game
     cur.execute('''
     SELECT 
         c.category_id, c.category_name
@@ -224,6 +229,7 @@ def view_game(game_id):
     else:
         print("not found")
 
+    # fetch developers for game
     cur.execute('''
     SELECT 
         d.developer_id, d.developer_name
