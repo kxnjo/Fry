@@ -102,11 +102,26 @@ def add_friend():
     if conn is None:
         return "Failed to connect to database"
 
-    suggested_friends = []  # Initialize suggested_friends
-
     try:
         cur = conn.cursor()
         user1 = session["user_id"]
+
+        suggested_friends = []  # Initialize suggested_friends
+        # Query to give friends suggestions
+        cur.execute('''
+            SELECT u.user_id, u.username
+            FROM user u
+            WHERE u.user_id != %s
+            AND NOT EXISTS (
+                SELECT 1
+                FROM friend f
+                WHERE (f.user1_id = u.user_id AND f.user2_id = %s)
+                OR (f.user2_id = u.user_id AND f.user1_id = %s))
+            ORDER BY RAND()
+            LIMIT 4
+        ''', (user1, user1, user1))
+
+        suggested_friends = cur.fetchall()
 
         if request.method == "POST":
             # Check if a friend was selected from suggestions
@@ -121,7 +136,8 @@ def add_friend():
                 ''', (user1, friend_id, friend_id, user1))
                 
                 if cur.fetchone():
-                    return "You are already friends with this user."
+                    error_message = "You are already friends with this user."
+                    return render_template("friend/add_friend.html", suggested_friends=suggested_friends, error=error_message)
 
                 # Insert a new entry into the friend table
                 cur.execute('''
@@ -149,7 +165,8 @@ def add_friend():
                 ''', (user1, user2_id, user2_id, user1))
                 
                 if cur.fetchone():
-                    return "You are already friends with this user."
+                    error_message = "You are already friends with this user."
+                    return render_template("friend/add_friend.html", suggested_friends=suggested_friends, error=error_message)
 
                 # Insert a new entry into the friend table
                 cur.execute('''
@@ -160,23 +177,9 @@ def add_friend():
                 conn.commit()
                 return view_friends()
             else:
-                return "Friend not found in the database"
+                error_message = "Friend not found"
+                return render_template("friend/add_friend.html", suggested_friends=suggested_friends, error=error_message)
 
-        # Query to give friends suggestions
-        cur.execute('''
-            SELECT u.user_id, u.username
-            FROM user u
-            WHERE u.user_id != %s
-            AND NOT EXISTS (
-                SELECT 1
-                FROM friend f
-                WHERE (f.user1_id = u.user_id AND f.user2_id = %s)
-                OR (f.user2_id = u.user_id AND f.user1_id = %s))
-            ORDER BY RAND()
-            LIMIT 4
-        ''', (user1, user1, user1))
-
-        suggested_friends = cur.fetchall()
 
     except mysql.connector.Error as e:
         # Error handling
