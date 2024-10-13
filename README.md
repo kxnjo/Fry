@@ -3,7 +3,7 @@
 
 FryGames is a centralized platform where users can browse and purchase games, connect with friends, and leave game reviews. It also provides price trends to help users make informed purchase decisions.
 
-# steam? fry nicer 🥴
+# steam? fry nicer 👩‍🍳👩‍🍳🧑‍🍳🧑‍🍳👩‍🍳👩‍🍳
 
 ## Start up
 To create your own environment, run:
