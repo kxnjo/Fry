@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, Blueprint, session
 import config
+from datetime import timedelta
 
 # import routes
 from routes.users import user_bp
@@ -14,6 +15,13 @@ from routes.owned_game import owned_game_bp
 
 app = Flask(__name__)
 app.secret_key = "INF2003DatabaseProject"  # for session security
+
+# Set the permanent session lifetime globally
+app.permanent_session_lifetime = timedelta(days=31)
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True  # Make the session permanent on every request
 
 # add url route to all endpoints under /users
 # ie. localhost:8000/users/...
