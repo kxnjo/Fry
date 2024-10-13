@@ -356,7 +356,6 @@ def view_game(game_id):
             change_date ASC
     ''', (game_id,))
     price_changes = cur.fetchall()
-    print(price_changes)
 
     # Prepare data for the graph
     dates = []
