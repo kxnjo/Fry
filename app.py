@@ -24,7 +24,6 @@ def make_session_permanent():
     session.permanent = True  # Make the session permanent on every request
 
 # add url route to all endpoints under /users
-# ie. localhost:8000/users/...
 app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(game_bp, url_prefix="/game")
 app.register_blueprint(sample_bp, url_prefix="/sample")

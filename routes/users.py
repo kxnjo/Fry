@@ -1,13 +1,4 @@
-from flask import (
-    Blueprint,
-    jsonify,
-    render_template,
-    request,
-    url_for,
-    redirect,
-    session,
-    flash,
-)
+from flask import Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
 import mysql.connector
 import config
 import hashlib
@@ -15,8 +6,7 @@ import json
 from datetime import date
 from auth_utils import login_required  # persistent login
 
-# integration
-# from routes.game import get_all_games
+# integrating everyone's parts
 from routes.review import user_written_reviews
 from routes.owned_game import get_owned_game
 from routes.friend import get_dashboard_mutual_friends
@@ -24,11 +14,16 @@ from routes.game import getGameNum, getGames
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
-all_users_num = []
 
 
 # db connections
 def create_connection():
+    """
+    Create and return a connection to the MySQL database.
+    
+    Returns:
+    mysql.connector.connection.MySQLConnection: A connection object to the database.
+    """
     # Replace with your database connection details
     return mysql.connector.connect(
         host=config.HOST,
@@ -40,6 +35,12 @@ def create_connection():
 
 # other functions for accessiblity
 def getUserNum():
+    """
+    Get the total number of users in the database.
+    
+    Returns:
+    int: The total number of users.
+    """
     # start connection
     conn = create_connection()
     if conn is None:
@@ -54,7 +55,6 @@ def getUserNum():
         """
         )
         total = cur.fetchall()
-        print(f"found this many users {len(total)}")
 
         # close connection
         cur.close()
@@ -67,6 +67,17 @@ def getUserNum():
 
 
 def checkUser(cur, name, email):
+    """
+    Check if a username or email already exists in the database.
+    
+    Args:
+    cur (mysql.connector.cursor.MySQLCursor): The database cursor.
+    name (str): The username to check.
+    email (str): The email to check.
+    
+    Returns:
+    dict: A dictionary containing message, status, and uniqueness flag.
+    """
     msg, status = "", ""
     unique = True
 
@@ -81,6 +92,7 @@ def checkUser(cur, name, email):
     )
     user_by_name = cur.fetchall()
 
+    # if someone already registered username
     if len(user_by_name) > 0:
         msg = "Username is already taken! Please choose a different username."
         status = "warning"
@@ -99,6 +111,7 @@ def checkUser(cur, name, email):
     )
     user_by_email = cur.fetchall()
 
+    # if someone already registered email
     if len(user_by_email) > 0:
         msg = "Email is already registered! Please use a different email."
         status = "warning"
@@ -110,7 +123,18 @@ def checkUser(cur, name, email):
 
 
 def getUsers(start=0, end=10):
+    """
+    Get a list of users within a specified range.
+    
+    Args:
+    start (int): The starting index.
+    end (int): The ending index.
+    
+    Returns:
+    list: A list of user dictionaries.
+    """
     allUsers = []
+
     # start connection
     conn = create_connection()
     if conn is None:
@@ -118,7 +142,6 @@ def getUsers(start=0, end=10):
     try:
         cur = conn.cursor(dictionary=True)
         # execute query
-        print(f"this is start: {start} and end {end}")
         cur.execute(
             """
                 SELECT * FROM (
@@ -143,6 +166,15 @@ def getUsers(start=0, end=10):
 
 
 def getUser(user_id):
+    """
+    Get user details by user ID.
+    
+    Args:
+    user_id (str): The ID of the user.
+    
+    Returns:
+    dict: A dictionary containing user details.
+    """
     user = {}
     # start connection
     conn = create_connection()
@@ -173,6 +205,15 @@ def getUser(user_id):
 
 
 def checkuid(uid):
+    """
+    Check if a user ID exists in the database.
+    
+    Args:
+    uid (str): The user ID to check.
+    
+    Returns:
+    list: A list of matching user IDs.
+    """
     userlist = []
     # start connection
     conn = create_connection()
@@ -203,6 +244,12 @@ def checkuid(uid):
 
 
 def getuid():
+    """
+    Generate a new unique user ID.
+    
+    Returns:
+    str: A new unique user ID.
+    """
     uid = getUserNum() + 1
 
     while len(checkuid(f"u{uid}")) != 0:
@@ -213,6 +260,7 @@ def getuid():
 
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
+    """Handle user login."""
     if request.method == "POST":
         conn = create_connection()
         if conn is None:
@@ -256,15 +304,12 @@ def login():
             flash(f"Error retrieving table: {e}", "danger")
             return redirect(url_for("user_bp.login"))
 
-    elif request.method == "GET":
-        # do nothing i guess,, idk what else to do,, load up the page?? :P
-        print("visited login page")
-
     return render_template("user/login.html")
 
 
 @user_bp.route("/register", methods=["GET", "POST"])
 def register():
+    """Handle user registration."""
     if request.method == "POST":
         conn = create_connection()
         if conn is None:
@@ -279,7 +324,6 @@ def register():
 
             # check if there is no existing user with same username/email
             checkUnique = checkUser(cur, name, email)
-            print(checkUnique)
 
             if not checkUnique["unique"]:
                 flash(checkUnique["msg"], checkUnique["status"])
@@ -324,6 +368,7 @@ def register():
 
 @user_bp.route("/forgot", methods=["GET", "POST"])
 def forgot():
+    """Handle password reset."""
     if request.method == "POST":
         # Retrieve form data
         username_email = request.form["username_email"]
@@ -349,7 +394,6 @@ def forgot():
                     username_email,
                 ),
             )
-            print(cur.fetchall())
             # save to db
             conn.commit()
 
@@ -368,6 +412,7 @@ def forgot():
 
 @user_bp.route("/logout")
 def logout():
+    """Handle user logout."""
     session.clear()
     return redirect(url_for("home"))
 
@@ -375,6 +420,7 @@ def logout():
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
+    """Display user or admin dashboard."""
     if session["role"] == "admin":
         # Get the current page number, set default to start from 1
         filter_type = request.args.get("filter_type", "accounts", type=str)
@@ -387,7 +433,9 @@ def dashboard():
         # User pagination logic
         all_users_num = getUserNum()  # Retrieve the total number of users
         user_num_per_page = 10
-        user_total_pages = (all_users_num + user_num_per_page - 1) // user_num_per_page  # Calculate total pages
+        user_total_pages = (
+            all_users_num + user_num_per_page - 1
+        ) // user_num_per_page  # Calculate total pages
 
         # Paginate the users
         user_start = (page - 1) * user_num_per_page
@@ -397,14 +445,14 @@ def dashboard():
         # Game pagination logic
         all_games_num = getGameNum()  # Retrieve the total number of games
         game_num_per_page = 50
-        game_total_pages = (all_games_num + game_num_per_page - 1) // game_num_per_page  # Calculate total pages
+        game_total_pages = (
+            all_games_num + game_num_per_page - 1
+        ) // game_num_per_page  # Calculate total pages
 
         # Paginate the games
         game_start = (page - 1) * game_num_per_page
         game_end = game_start + game_num_per_page
         all_games = getGames(game_start, game_end)  # Get games for current page
-
-        print(f"this is all games: {all_games}, total_pages: {game_total_pages}")
 
         return render_template(
             "user/admin_dashboard.html",
@@ -413,9 +461,8 @@ def dashboard():
             games=all_games,
             game_total_pages=game_total_pages,
             page=page,  # Pass the current page to the template,
-            filter_type=filter_type
+            filter_type=filter_type,
         )
-
 
     elif session["role"] == "user":
         curr_id = request.args.get("user_id", session["user_id"], type=str)
@@ -424,38 +471,35 @@ def dashboard():
         # get user details
         user = getUser(curr_id)
 
-        # INSERT GAMES OWNED = = =
+        # INSERT GAMES OWNED
         games = get_owned_game(curr_id)
 
-        # INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER,,  = = =
+        # INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER
         user_reviews = user_written_reviews(curr_id)
 
-        # INSERT MUTUAL FRIENDS LIST = = =
-        if curr_id == session["user_id"]: 
+        # INSERT MUTUAL FRIENDS LIST
+        if curr_id == session["user_id"]:
             mutual_friends = get_dashboard_mutual_friends(curr_id, curr_id)
         else:
             mutual_friends = get_dashboard_mutual_friends(curr_id, session["user_id"])
 
-        print(f"this is mutual friends from zx {mutual_friends}")
 
         return render_template(
             "user/user_dashboard.html",
             user=user,
             games=games,
             user_reviews=user_reviews,
-            mutual_friends=mutual_friends
+            mutual_friends=mutual_friends,
         )
 
 
 @user_bp.route("/edit-user/<string:user_id>", methods=["POST"])
 @login_required
 def edit_user(user_id):
+    """Edit user details."""
     # Retrieve form data
     username = request.form["username"]
     email = request.form["email"]
-    print(
-        f"username retrieved: {username}, email retrieved: {email}, user_id: {user_id}"
-    )
 
     # start connection
     conn = create_connection()
@@ -484,8 +528,6 @@ def edit_user(user_id):
         cur.close()
         conn.close()
 
-        print("user updated successfully")
-
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
@@ -496,6 +538,7 @@ def edit_user(user_id):
 @user_bp.route("/delete_user/<string:user_id>")
 @login_required
 def delete_user(user_id):
+    """Delete a user account."""
     conn = create_connection()
     if conn is None:
         return "Failed to connect to database"
@@ -517,8 +560,6 @@ def delete_user(user_id):
         # close connection
         cur.close()
         conn.close()
-
-        print("user deleted successfully")
 
     except mysql.connector.Error as e:
         print(f"Error: {e}")
