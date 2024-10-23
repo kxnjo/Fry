@@ -5,6 +5,27 @@ import config
 # Create a Blueprint object
 game_bp = Blueprint("game_bp", __name__)
 
+def get_all_games():
+    # start connection
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute(
+            "SELECT * FROM game;"
+        )
+        total = cur.fetchall()
+
+        # close connection
+        cur.close()
+        conn.close()
+        return total
+
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
 
 def getGameNum():
      # start connection
@@ -421,5 +442,17 @@ def edit_game(game_id):
     except mysql.connector.Error as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
+
+    return redirect(url_for("user_bp.dashboard"))
+
+@game_bp.route("/create-game", methods=["POST"])
+def create_game(game_id):
+    # something (placeholder)
+
+    return redirect(url_for("user_bp.dashboard"))
+
+@game_bp.route("/delete-game/<game_id>", methods=["POST"])
+def delete_game(game_id):
+    # something (placeholder)
 
     return redirect(url_for("user_bp.dashboard"))

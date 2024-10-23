@@ -10,7 +10,7 @@ from auth_utils import login_required  # persistent login
 from routes.review import user_written_reviews
 from routes.owned_game import get_owned_game
 from routes.friend import get_dashboard_mutual_friends
-from routes.game import getGameNum, getGames
+from routes.game import getGameNum, getGames, get_all_games
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
@@ -492,6 +492,75 @@ def dashboard():
             mutual_friends=mutual_friends,
         )
 
+    elif session["role"] == "developer":
+        games = get_all_games()[:10]
+
+        return render_template("user/developer_dashboard.html", games=games)
+
+
+@user_bp.route("/create-user", methods=["POST"])
+@login_required
+def create_user():
+    """Handle user registration."""
+    if request.method == "POST":
+        conn = create_connection()
+        if conn is None:
+            return "Failed to connect to database"
+        try:
+            cur = conn.cursor(dictionary=True)
+
+            # handle the fields retrieved, make sure that it aligns with db
+            name = request.form['username']
+            email = request.form['email']
+            password = request.form['password']
+            confirm_password = request.form['confirm_password']
+            role = request.form['role']
+
+            if password != confirm_password:
+                flash('Passwords do not match!', 'danger')
+                print("it does not match or sth")
+                return redirect(request.referrer or url_for("user_bp.dashboard"))
+
+            # check if there is no existing user with same username/email
+            checkUnique = checkUser(cur, name, email)
+
+            if not checkUnique["unique"]:
+                flash(checkUnique["msg"], checkUnique["status"])
+                return redirect(url_for("user_bp.register"))
+
+            else:
+                # other details
+                uid = getuid()
+
+                created_on = date.today()
+                # hash the password
+                hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
+
+                # table query
+                create_table_query = """
+                    INSERT INTO user (user_id, username, email, password, created_on, role) 
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """
+
+                # Execute the SQL statement
+                cur.execute(
+                    create_table_query,
+                    (uid, name, email, hashed_input_password, created_on, role),
+                )
+                conn.commit()
+                print(f"successfully created user {name}")
+
+                return redirect(request.referrer or url_for("user_bp.dashboard"))
+
+        except mysql.connector.Error as e:
+            conn.rollback()
+            print(f"Error: {e}")
+            return f"Error creating table: {e}"
+        finally:
+            cur.close()
+            conn.close()
+
+    return redirect(request.referrer or url_for("user_bp.dashboard"))
 
 @user_bp.route("/edit-user/<string:user_id>", methods=["POST"])
 @login_required
@@ -531,7 +600,7 @@ def edit_user(user_id):
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
 
-    return redirect(url_for("user_bp.dashboard"))
+    return redirect(request.referrer or url_for("user_bp.dashboard"))
 
 
 @user_bp.route("/delete_user/<string:user_id>")

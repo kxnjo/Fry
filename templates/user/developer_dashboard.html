@@ -1,0 +1,291 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="container-fluid mt-5">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-4">Games Library</h1>
+                <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#addGameModal">
+                    <i class="fas fa-plus"></i> Add New Game
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Games Table Section -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="mb-0">Games Overview</h3>
+                </div>
+                <div class="col-3">
+                    <input type="text" class="form-control" id="gameSearch" placeholder="Search games...">
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table">
+                        <tr>
+                            <th style="width: 40%">Game Details</th>
+                            <th>Release Date</th>
+                            <th>Price</th>
+                            <th>Categories</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for game in games %}
+                        <tr>
+                            <!-- Game Details Column -->
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ game.image_url if game.image_url else url_for('static', filename='img/default_game.jpeg') }}"
+                                         class="rounded me-3" style="width: 120px; height: 68px; object-fit: cover;"
+                                         alt="{{ game.title }}">
+                                    <div>
+                                        <h5 class="mb-1">{{ game.title }}</h5>
+                                        <small class="text-muted">ID: {{ game.game_id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <!-- Release Date Column -->
+                            <td>{{ game.release_date.strftime('%Y-%m-%d') }}</td>
+                            
+                            <!-- Price Column -->
+                            <td>${{ "%.2f"|format(game.price) }}</td>
+                            
+                            <!-- Categories Column -->
+                            <td>
+                                {% for category in game.categories %}
+                                <span class="badge bg-secondary me-1">{{ category.name }}</span>
+                                {% endfor %}
+                            </td>
+                            
+                            <!-- Actions Column -->
+                            <td>
+                                <div class="col btn-group">
+                                    <button class="btn btn-info" data-bs-toggle="modal" 
+                                            data-bs-target="#viewGameModal{{ game.id }}" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" 
+                                            data-bs-target="#editGameModal{{ game.id }}" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-danger" data-bs-toggle="modal" 
+                                            data-bs-target="#deleteGameModal{{ game.id }}" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Game Modal -->
+    {% for game in games %}
+    <div class="modal fade" id="viewGameModal{{ game.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">{{ game.title }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <img src="{{ game.image_url if game.image_url else url_for('static', filename='img/default_game.jpeg') }}"
+                                 class="img-fluid rounded" alt="{{ game.title }}">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Game Details</h5>
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4">Release Date:</dt>
+                                        <dd class="col-sm-8">{{ game.release_date.strftime('%Y-%m-%d') }}</dd>
+                                        
+                                        <dt class="col-sm-4">Price:</dt>
+                                        <dd class="col-sm-8">${{ "%.2f"|format(game.price) }}</dd>
+                                        
+                                        <dt class="col-sm-4">Categories:</dt>
+                                        <dd class="col-sm-8">
+                                            {% for category in game.categories %}
+                                            <span class="badge bg-secondary me-1">{{ category.name }}</span>
+                                            {% endfor %}
+                                        </dd>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Game Modal -->
+    <div class="modal fade" id="editGameModal{{ game.id }}" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white">
+                    <h5 class="modal-title">Edit Game</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('game_bp.edit_game', game_id=game.id) }}" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="title{{ game.id }}" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="title{{ game.id }}" 
+                                           name="title" value="{{ game.title }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="release_date{{ game.id }}" class="form-label">Release Date</label>
+                                    <input type="date" class="form-control" id="release_date{{ game.id }}" 
+                                           name="release_date" value="{{ game.release_date.strftime('%Y-%m-%d') }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price{{ game.id }}" class="form-label">Price</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="price{{ game.id }}" 
+                                               name="price" value="{{ "%.2f"|format(game.price) }}" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="categories{{ game.id }}" class="form-label">Categories</label>
+                                    <select class="form-select" id="categories{{ game.id }}" name="categories" multiple required>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}"
+                                                {% if category in game.categories %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Current Image</label>
+                                    <img src="{{ game.image_url if game.image_url else url_for('static', filename='img/default_game.jpeg') }}"
+                                         class="img-fluid rounded mb-2" alt="{{ game.title }}">
+                                    <input type="file" class="form-control" id="game_image{{ game.id }}" name="game_image">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Game Modal -->
+    <div class="modal fade" id="deleteGameModal{{ game.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header text-white">
+                    <h5 class="modal-title">Delete Game</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete "{{ game.title }}"? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form action="{{ url_for('game_bp.delete_game', game_id=game.id) }}" method="POST">
+                        <button type="submit" class="btn btn-danger">Delete Game</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+A
+    <!-- Add New Game Modal -->
+    <div class="modal fade" id="addGameModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Add New Game</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('game_bp.create_game') }}" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="title" name="title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="release_date" class="form-label">Release Date</label>
+                                    <input type="date" class="form-control" id="release_date" name="release_date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Price</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="categories" class="form-label">Categories</label>
+                                    <select class="form-select" id="categories" name="categories" multiple required>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="game_image" class="form-label">Game Image</label>
+                                    <input type="file" class="form-control" id="game_image" name="game_image">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success">Add Game</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add this script at the end of your template -->
+<script>
+document.getElementById('gameSearch').addEventListener('keyup', function() {
+    let searchText = this.value.toLowerCase();
+    let tableRows = document.querySelectorAll('tbody tr');
+    
+    tableRows.forEach(row => {
+        let title = row.querySelector('h5').textContent.toLowerCase();
+        let categories = Array.from(row.querySelectorAll('.badge')).map(badge => badge.textContent.toLowerCase()).join(' ');
+        
+        if (title.includes(searchText) || categories.includes(searchText)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

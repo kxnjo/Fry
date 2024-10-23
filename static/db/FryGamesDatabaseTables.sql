@@ -12,9 +12,14 @@ CREATE TABLE IF NOT EXISTS `user` (
   `email` VARCHAR(255) NOT NULL,
   `password` VARCHAR(255) NOT NULL,
   `created_on` DATE NOT NULL,
+  `role` ENUM('user', 'admin', 'developer') NOT NULL DEFAULT 'user'
   PRIMARY KEY (`user_id`),
   UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE)
 ENGINE = InnoDB;
+
+-- to add more roles:
+ALTER TABLE user
+MODIFY COLUMN role ENUM('user', 'admin', 'developer') NOT NULL DEFAULT 'user';
 
 -- -----------------------------------------------------
 -- Table `game`
