@@ -13,7 +13,11 @@ from routes.friend import friendlist_bp
 from routes.wishlist import wishlist_bp
 from routes.owned_game import owned_game_bp
 
+# MongoDB
+from mongo_cfg import noSQL_init
+
 app = Flask(__name__)
+noSQL_init(app)
 app.secret_key = "INF2003DatabaseProject"  # for session security
 
 # Set the permanent session lifetime globally

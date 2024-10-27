@@ -4,6 +4,8 @@ import config
 from auth_utils import login_required  # persistent login
 import random, datetime
 
+# mongo
+from mongo_cfg import get_NoSQLdb
 # Create a Blueprint object
 review_bp = Blueprint("review_bp", __name__)
 
@@ -16,6 +18,20 @@ def create_connection():
         password=config.PASSWORD,
         database=config.DATABASE,
     )
+
+@review_bp.route('/test-db-connection')
+def mongo_connection():
+
+    db = get_NoSQLdb()
+    if db is None:
+        return "Database not initialized!!.", 500
+    try:
+        collections = db.list_collection_names()
+        return f"Successfully connected to MongoDB. Collections: {collections}", 200
+    except Exception as e:
+        return f"Failed to connect to MongoDB: {e}", 500
+
+
 @review_bp.route("/review-test")
 def get_reviews():
     # Get the current page and filter parameters from the request
