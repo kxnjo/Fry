@@ -1,6 +1,10 @@
 from flask import Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
 import mysql.connector
-import config
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv('config.env')
 import hashlib
 import json
 from datetime import date

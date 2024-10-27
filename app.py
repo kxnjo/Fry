@@ -1,5 +1,9 @@
 from flask import Flask, render_template, request, jsonify, Blueprint, session
-import config
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv('config.env')
 from datetime import timedelta
 
 # import routes

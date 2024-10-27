@@ -1,8 +1,17 @@
 from pymongo import MongoClient
 from flask import Flask
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv('config.env')
+
 client = None
 db = None
+
+username = os.environ.get("MONGO_USERNAME")
+password = os.environ.get("MONGO_PASSWORD")
+app_name = os.environ.get("MONGO_APP_NAME")
 
 
 def noSQL_init(app: Flask):
@@ -10,7 +19,7 @@ def noSQL_init(app: Flask):
 
     # Initialize MongoDB connection
     try:
-        client = MongoClient("mongodb+srv://2301915:trytohackthisuf00l@fry-nosql.c1xaw.mongodb.net/?retryWrites=true&w=majority&appName=Fry-NoSQL")
+        client = MongoClient(f"mongodb+srv://{username}:{password}@fry-nosql.c1xaw.mongodb.net/?retryWrites=true&w=majority&appName={app_name}")
 
         db = client.get_database("Fry-NoSQL")  # Make sure this matches your database name
 

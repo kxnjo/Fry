@@ -1,6 +1,10 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for
 import mysql.connector
-import config
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv('config.env')
 from auth_utils import login_required  # persistent login
 import random, datetime
 
@@ -13,10 +17,10 @@ review_bp = Blueprint("review_bp", __name__)
 def create_connection():
     # Replace with your database connection details
     return mysql.connector.connect(
-        host=config.HOST,
-        user=config.USER,
-        password=config.PASSWORD,
-        database=config.DATABASE,
+        host=os.environ.get("DB_HOST"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASSWORD"),
+        database=os.environ.get("DB_DATABASE"),
     )
 
 @review_bp.route('/test-db-connection')

@@ -8,16 +8,20 @@ import mysql.connector
 
 # Add the root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-import config
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv('config.env')
 
 
 def create_connection():
     # Replace with your database connection details
     return mysql.connector.connect(
-        host=config.HOST,
-        user=config.USER,
-        password=config.PASSWORD,
-        database=config.DATABASE,
+        host=os.environ.get("DB_HOST"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASSWORD"),
+        database=os.environ.get("DB_DATABASE"),
     )
 
 

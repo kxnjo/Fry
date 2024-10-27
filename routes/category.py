@@ -1,6 +1,10 @@
 from flask import Blueprint, render_template, request
 import mysql.connector
-import config
+
+from dotenv import load_dotenv
+import os
+
+load_dotenv('config.env')
 
 # Create a Blueprint object
 category_bp = Blueprint("category_bp", __name__)
@@ -9,10 +13,10 @@ category_bp = Blueprint("category_bp", __name__)
 def create_connection():
     # Replace with your database connection details
     return mysql.connector.connect(
-        host=config.HOST,
-        user=config.USER,
-        password=config.PASSWORD,
-        database=config.DATABASE,
+        host=os.environ.get("DB_HOST"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASSWORD"),
+        database=os.environ.get("DB_DATABASE"),
     )
 
 # route to view all categories
