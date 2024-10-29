@@ -9,7 +9,6 @@ load_dotenv('config.env')
 # Create a Blueprint object
 developer_bp = Blueprint("developer_bp", __name__)
 
-print(f'this is user {os.environ.get("DB_HOST")}')
 def create_connection():
     # Replace with your database connection details
     return mysql.connector.connect(

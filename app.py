@@ -7,15 +7,15 @@ load_dotenv('config.env')
 from datetime import timedelta
 
 # import routes
-from routes.users import user_bp
-from routes.game import game_bp
-from routes.sample import sample_bp
-from routes.review import review_bp
-from routes.category import category_bp
-from routes.developer import developer_bp
-from routes.friend import friendlist_bp
-from routes.wishlist import wishlist_bp
-from routes.owned_game import owned_game_bp
+from mysql_routes.users import user_bp
+from mysql_routes.game import game_bp
+from mysql_routes.sample import sample_bp
+from mysql_routes.review import review_bp
+from mysql_routes.category import category_bp
+from mysql_routes.developer import developer_bp
+from mysql_routes.friend import friendlist_bp
+from mysql_routes.wishlist import wishlist_bp
+from mysql_routes.owned_game import owned_game_bp
 
 # MongoDB
 from mongo_cfg import noSQL_init
