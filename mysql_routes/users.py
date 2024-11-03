@@ -1,10 +1,19 @@
-from flask import Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
+from flask import (
+    Blueprint,
+    jsonify,
+    render_template,
+    request,
+    url_for,
+    redirect,
+    session,
+    flash,
+)
 import mysql.connector
 
 from dotenv import load_dotenv
 import os
 
-load_dotenv('config.env')
+load_dotenv("config.env")
 import hashlib
 import json
 from datetime import date
@@ -16,9 +25,6 @@ from mysql_routes.owned_game import get_owned_game
 from mysql_routes.friend import get_dashboard_mutual_friends
 from mysql_routes.game import getGameNum, getGames, get_all_games
 
-# mongo
-from mongo_cfg import get_NoSQLdb
-
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
 
@@ -27,7 +33,7 @@ user_bp = Blueprint("user_bp", __name__)
 def create_connection():
     """
     Create and return a connection to the MySQL database.
-    
+
     Returns:
     mysql.connector.connection.MySQLConnection: A connection object to the database.
     """
@@ -39,41 +45,12 @@ def create_connection():
         database=config.DATABASE,
     )
 
-# MONGO connections
-@user_bp.route('/test-db-connection')
-def mongo_connection():
-
-    db = get_NoSQLdb()
-
-    if db is None:
-        return "Database not initialized!!", 500
-    try:
-        user_collection = db["user"]
-
-        # Retrieve all documents
-        documents = user_collection.find()
-
-        all_users = []
-        # Iterate through documents and print them
-        for doc in documents:
-            all_users.append({
-                "user_id": doc["user_id"],
-                "username": doc["username"],
-                "email": doc["email"],
-                "password": doc["password"],
-                "created_on": doc["created_on"]
-            })
-
-        return f"Successfully connected to MongoDB. all_users: {all_users}", 200
-    except Exception as e:
-        return f"Failed to connect to MongoDB: {e}", 500
-
 
 # other functions for accessiblity
 def getUserNum():
     """
     Get the total number of users in the database.
-    
+
     Returns:
     int: The total number of users.
     """
@@ -83,130 +60,108 @@ def getUserNum():
 def checkUser(cur, name, email):
     """
     Check if a username or email already exists in the database.
-    
+
     Args:
     cur (mysql.connector.cursor.MySQLCursor): The database cursor.
     name (str): The username to check.
     email (str): The email to check.
-    
+
     Returns:
     dict: A dictionary containing message, status, and uniqueness flag.
     """
     msg, status = "", ""
     unique = True
 
-    
+    # Check for existing username
+    cur.execute(
+        """
+        SELECT user_id
+        FROM user
+        WHERE username = %s
+    """,
+        (name,),
+    )
+    user_by_name = cur.fetchall()
 
-    # # Check for existing username
-    # cur.execute(
-    #     """
-    #     SELECT user_id 
-    #     FROM user 
-    #     WHERE username = %s
-    # """,
-    #     (name,),
-    # )
-    # user_by_name = cur.fetchall()
+    # if someone already registered username
+    if len(user_by_name) > 0:
+        msg = "Username is already taken! Please choose a different username."
+        status = "warning"
+        unique = False
 
-    # # if someone already registered username
-    # if len(user_by_name) > 0:
-    #     msg = "Username is already taken! Please choose a different username."
-    #     status = "warning"
-    #     unique = False
+        return {"msg": msg, "status": status, "unique": unique}
 
-    #     return {"msg": msg, "status": status, "unique": unique}
+    # Check for existing email
+    cur.execute(
+        """
+        SELECT user_id
+        FROM user
+        WHERE email = %s
+    """,
+        (email,),
+    )
+    user_by_email = cur.fetchall()
 
-    # # Check for existing email
-    # cur.execute(
-    #     """
-    #     SELECT user_id 
-    #     FROM user 
-    #     WHERE email = %s
-    # """,
-    #     (email,),
-    # )
-    # user_by_email = cur.fetchall()
+    # if someone already registered email
+    if len(user_by_email) > 0:
+        msg = "Email is already registered! Please use a different email."
+        status = "warning"
+        unique = False
 
-    # # if someone already registered email
-    # if len(user_by_email) > 0:
-    #     msg = "Email is already registered! Please use a different email."
-    #     status = "warning"
-    #     unique = False
+        return {"msg": msg, "status": status, "unique": unique}
 
-    #     return {"msg": msg, "status": status, "unique": unique}
-
-    # return {"msg": msg, "status": status, "unique": unique}
+    return {"msg": msg, "status": status, "unique": unique}
 
 
 def getUsers(start=0, end=10):
     """
     Get a list of users within a specified range.
-    
+
     Args:
     start (int): The starting index.
     end (int): The ending index.
-    
+
     Returns:
     list: A list of user dictionaries.
     """
-    # MONGO = = =
-    user_collection = db["user"]
-
-    # Retrieve all documents
-    user_documents = user_collection.find()
-
-    all_users = []
-    # Iterate through documents and print them
-    for doc in user_documents:
-        all_users.append({
-            "user_id": doc["user_id"],
-            "username": doc["username"],
-            "email": doc["email"],
-            "password": doc["password"],
-            "created_on": doc["created_on"]
-        })
-
-    return all_users
-
-    
     # MYSQL = = =
     # start connection
-    # conn = create_connection()
-    # if conn is None:
-    #     return "Failed to connect to database"
-    # try:
-    #     cur = conn.cursor(dictionary=True)
-    #     # execute query
-    #     cur.execute(
-    #         """
-    #             SELECT * FROM (
-    #                 SELECT user_id, username, email, created_on, role, 
-    #                 ROW_NUMBER() OVER (ORDER BY user_id) as row_num 
-    #                 FROM user) as temp_table
-    #             WHERE row_num > %s AND row_num <= %s
-    #         """,
-    #         (start, end),
-    #     )
-    #     allUsers = cur.fetchall()
+    conn = create_connection()
+    if conn is None:
+        return "Failed to connect to database"
+    try:
+        cur = conn.cursor(dictionary=True)
+        # execute query
+        cur.execute(
+            """
+                SELECT * FROM (
+                    SELECT user_id, username, email, created_on, role,
+                    ROW_NUMBER() OVER (ORDER BY user_id) as row_num
+                    FROM user) as temp_table
+                WHERE row_num > %s AND row_num <= %s
+            """,
+            (start, end),
+        )
+        allUsers = cur.fetchall()
 
-    #     # close connection
-    #     cur.close()
-    #     conn.close()
+        # close connection
+        cur.close()
+        conn.close()
 
-    #     return allUsers
+        return allUsers
 
-    # except mysql.connector.Error as e:
-    #     print(f"Error: {e}")
-    #     return f"Error retrieving table: {e}"
+    except mysql.connector.Error as e:
+        print(f"Error: {e}")
+        return f"Error retrieving table: {e}"
 
 
 def getUser(user_id):
     """
     Get user details by user ID.
-    
+
     Args:
     user_id (str): The ID of the user.
-    
+
     Returns:
     dict: A dictionary containing user details.
     """
@@ -242,10 +197,10 @@ def getUser(user_id):
 def checkuid(uid):
     """
     Check if a user ID exists in the database.
-    
+
     Args:
     uid (str): The user ID to check.
-    
+
     Returns:
     list: A list of matching user IDs.
     """
@@ -281,7 +236,7 @@ def checkuid(uid):
 def getuid():
     """
     Generate a new unique user ID.
-    
+
     Returns:
     str: A new unique user ID.
     """
@@ -518,7 +473,6 @@ def dashboard():
         else:
             mutual_friends = get_dashboard_mutual_friends(curr_id, session["user_id"])
 
-
         return render_template(
             "user/user_dashboard.html",
             user=user,
@@ -545,14 +499,14 @@ def create_user():
             cur = conn.cursor(dictionary=True)
 
             # handle the fields retrieved, make sure that it aligns with db
-            name = request.form['username']
-            email = request.form['email']
-            password = request.form['password']
-            confirm_password = request.form['confirm_password']
-            role = request.form['role']
+            name = request.form["username"]
+            email = request.form["email"]
+            password = request.form["password"]
+            confirm_password = request.form["confirm_password"]
+            role = request.form["role"]
 
             if password != confirm_password:
-                flash('Passwords do not match!', 'danger')
+                flash("Passwords do not match!", "danger")
                 print("it does not match or sth")
                 return redirect(request.referrer or url_for("user_bp.dashboard"))
 
@@ -596,6 +550,7 @@ def create_user():
             conn.close()
 
     return redirect(request.referrer or url_for("user_bp.dashboard"))
+
 
 @user_bp.route("/edit-user/<string:user_id>", methods=["POST"])
 @login_required
