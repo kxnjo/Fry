@@ -1,13 +1,14 @@
 from flask import Flask, render_template, request, jsonify, Blueprint, session
-
-from dotenv import load_dotenv
-import os
-
-load_dotenv('config.env')
 from datetime import timedelta
 
+# MongoDB
+from dotenv import load_dotenv
+import os
+load_dotenv('config.env')
+from mongo_cfg import noSQL_init
+
 # import routes
-from mysql_routes.users import user_bp
+from mongo_routes.users import user_bp
 from mysql_routes.game import game_bp
 from mysql_routes.sample import sample_bp
 from mysql_routes.review import review_bp
@@ -16,9 +17,6 @@ from mysql_routes.developer import developer_bp
 from mysql_routes.friend import friendlist_bp
 from mysql_routes.wishlist import wishlist_bp
 from mysql_routes.owned_game import owned_game_bp
-
-# MongoDB
-from mongo_cfg import noSQL_init
 
 app = Flask(__name__)
 noSQL_init(app)

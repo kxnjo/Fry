@@ -1,44 +1,67 @@
-from flask import Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
+from flask import app, Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
 import mysql.connector
+import pymongo
 
+# images import
+from bson.binary import Binary
+import base64
+
+# load up configurations
 from dotenv import load_dotenv
 import os
-
 load_dotenv('config.env')
+
 import hashlib
 import json
 from datetime import date
 from auth_utils import login_required  # persistent login
 
-# integrating everyone's parts
-from routes.review import user_written_reviews
-from routes.owned_game import get_owned_game
-from routes.friend import get_dashboard_mutual_friends
-from routes.game import getGameNum, getGames, get_all_games
+# MongoDB setup
+import mongo_cfg
 
-# mongo
-from mongo_cfg import get_NoSQLdb
+# integrating everyone's parts
+from mysql_routes.review import user_written_reviews
+from mysql_routes.owned_game import get_owned_game
+from mysql_routes.friend import get_dashboard_mutual_friends
+from mysql_routes.game import getGameNum, getGames, get_all_games
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
+
+db = None
+
+def initialize_database():
+    """Helper function to initialize the MongoDB user collection."""
+    global db
+    if db is None:
+        # Attempt to get an existing connection first
+        db = mongo_cfg.get_NoSQLdb()
+        
+        # If no existing connection, initialize a new one
+        if db is None:
+            db = mongo_cfg.noSQL_init(app)
+            
+    # After ensuring db is initialized, return the user collection if db is available
+    if db is not None:
+        return db["user"]
+    else:
+        raise Exception("Failed to initialize MongoDB connection")
 
 
 # MONGO connections
 @user_bp.route('/test-db-connection')
 def mongo_connection():
-
-    db = get_NoSQLdb()
-
+    # Ensure db.user is initialized
+    initialize_database()  
     if db is None:
         return "Database not initialized!!", 500
+
     try:
-        user_collection = db["user"]
-
         # Retrieve all documents
-        documents = user_collection.find()
+        documents = db.user.find()
 
-        all_users = []
         # Iterate through documents and print them
+        all_users = []
         for doc in documents:
             all_users.append({
                 "user_id": doc["user_id"],
@@ -48,81 +71,15 @@ def mongo_connection():
                 "created_on": doc["created_on"]
             })
 
+        for doc in documents:
+            print(doc)
+
         return f"Successfully connected to MongoDB. all_users: {all_users}", 200
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
 
-
 # other functions for accessiblity
-def getUserNum():
-    """
-    Get the total number of users in the database.
-    
-    Returns:
-    int: The total number of users.
-    """
-    return len(getUsers())
-
-
-def checkUser(cur, name, email):
-    """
-    Check if a username or email already exists in the database.
-    
-    Args:
-    cur (mysql.connector.cursor.MySQLCursor): The database cursor.
-    name (str): The username to check.
-    email (str): The email to check.
-    
-    Returns:
-    dict: A dictionary containing message, status, and uniqueness flag.
-    """
-    msg, status = "", ""
-    unique = True
-
-    
-
-    # # Check for existing username
-    # cur.execute(
-    #     """
-    #     SELECT user_id 
-    #     FROM user 
-    #     WHERE username = %s
-    # """,
-    #     (name,),
-    # )
-    # user_by_name = cur.fetchall()
-
-    # # if someone already registered username
-    # if len(user_by_name) > 0:
-    #     msg = "Username is already taken! Please choose a different username."
-    #     status = "warning"
-    #     unique = False
-
-    #     return {"msg": msg, "status": status, "unique": unique}
-
-    # # Check for existing email
-    # cur.execute(
-    #     """
-    #     SELECT user_id 
-    #     FROM user 
-    #     WHERE email = %s
-    # """,
-    #     (email,),
-    # )
-    # user_by_email = cur.fetchall()
-
-    # # if someone already registered email
-    # if len(user_by_email) > 0:
-    #     msg = "Email is already registered! Please use a different email."
-    #     status = "warning"
-    #     unique = False
-
-    #     return {"msg": msg, "status": status, "unique": unique}
-
-    # return {"msg": msg, "status": status, "unique": unique}
-
-
-def getUsers(start=0, end=10):
+def get_all_users(start=0, end=10):
     """
     Get a list of users within a specified range.
     
@@ -134,10 +91,13 @@ def getUsers(start=0, end=10):
     list: A list of user dictionaries.
     """
     # MONGO = = =
-    user_collection = db["user"]
-
     # Retrieve all documents
-    user_documents = user_collection.find()
+    # Ensure db.user is initialized
+    initialize_database()  
+    if db is None:
+        return "Database not initialized!!", 500
+        
+    user_documents = db.user.find()
 
     all_users = []
     # Iterate through documents and print them
@@ -152,111 +112,72 @@ def getUsers(start=0, end=10):
 
     return all_users
 
+def get_user_num():
+    """
+    Get the total number of users in the database.
+    
+    Returns:
+    int: The total number of users.
+    """
+    return len(get_all_users())
 
-def getUser(user_id):
+def generate_id():
+    # Retrieve all user_ids that match the pattern `u<number>`
+    existing_ids = db.user.find(
+        {"user_id": {"$regex": "^u\\d+$"}}, 
+        {"user_id": 1}
+    )
+    
+    # Extract numeric parts of user_ids into a sorted list
+    used_numbers = sorted(int(doc["user_id"][1:]) for doc in existing_ids)
+    
+    # Find the lowest available ID by checking for gaps
+    new_id_number = used_numbers[-1] + 1
+
+    # Format the new ID
+    new_user_id = f"u{new_id_number}"
+    return new_user_id
+
+def get_user(name="", email="", uid=""):
     """
     Get user details by user ID.
     
     Args:
-    user_id (str): The ID of the user.
+    name (str): The user's username.
+    email (str): The user's email address
+    uid (str): The user's unique id (u<id>)
     
     Returns:
     dict: A dictionary containing user details.
     """
-    user = {}
-    # start connection
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(dictionary=True)
-        # execute query
-        cur.execute(
-            """
-                SELECT user_id, username, email
-                FROM user 
-                WHERE user_id = %s
-            """,
-            (user_id,),
-        )
-        user = cur.fetchall()[0]
 
-        # close connection
-        cur.close()
-        conn.close()
+    # Ensure db.user is initialized
+    initialize_database()  
+    if db.user is None:
+        return "Collection not initialized!!", 500
+
+    try:
+        query = {"$or": [{"username": name}, {"email": email}, {"user_id": uid}]}
+        user = db.user.find_one(query)
 
         return user
 
-    except mysql.connector.Error as e:
+    except pymongo.error.PyMongoError as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
-
-
-def checkuid(uid):
-    """
-    Check if a user ID exists in the database.
-    
-    Args:
-    uid (str): The user ID to check.
-    
-    Returns:
-    list: A list of matching user IDs.
-    """
-    userlist = []
-    # start connection
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(dictionary=True)
-        # execute query
-        cur.execute(
-            """
-            SELECT user_id 
-            FROM user 
-            WHERE user_id = %s
-        """,
-            (uid,),
-        )
-        userlist = cur.fetchall()
-
-        # close connection
-        cur.close()
-        conn.close()
-
-        return userlist
-
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving table: {e}"
-
-
-def getuid():
-    """
-    Generate a new unique user ID.
-    
-    Returns:
-    str: A new unique user ID.
-    """
-    uid = getUserNum() + 1
-
-    while len(checkuid(f"u{uid}")) != 0:
-        uid += 1
-
-    return f"u{uid}"
 
 
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
     """Handle user login."""
     if request.method == "POST":
-        conn = create_connection()
-        if conn is None:
-            return "Failed to connect to database"
+
+        # Ensure db.user is initialized
+        initialize_database()  
+        if db.user is None:
+            return "Collection not initialized!!", 500
 
         try:
-            cur = conn.cursor(dictionary=True)
-
             # handle the fields retrieved, make sure that it aligns with db
             username_email = request.form["username_email"]
             password = request.form["password"]
@@ -264,19 +185,10 @@ def login():
             # hash the password
             hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
 
-            # Execute the SQL statement
-            cur.execute(
-                """
-                    SELECT user_id, username, password, role 
-                    FROM user 
-                    WHERE email = %s OR username = %s
-                """,
-                (username_email, username_email),
-            )
-            user = cur.fetchone()
-            cur.close()
-            conn.close()
+            # Execute the Mongodb statement
+            user = get_user(username_email, username_email, "") # can use either username or email
 
+            # error handling: if username/email does not exist, user == None, return error. If password wrong also, return error.
             if not user or user["password"] != hashed_input_password:
                 flash("Incorrect username/password", "danger")
                 return redirect(url_for("user_bp.login"))
@@ -288,10 +200,14 @@ def login():
 
             return redirect(url_for("home"))
 
-        except mysql.connector.Error as e:
-            flash(f"Error retrieving table: {e}", "danger")
+        except pymongo.errors.PyMongoError as e:
+            # Handle any pymongo-related error
+            flash(f"An unknown error occurred: {e}", "danger")
+            print(f"An unknown error occurred: {e}")
             return redirect(url_for("user_bp.login"))
+            
 
+    # if the method is GET instead, load the html
     return render_template("user/login.html")
 
 
@@ -299,58 +215,45 @@ def login():
 def register():
     """Handle user registration."""
     if request.method == "POST":
-        conn = create_connection()
-        if conn is None:
-            return "Failed to connect to database"
-        try:
-            cur = conn.cursor(dictionary=True)
 
-            # handle the fields retrieved, make sure that it aligns with db
-            name = request.form["name"]
-            email = request.form["email"]
-            password = request.form["password"]
+        # Ensure db.user is initialized
+        initialize_database()  
+        if db is None:
+            return "Database not initialized!!", 500
 
-            # check if there is no existing user with same username/email
-            checkUnique = checkUser(cur, name, email)
+        # handle the fields retrieved, make sure that it aligns with db
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
 
-            if not checkUnique["unique"]:
-                flash(checkUnique["msg"], checkUnique["status"])
-                return redirect(url_for("user_bp.register"))
+        # hash the password
+        hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
 
-            else:
-                # other details
-                uid = getuid()
+        try: 
+            new_user = {
+                "user_id": generate_id(),
+                "username": name,
+                "email": email, 
+                "password": hashed_input_password,
+                "role": "user",
+                "created_on": date.today().isoformat()
+            }
+            db.user.insert_one(new_user)
+            print(f"Create user {name} success !")
 
-                role = "user"
-                created_on = date.today()
-                # hash the password
-                hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
+            return redirect( url_for("user_bp.login") )  # send them back to login page
+            
+        except pymongo.errors.DuplicateKeyError:
+            flash("User exists! Please use another username/password", "warning")
+            return redirect(url_for("user_bp.register"))
 
-                # table query
-                create_table_query = """
-                    INSERT INTO user (user_id, username, email, password, created_on, role) 
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """
-
-                # Execute the SQL statement
-                cur.execute(
-                    create_table_query,
-                    (uid, name, email, hashed_input_password, created_on, role),
-                )
-                conn.commit()
-
-                return redirect(
-                    url_for("user_bp.login")
-                )  # send them back to login page
-
-        except mysql.connector.Error as e:
-            conn.rollback()
-            print(f"Error: {e}")
-            return f"Error creating table: {e}"
-        finally:
-            cur.close()
-            conn.close()
-
+        except pymongo.errors.PyMongoError as e:
+            # Handle any pymongo-related error
+            flash(f"An unknown error occurred: {e}", "danger")
+            print(f"An unknown error occurred: {e}")
+            return redirect(url_for("user_bp.register"))
+                
+    # if the method is GET instead, load the html
     return render_template("user/register.html")
 
 
@@ -358,43 +261,35 @@ def register():
 def forgot():
     """Handle password reset."""
     if request.method == "POST":
+
+        # Ensure db is initialized
+        initialize_database()  
+        if db is None:
+            return "Database not initialized!!", 500
+            
         # Retrieve form data
         username_email = request.form["username_email"]
         password = request.form["password"]
         # hash the password
         hashed_password = hashlib.sha256(password.encode()).hexdigest()
 
-        # start connection
-        conn = create_connection()
-        if conn is None:
-            return "Failed to connect to database"
         try:
-            cur = conn.cursor(dictionary=True)
-            # execute query
-            cur.execute(
-                """
-                    UPDATE user SET password = %s
-                    WHERE username = %s OR email = %s
-                """,
-                (
-                    hashed_password,
-                    username_email,
-                    username_email,
-                ),
+            result = db.user.update_one(
+                {"$or": [ {"username": username_email}, {"email": username_email}]},  # filter to find each user by either username or email
+                {"$set": {"password": hashed_password}}
             )
-            # save to db
-            conn.commit()
 
-            # close connection
-            cur.close()
-            conn.close()
+            if result.modified_count > 0:
+                print(f"successfully updated password for {username_email}")
+                return redirect(url_for("user_bp.login"))
+            else: 
+                raise Exception("No document matched the filter. Password update failed.")
 
-            return redirect(url_for("user_bp.login"))
-
-        except mysql.connector.Error as e:
+        except (pymongo.errors.PyMongoError, Exception) as e:
             print(f"Error: {e}")
-            return f"Error retrieving table: {e}"
-
+            return redirect(url_for("user_bp.forgot"))
+            
+    # if the method is GET instead, load the html
     return render_template("user/forgot.html")
 
 
@@ -405,6 +300,7 @@ def logout():
     return redirect(url_for("home"))
 
 
+# TODO: DASHBOARD (maybe half done?? idk i havent fully tested it)
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -419,7 +315,7 @@ def dashboard():
         all_games = []
 
         # User pagination logic
-        all_users_num = getUserNum()  # Retrieve the total number of users
+        all_users_num = get_user_num()  # Retrieve the total number of users
         user_num_per_page = 10
         user_total_pages = (
             all_users_num + user_num_per_page - 1
@@ -428,7 +324,7 @@ def dashboard():
         # Paginate the users
         user_start = (page - 1) * user_num_per_page
         user_end = user_start + user_num_per_page
-        all_users = getUsers(user_start, user_end)  # Get users for current page
+        all_users = get_all_users(user_start, user_end)  # Get users for current page
 
         # Game pagination logic
         all_games_num = getGameNum()  # Retrieve the total number of games
@@ -457,7 +353,11 @@ def dashboard():
         games, user_reviews, mutual_friends = None, None, None
 
         # get user details
-        user = getUser(curr_id)
+        user = get_user("", "", curr_id)
+        if "image" in user:
+            encoded_image = "data:image/jpeg;base64," + base64.b64encode(user["image"]).decode("utf-8")
+        else:
+            encoded_image = "https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
 
         # INSERT GAMES OWNED
         games = get_owned_game(curr_id)
@@ -478,6 +378,7 @@ def dashboard():
             games=games,
             user_reviews=user_reviews,
             mutual_friends=mutual_friends,
+            profile_pic = encoded_image
         )
 
     elif session["role"] == "developer":
@@ -486,107 +387,103 @@ def dashboard():
         return render_template("user/developer_dashboard.html", games=games)
 
 
+# TODO: roadblock- i dont know how to display error message while modal is open heh
 @user_bp.route("/create-user", methods=["POST"])
 @login_required
 def create_user():
     """Handle user registration."""
     if request.method == "POST":
-        conn = create_connection()
-        if conn is None:
-            return "Failed to connect to database"
+        
+        # Ensure db is initialized
+        initialize_database()  
+        if db is None:
+            return "Database not initialized!!", 500
+
+        # Get the form data
+        name = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        role = request.form['role']
+        hashed_input_password = hashlib.sha256(password.encode()).hexdigest()  # hash the password
+
+        # Password confirmation check
+        if password != confirm_password:
+            flash('Passwords do not match!', 'danger')
+            return render_template("user/admin_dashboard.html", show_create_modal=True, form_data={"username": name, "email": email, "role": role})
+
+        # Check if username or email already exists
+        if db.user.find_one({"$or": [{"username": name}, {"email": email}]}):
+            flash("User exists! Please use another username/email", "warning")
+            return render_template("user/admin_dashboard.html", show_create_modal=True, form_data={"username": name, "email": email, "role": role})
+
+        # Proceed with creating the user if no errors
         try:
-            cur = conn.cursor(dictionary=True)
+            new_user = {
+                "user_id": generate_id(),
+                "username": name,
+                "email": email, 
+                "password": hashed_input_password,
+                "role": role,
+                "created_on": date.today().isoformat()
+            }
+            db.user.insert_one(new_user)
+            print(f"Successfully created user {name}")
+            return redirect(url_for("user_bp.login"))
 
-            # handle the fields retrieved, make sure that it aligns with db
-            name = request.form['username']
-            email = request.form['email']
-            password = request.form['password']
-            confirm_password = request.form['confirm_password']
-            role = request.form['role']
+        except pymongo.errors.PyMongoError as e:
+            flash(f"An unknown error occurred: {e}", "danger")
+            return render_template("user/admin_dashboard.html", show_create_modal=True, form_data={"username": name, "email": email, "role": role})
 
-            if password != confirm_password:
-                flash('Passwords do not match!', 'danger')
-                print("it does not match or sth")
-                return redirect(request.referrer or url_for("user_bp.dashboard"))
+    # GET request: render the registration page normally
+    return render_template("user/admin_dashboard.html")
 
-            # check if there is no existing user with same username/email
-            checkUnique = checkUser(cur, name, email)
-
-            if not checkUnique["unique"]:
-                flash(checkUnique["msg"], checkUnique["status"])
-                return redirect(url_for("user_bp.register"))
-
-            else:
-                # other details
-                uid = getuid()
-
-                created_on = date.today()
-                # hash the password
-                hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
-
-                # table query
-                create_table_query = """
-                    INSERT INTO user (user_id, username, email, password, created_on, role) 
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """
-
-                # Execute the SQL statement
-                cur.execute(
-                    create_table_query,
-                    (uid, name, email, hashed_input_password, created_on, role),
-                )
-                conn.commit()
-                print(f"successfully created user {name}")
-
-                return redirect(request.referrer or url_for("user_bp.dashboard"))
-
-        except mysql.connector.Error as e:
-            conn.rollback()
-            print(f"Error: {e}")
-            return f"Error creating table: {e}"
-        finally:
-            cur.close()
-            conn.close()
-
-    return redirect(request.referrer or url_for("user_bp.dashboard"))
 
 @user_bp.route("/edit-user/<string:user_id>", methods=["POST"])
 @login_required
 def edit_user(user_id):
     """Edit user details."""
+
+    # Ensure db is initialized
+    initialize_database()  
+    if db is None:
+        return "Database not initialized!!", 500
+
     # Retrieve form data
     username = request.form["username"]
     email = request.form["email"]
+    updated_user = {
+        "username": username,
+        "email": email
+    }
 
-    # start connection
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
+    # update profile picture
+    profile_picture = request.files.get("profile-picture")
+    if profile_picture and profile_picture.filename != '':
+        print("Profile picture detected!")
+        encoded_img = Binary(profile_picture.read())  # Convert image to binary
+        updated_user["image"] = encoded_img
+    
+    print("Updated user document:", updated_user)
+
     try:
-        cur = conn.cursor(dictionary=True)
-        # execute query
-        cur.execute(
-            """
-                UPDATE user SET username = %s, email = %s 
-                WHERE user_id = %s
-            """,
-            (
-                username,
-                email,
-                user_id,
-            ),
+        result = db.user.update_one(
+            {"user_id": user_id},  # filter to find user by user_id
+            {"$set": updated_user}
         )
 
-        # save to db
-        conn.commit()
+        if result.modified_count > 0:
+            print(f"successfully updated user details for {username_email}")
+            return redirect(url_for("user_bp.dashboard"))
+        else:
+            print("No document matched the filter, or no changes were made.")
+            flash("Update failed. No changes were made.", "danger")
+            return redirect(url_for("user_bp.dashboard"))
 
-        # close connection
-        cur.close()
-        conn.close()
 
-    except mysql.connector.Error as e:
+    except (pymongo.errors.PyMongoError, Exception) as e:
         print(f"Error: {e}")
-        return f"Error retrieving table: {e}"
+        return redirect(url_for("user_bp.dashboard"))
 
     return redirect(request.referrer or url_for("user_bp.dashboard"))
 
@@ -595,31 +492,18 @@ def edit_user(user_id):
 @login_required
 def delete_user(user_id):
     """Delete a user account."""
-    conn = create_connection()
-    if conn is None:
-        return "Failed to connect to database"
-    try:
-        cur = conn.cursor(dictionary=True)
 
-        # delete user
-        cur.execute(
-            """
-                DELETE FROM user
-                WHERE user_id = %s
-            """,
-            (user_id,),
-        )
+    # Ensure db is initialized
+    initialize_database()  
+    if db is None:
+        return "Database not initialized!!", 500
 
-        # save to db
-        conn.commit()
-
-        # close connection
-        cur.close()
-        conn.close()
-
-    except mysql.connector.Error as e:
-        print(f"Error: {e}")
-        return f"Error retrieving table: {e}"
+    result = db.user.delete_one({"user_id": user_id})
+    # Check if a document was deleted
+    if result.deleted_count > 0:
+        print("Document deleted successfully.")
+    else:
+        print("No document matched the filter.")
 
     if user_id == session["user_id"]:
         session.clear()

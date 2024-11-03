@@ -27,6 +27,8 @@ def noSQL_init(app: Flask):
         print("Collections:", db.list_collection_names())  # Check available collections
     except Exception as e:
         print("Failed to connect to MongoDB:", e)
+    
+    return db
 
 
 # Optionally, you can create a function to return the db variable

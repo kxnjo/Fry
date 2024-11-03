@@ -1,4 +1,19 @@
-{% extends "index.html" %} {% block content %}
+{% extends "index.html" %} 
+
+{% block scripts %}
+<!-- Show modal if there's an error -->
+<script>
+	document.addEventListener("DOMContentLoaded", function() {
+		{% if show_create_modal %}
+			// Open the modal if there's an error
+			var modal = new bootstrap.Modal(document.getElementById("createUserModal"));
+			modal.show();
+		{% endif %}
+	});
+</script>
+{% endblock %}
+
+{% block content %}
 <div class="container mt-4">
 	<ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
 		<li class="nav-item" role="presentation">
@@ -217,12 +232,12 @@
 						<!-- Username Field -->
 						<div class="mb-3">
 							<label for="username" class="form-label">Username</label>
-							<input type="text" class="form-control" id="username" name="username" required />
+							<input type="text" name="username" class="form-control" id="username" value="{{ form_data.username if form_data else '' }}" required />
 						</div>
 						<!-- Email Field -->
 						<div class="mb-3">
 							<label for="email" class="form-label">Email</label>
-							<input type="email" class="form-control" id="email" name="email" required />
+							<input type="email" name="email" class="form-control" id="email" value="{{ form_data.email if form_data else '' }}" required />
 						</div>
 						<!-- Password Field -->
 						<div class="mb-3">
@@ -238,9 +253,9 @@
 						<div class="mb-3">
 							<label for="role" class="form-label">Role</label>
 							<select class="form-select" id="role" name="role" required>
-								<option value="user">User</option>
-								<option value="admin">Admin</option>
-								<option value="developer">Developer</option>
+								<option value="user" {% if form_data and form_data.role == "user" %}selected{% endif %}>User</option>
+								<option value="admin" {% if form_data and form_data.role == "admin" %}selected{% endif %}>Admin</option>
+								<option value="developer" {% if form_data and form_data.role == "developer" %}selected{% endif %}>Developer</option>
 							</select>
 						</div>
 					</div>

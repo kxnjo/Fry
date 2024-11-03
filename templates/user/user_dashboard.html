@@ -7,10 +7,10 @@
 			<div class="card mb-4 border-0 bg-transparent text-center">
                 <div class="d-flex justify-content-center">
                     <img
-                        src="https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
+                        src="{{ profile_pic }}"
                         alt="User Image"
                         class="card-img-top img-fluid rounded-circle" 
-                        style="max-width: 15vw; height: auto;"/>
+                        style="max-width: 15vw; height: auto; aspect-ratio: 1; object-fit: cover;"/>
                 </div>
                 <div class="card-body text-center">
                     <h4 class="card-title">{{ user.username }}</h4>
@@ -180,7 +180,7 @@
 		<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
-					<form action="{{ url_for('user_bp.edit_user', user_id=user.user_id) }}" method="POST">
+					<form action="{{ url_for('user_bp.edit_user', user_id=user.user_id) }}" method="POST" enctype="multipart/form-data">
 						<div class="modal-header">
 							<h5 class="modal-title" id="editUserModalLabel">Edit User Details</h5>
 							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -197,6 +197,13 @@
 								<label for="email" class="form-label">Email</label>
 								<input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required />
 							</div>
+
+                            <!-- Upload an image -->
+                            <div class="mb-3">
+                                <label for="profile-picture" class="form-label">Upload Profile Picture</label>
+                                <input class="form-control" type="file" id="profile-picture" name="profile-picture" accept="image/*">
+                            </div>
+
 						</div>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
