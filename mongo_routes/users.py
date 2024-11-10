@@ -107,7 +107,8 @@ def get_all_users(start=0, end=10):
             "username": doc["username"],
             "email": doc["email"],
             "password": doc["password"],
-            "created_on": doc["created_on"]
+            "created_on": doc["created_on"],
+            "role": doc["role"]
         })
 
     return all_users
@@ -304,6 +305,10 @@ def logout():
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
+    initialize_database()  
+    if db is None:
+        return "Database not initialized!!", 500
+
     """Display user or admin dashboard."""
     if session["role"] == "admin":
         # Get the current page number, set default to start from 1
@@ -382,9 +387,19 @@ def dashboard():
         )
 
     elif session["role"] == "developer":
-        games = get_all_games()[:10]
+        games = db.game.find()[:10]
 
-        return render_template("user/developer_dashboard.html", games=games)
+        all_games = []
+        for game in games:
+            if "image" in game:
+                game["image"] = "data:image/jpeg;base64," + base64.b64encode(game["image"]).decode("utf-8")
+            else:
+                game["image"] = None
+            
+            print(f"this is indiv game! {game}")
+            all_games.append(game)
+
+        return render_template("user/developer_dashboard.html", games=all_games)
 
 
 # TODO: roadblock- i dont know how to display error message while modal is open heh
@@ -429,7 +444,7 @@ def create_user():
             }
             db.user.insert_one(new_user)
             print(f"Successfully created user {name}")
-            return redirect(url_for("user_bp.login"))
+            return redirect(url_for("user_bp.dashboard"))
 
         except pymongo.errors.PyMongoError as e:
             flash(f"An unknown error occurred: {e}", "danger")
@@ -473,7 +488,7 @@ def edit_user(user_id):
         )
 
         if result.modified_count > 0:
-            print(f"successfully updated user details for {username_email}")
+            print(f"successfully updated user details for {username}")
             return redirect(url_for("user_bp.dashboard"))
         else:
             print("No document matched the filter, or no changes were made.")
