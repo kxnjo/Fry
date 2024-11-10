@@ -387,15 +387,10 @@ def dashboard():
         )
 
     elif session["role"] == "developer":
-        games = db.game.find()[:10]
+        games = db.new_game.find()[:10]
 
         all_games = []
-        for game in games:
-            if "image" in game:
-                game["image"] = "data:image/jpeg;base64," + base64.b64encode(game["image"]).decode("utf-8")
-            else:
-                game["image"] = None
-            
+        for game in games:            
             print(f"this is indiv game! {game}")
             all_games.append(game)
 
