@@ -6,7 +6,7 @@
 		<p class="lead">Your one-stop destination for all the best online games.</p>
 		<hr class="my-4" />
 		<p>Explore the latest releases, find your favorite classics, and discover new games to enjoy. Ready to dive in?</p>
-		{% if not session["user_id"] %}
+		{% if not session["_id"] %}
 		<a class="btn btn-primary btn-lg" href="{{ url_for('user_bp.login') }}" role="button">Log In</a>
 		{% endif %}
 		<a class="btn btn-success btn-lg" href="{{ url_for('game_bp.view_all_games') }}" role="button">View Games</a>

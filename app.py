@@ -44,6 +44,7 @@ app.register_blueprint(owned_game_bp, url_prefix="/owned_game")
 # routes == MAIN
 @app.route("/")
 def home():
+    print(f"session: {session}")
     return render_template("main/home.html")
 
 

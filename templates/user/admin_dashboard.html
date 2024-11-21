@@ -59,14 +59,14 @@
 				<tbody>
 					{% for user in users %}
 					<tr>
-						<td>{{ user.user_id }}</td>
+						<td>{{ user._id }}</td>
 						<td>{{ user.username }}</td>
 						<td>{{ user.email }}</td>
 						<td>{{ user.created_on }}</td>
 						<td>{{ user.role }}</td>
 						<td>
-							<button type="button" class="btn btn-warning btn-sm d-inline" data-bs-toggle="modal" data-bs-target="#editUserModal{{user.user_id}}">Edit Account</button>
-							<button type="button" class="btn btn-danger btn-sm d-inline" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{user.user_id}}">Delete Account</button>
+							<button type="button" class="btn btn-warning btn-sm d-inline" data-bs-toggle="modal" data-bs-target="#editUserModal{{user._id}}">Edit Account</button>
+							<button type="button" class="btn btn-danger btn-sm d-inline" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{user._id}}">Delete Account</button>
 						</td>
 					</tr>
 					{% endfor %}
@@ -131,10 +131,10 @@
 	<!-- Modals for User Management -->
 	{% for user in users %}
 	<!-- Modal for Editing User Details -->
-	<div class="modal fade" id="editUserModal{{user.user_id}}" tabindex="-1" aria-labelledby="editUserModalLabel{{user.user_id}}" aria-hidden="true">
+	<div class="modal fade" id="editUserModal{{user._id}}" tabindex="-1" aria-labelledby="editUserModalLabel{{user._id}}" aria-hidden="true">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<form action="{{ url_for('user_bp.edit_user', user_id=user.user_id) }}" method="POST">
+				<form action="{{ url_for('user_bp.edit_user', _id=user._id) }}" method="POST">
 					<div class="modal-header">
 						<h5 class="modal-title">Edit User Details</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -161,7 +161,7 @@
 	</div>
 
 	<!-- Modal for Deleting User -->
-	<div class="modal fade" id="deleteUserModal{{user.user_id}}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{user.user_id}}" aria-hidden="true">
+	<div class="modal fade" id="deleteUserModal{{user._id}}" tabindex="-1" aria-labelledby="deleteUserModalLabel{{user._id}}" aria-hidden="true">
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -173,7 +173,7 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-					<a href="{{ url_for('user_bp.delete_user', user_id=user.user_id) }}" class="btn btn-danger">Confirm Delete</a>
+					<a href="{{ url_for('user_bp.delete_user', _id=user._id) }}" class="btn btn-danger">Confirm Delete</a>
 				</div>
 			</div>
 		</div>

@@ -48,7 +48,7 @@
                                          alt="{{ game.title }}">
                                     <div>
                                         <h5 class="mb-1">{{ game.title }}</h5>
-                                        <small class="text-muted">ID: {{ game.game_id }}</small>
+                                        <small class="text-muted">ID: {{ game._id }}</small>
                                     </div>
                                 </div>
                             </td>
@@ -70,15 +70,15 @@
                             <td>
                                 <div class="col btn-group">
                                     <button class="btn btn-info" data-bs-toggle="modal" 
-                                            data-bs-target="#viewGameModal{{ game.game_id }}" title="View Details">
+                                            data-bs-target="#viewGameModal{{ game._id }}" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     <button class="btn btn-primary" data-bs-toggle="modal" 
-                                            data-bs-target="#editGameModal{{ game.game_id }}" title="Edit">
+                                            data-bs-target="#editGameModal{{ game._id }}" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button class="btn btn-danger" data-bs-toggle="modal" 
-                                            data-bs-target="#deleteGameModal{{ game.game_id }}" title="Delete">
+                                            data-bs-target="#deleteGameModal{{ game._id }}" title="Delete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -93,7 +93,7 @@
 
     <!-- View Game Modal -->
     {% for game in games %}
-    <div class="modal fade" id="viewGameModal{{ game.game_id }}" tabindex="-1">
+    <div class="modal fade" id="viewGameModal{{ game._id }}" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
@@ -120,7 +120,7 @@
                                         <dt class="col-sm-4">Categories:</dt>
                                         <dd class="col-sm-8">
                                             {% for category in game.categories %}
-                                            <span class="badge bg-secondary me-1">{{ category.name }}</span>
+                                            <span class="badge bg-secondary me-1">{{ category }}</span>
                                             {% endfor %}
                                         </dd>
                                     </dl>
@@ -134,7 +134,7 @@
     </div>
 
     <!-- Edit Game Modal -->
-    <div class="modal fade" id="editGameModal{{ game.game_id }}" tabindex="-1">
+    <div class="modal fade" id="editGameModal{{ game._id }}" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header text-white">
@@ -142,34 +142,33 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="{{ url_for('game_bp.edit_game', game_id=game.game_id) }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('game_bp.edit_game', game_id=game._id) }}" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">
-                                    <label for="title{{ game.game_id }}" class="form-label">Title</label>
-                                    <input type="text" class="form-control" id="title{{ game.game_id }}" 
+                                    <label for="title{{ game._id }}" class="form-label">Title</label>
+                                    <input type="text" class="form-control" id="title{{ game._id }}" 
                                            name="title" value="{{ game.title }}" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="release_date{{ game.game_id }}" class="form-label">Release Date</label>
-                                    <input type="date" class="form-control" id="release_date{{ game.game_id }}" 
+                                    <label for="release_date{{ game._id }}" class="form-label">Release Date</label>
+                                    <input type="date" class="form-control" id="release_date{{ game._id }}" 
                                            name="release_date" value="{{ game.release_date }}" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="price{{ game.game_id }}" class="form-label">Price</label>
+                                    <label for="price{{ game._id }}" class="form-label">Price</label>
                                     <div class="input-group">
                                         <span class="input-group-text">$</span>
-                                        <input type="number" step="0.01" class="form-control" id="price{{ game.game_id }}" 
+                                        <input type="number" step="0.01" class="form-control" id="price{{ game._id }}" 
                                                name="price" value="{{ '%.2f'|format(game.price) }}" required>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="categories{{ game.game_id }}" class="form-label">Categories</label>
-                                    <select class="form-select" id="categories{{ game.game_id }}" name="categories" multiple required>
+                                    <label for="categories{{ game._id }}" class="form-label">Categories</label>
+                                    <select class="form-select" id="categories{{ game._id }}" name="categories" multiple required>
                                         {% for category in categories %}
-                                        <option value="{{ category.id }}"
-                                                {% if category in game.categories %}selected{% endif %}>
-                                            {{ category.name }}
+                                        <option value="{{ category }}">
+                                            {{ category }}
                                         </option>
                                         {% endfor %}
                                     </select>
@@ -180,7 +179,7 @@
                                     <label class="form-label">Current Image</label>
                                     <img src="{{ game.image if game.image else url_for('static', filename='img/default_game.jpeg') }}" 
                                          class="img-fluid rounded mb-2" alt="{{ game.title }}">
-                                    <input type="file" class="form-control" id="game_image{{ game.game_id }}" name="game_image">
+                                    <input type="file" class="form-control" id="game_image{{ game._id }}" name="game_image">
                                 </div>
                             </div>
                         </div>
@@ -195,7 +194,7 @@
     </div>
 
     <!-- Delete Game Modal -->
-    <div class="modal fade" id="deleteGameModal{{ game.game_id }}" tabindex="-1">
+    <div class="modal fade" id="deleteGameModal{{ game._id }}" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header text-white">
@@ -207,7 +206,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <form action="{{ url_for('game_bp.delete_game', game_id=game.game_id) }}" method="POST">
+                    <form action="{{ url_for('game_bp.delete_game', game_id=game._id) }}" method="POST">
                         <button type="submit" class="btn btn-danger">Delete Game</button>
                     </form>
                 </div>

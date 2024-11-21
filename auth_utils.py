@@ -6,7 +6,7 @@ from functools import wraps # for persistent login
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if "user_id" not in session:
+        if "_id" not in session:
             return redirect(url_for("user_bp.login"))
         return f(*args, **kwargs)
 
