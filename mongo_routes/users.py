@@ -165,7 +165,7 @@ def get_user(name="", email="", uid=""):
 
         return user
 
-    except pymongo.error.PyMongoError as e:
+    except pymongo.errors.PyMongoError as e:
         print(f"Error: {e}")
         return f"Error retrieving table: {e}"
 
@@ -190,9 +190,11 @@ def login():
 
             # Execute the Mongodb statement
             user = get_user(username_email, username_email, "") # can use either username or email
-
+            print(f"this is user password {user['password']}")
+            print(f"this is HASHED password {hashed_input_password}")
+            
             # error handling: if username/email does not exist, user == None, return error. If password wrong also, return error.
-            if not user or user["password"] != hashed_input_password:
+            if not user or user["password"]!= hashed_input_password:
                 flash("Incorrect username/password", "danger")
                 return redirect(url_for("user_bp.login"))
 
@@ -487,7 +489,7 @@ def edit_user(_id):
             {"_id": _id},  # filter to find user by _id
             {"$set": updated_user}
         )
-
+ 
         if result.modified_count > 0:
             print(f"successfully updated user details for {username}")
             return redirect(url_for("user_bp.dashboard"))

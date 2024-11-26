@@ -9,13 +9,15 @@ from mongo_cfg import noSQL_init
 
 # import routes
 from mongo_routes.users import user_bp
+from mongo_routes.wishlist import wishlist_bp
+
+# sql routes
 from mysql_routes.game import game_bp
 from mysql_routes.sample import sample_bp
 from mysql_routes.review import review_bp
 from mysql_routes.category import category_bp
 from mysql_routes.developer import developer_bp
 from mysql_routes.friend import friendlist_bp
-from mysql_routes.wishlist import wishlist_bp
 from mysql_routes.owned_game import owned_game_bp
 
 app = Flask(__name__)
@@ -46,6 +48,10 @@ app.register_blueprint(owned_game_bp, url_prefix="/owned_game")
 def home():
     print(f"session: {session}")
     return render_template("main/home.html")
+
+@app.route("/wishlist")
+def wishlist():
+    return render_template("wishlist/wishlist.html")
 
 
 if __name__ == "__main__":

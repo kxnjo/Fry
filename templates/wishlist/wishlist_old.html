@@ -1,0 +1,89 @@
+{% extends "index.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center">Wishlist</h1>
+    <div class="row">
+        <div class="col-12">
+            <form method="POST" action="{{ url_for('wishlist_bp.searchWishlist') }}">
+                <div class="input-group rounded">
+                    <input type="search" name="searchInput" class="form-control rounded" placeholder="Search by title or categories" aria-label="Search" aria-describedby="search-addon" required/>
+                    <button type="submit" class="input-group-text border-0" id="search-addon">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+            <br>
+            {% if search == False %}
+                <table class="table">
+                    {% if wishlist != [] %}
+                        {% for i in wishlist %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('game_bp.view_game', game_id=i[2]) }}" class="link-underline-dark"><h5>{{ i[0] }}</h5><a>
+                                    <h6>Categories: {{ i[3] }}</h6>
+                                    <h6>Date Added: {{ i[1] }}</h6>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('wishlist_bp.deleteFromWishlist', game_id=i[2]) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                                </td>
+                            <tr>
+                        {% endfor %}
+                    {% else %}
+                        <h3>No games in wishlist yet.</h3>
+                    {% endif %}
+                </table>
+                <br>
+                {% if wishlist != [] %}
+                    <h5>Games Recommendation:</h5>
+                    <br>
+                    <div class="row">
+                        {% for i in gameRecommendation %}
+                        <div class="col-sm-4">
+                            <div class="card" style="height: 12rem;">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title"><a href="{{ url_for('game_bp.view_game', game_id=i[1]) }}" class="link-underline-dark">{{ i[0] }}</a></h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">Categories: {{ i[2] }}</h6>
+                                    <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}" class="mb-2  position-absolute bottom-0 start-50 translate-middle-x">
+                                        <input type="text" name="game" value="{{ i[1] }}" hidden>
+                                        <button type="submit" class="btn btn-light">Add to Wishlist</button>
+                                    </form>
+                                </div>
+                            </div>
+                            <br>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% elif search == True %}
+                <div class="row">
+                    <div class="col-10">
+                        <h4>Search results for '{{ string }}':</h4>
+                    </div>
+                    <div class="col-2">
+                        <a type="button" href="{{ url_for('wishlist_bp.view_wishlist') }}" class="btn btn-light">Clear Search</a>
+                    </div>
+                </div>
+                <br>
+                <table class="table">
+                    {% if searchResult %}
+                        {% for x in searchResult %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('game_bp.view_game', game_id=x.game_id) }}" class="link-underline-dark"><h5>{{ x.title }}</h5><a>
+                                    <h6>Categories: {{ x.categories }}</h6>
+                                    <h6>Date Added: {{ x.added_date }}</h6>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('wishlist_bp.deleteFromWishlist', game_id=x.game_id) }}"><i class="fa fa-trash-o" style="font-size: 25px;"></i></a>
+                                </td>
+                            <tr>
+                        {% endfor %}
+                    {% else %}
+                        <h3>No Result Found.</h3>
+                    {% endif %}
+        </table>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
