@@ -30,6 +30,7 @@ wishlist_bp = Blueprint("wishlist_bp", __name__)
 
 db = None
 
+# Functions
 def initialize_database():
     """Helper function to initialize the MongoDB user collection."""
     global db
@@ -48,13 +49,6 @@ def initialize_database():
         return db
     else:
         raise Exception("Failed to initialize MongoDB connection")
-
-
-@wishlist_bp.route('/view-wishlist')
-def viewWishlist():
-    wishlist_game = gamesInWishlist()
-        
-    return render_template("wishlist/wishlist.html", wishlist_game=wishlist_game, search=False)
 
 # Get all games in wishlist by user
 def gamesInWishlist():
@@ -105,20 +99,84 @@ def getGame(added_date, game_id):
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
 
-@wishlist_bp.route("/delete-from-wishlist/<game_id>", methods=["GET"])
-def deleteFromWishlist(game_id):
+# Used to check if game is in wishlist as well
+def getAddedDate(game_id): # Return added date if game is in wishlist else return None
     db = initialize_database()  
     if db is None:
         return "Database not initialized!!", 500
 
     try:
-        db.new_user.update_one(
-            {"_id": session["_id"]},  # Match the document by _id
-            {"$pull": {"wanted_games": {"game_id": game_id}}}  # Remove the specific game
-        )
-        return viewWishlist()
+        documents = db.new_user.find({"_id":  session["_id"],})
+        date = None
+        
+        for doc in documents:
+            for i in doc["wanted_games"]:
+                if i["game_id"] == game_id:
+                    date = i["added_date"]
+                    break
+        return date
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
+    
+# Recommend game by game category
+def recommendGame(game_id):
+    db = initialize_database()  
+    if db is None:
+        return "Database not initialized!!", 500
+
+    try:
+        gameDocument = db.new_game.find({"_id":  game_id,})
+        categories = []
+        for doc in gameDocument:    
+            categories.extend(doc["categories"])
+            
+        allGameDocuments = db.new_game.find()
+        count = 0
+        recommendGame = []
+        for doc in allGameDocuments: # Loop through each game
+            match = False
+            for c in categories: # Loop through each category that we are matching
+                for gameCategory in doc["categories"]: # Loop through each categories in each game 
+                    if gameCategory == c:
+                        count += 1
+                        match = True
+                        recommendGame.append(doc["_id"])
+                        break
+                if (match): break # If already found a match in one of the category, break
+            if count >= 20:
+                break
+        return recommendGame
+    except Exception as e:
+        return f"Failed to connect to MongoDB: {e}", 500
+    
+
+# Routes
+@wishlist_bp.route('/view-wishlist')
+def viewWishlist():
+    wishlist_game = gamesInWishlist()
+    
+    seen_game_ids = set()
+    unique_games = []
+    recommendations = []
+    
+    for i in wishlist_game:
+        recommendations.extend(recommendGame(i["game_id"]))
+        seen_game_ids.add(i["game_id"]) # Do not add games already in wishlist into recommendation
+    
+    # Remove duplicates
+    for game_id in recommendations:
+        if game_id not in seen_game_ids :
+            unique_games.append(game_id)
+            seen_game_ids.add(game_id)
+
+    gameRecommendation = []
+    count = 0
+    for game_id in unique_games:
+        gameRecommendation.extend(getGame("-", game_id))
+        count += 1
+        if (count >= 3): break
+
+    return render_template("wishlist/wishlist.html", wishlist_game=wishlist_game, search=False, gameRecommendation=gameRecommendation)
 
 @wishlist_bp.route("/add-to-wishlist", methods=["POST"])
 def addToWishlist():
@@ -144,23 +202,19 @@ def addToWishlist():
         return viewWishlist()
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
-    
-# Used to check if game is in wishlist as well
-def getAddedDate(game_id): # Return added date if game is in wishlist else return None
+
+@wishlist_bp.route("/delete-from-wishlist/<game_id>", methods=["GET"])
+def deleteFromWishlist(game_id):
     db = initialize_database()  
     if db is None:
         return "Database not initialized!!", 500
 
     try:
-        documents = db.new_user.find({"_id":  session["_id"],})
-        date = None
-        
-        for doc in documents:
-            for i in doc["wanted_games"]:
-                if i["game_id"] == game_id:
-                    date = i["added_date"]
-                    break
-        return date
+        db.new_user.update_one(
+            {"_id": session["_id"]},  # Match the document by _id
+            {"$pull": {"wanted_games": {"game_id": game_id}}}  # Remove the specific game
+        )
+        return viewWishlist()
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
     
@@ -169,6 +223,7 @@ def searchWishlist():
     if request.method == "POST":
         allGameDetails = {}
         wishlist_game = gamesInWishlist()
+        
         for i in wishlist_game:
             gameDetails = []
             gameDetails.append(i["title"])
@@ -188,3 +243,4 @@ def searchWishlist():
         
         return render_template("wishlist/wishlist.html", search=True, searchResult=searchResult, string=string)
     return
+
