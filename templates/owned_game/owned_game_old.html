@@ -9,13 +9,13 @@
             {% for i in owned_game %}
             <tr>
                 <td>
-                    <!-- game details to display -->
-                    <h6>Game Title: {{ i["title"] }}</h6>
-                    <h6>Purchase Date: {{ i["purchase_date"] }}</h6>
-                    <h6>Hours Played: {{ i["hours_played"] }}</h6>
-                
-                    <!-- Delete Button -->
-                <a href="{{ url_for('owned_game_bp.delete_owned_game', game_id=i['game_id']) }}"
+                    <h6>Game Title: {{ i[0] }}</h6>
+                    <!-- <h6>User: {{ i[1] }}</h6> -->
+                    <!-- <h6>Game: {{ i[2] }}</h6> -->
+                    <h6>Purchase Date: {{ i[3] }}</h6>
+                    <h6>Hours Played: {{ i[4] }}</h6>
+                        <!-- Delete Button -->
+                <a href="{{ url_for('owned_game_bp.delete_owned_game', game_id=i[2]) }}"
                 class="btn btn-danger btn-sm">Delete</a>
                 </td>
             <tr>
