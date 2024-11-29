@@ -1,212 +1,227 @@
-{% extends "index.html" %} {% block content %}
+{% extends "index.html" %}
+{% block content %}
 <div class="container-fluid mt-5">
-	<h1 class="text-center mb-4">Friend List</h1>
+    <h1 class="text-center mb-4">Friend List</h1>
 
-	<!-- Add Friend Button -->
-	<div class="d-flex justify-content-end mb-3">
-		<a class="btn btn-primary" href="{{ url_for('friendlist_bp.add_friend') }}"> <i class="fas fa-user-plus"></i> Add Friend </a>
-	</div>
+    <!-- Add Friend Button -->
+    <div class="d-flex justify-content-end mb-3">
+        <a class="btn btn-primary" href="{{ url_for('friendlist_bp.add_friend') }}">
+            <i class="fas fa-user-plus"></i> Add Friend
+        </a>
+    </div>
 
-	<!-- Friends List -->
-	<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-		{% for friend, mutuals in friend_data %}
-		<div class="col">
-			<div class="card h-100 shadow friend-card">
-				<div class="card-body">
-					<!-- Friend Name and Details -->
-					<a href="{{ url_for('user_bp.dashboard', user_id = friend[0]) }}"><h4 class="card-title text-primary mb-3">{{ friend[2] }}</h4></a>
-					<p class="card-subtitle mb-3 text-muted"><i class="fas fa-calendar-alt me-2"></i>Friendship Date: {{ friend[1] }}</p>
+    <!-- Friends List -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        {% for friend in friend_data %}
+        <div class="col">
+            <div class="card h-100 shadow friend-card">
+                <div class="card-body">
+                    <!-- Friend Name and Details -->
+                    <a href="{{ url_for('user_bp.dashboard', user_id=friend.friend_id) }}">
+                        <h4 class="card-title text-primary mb-3">{{ friend.username }}</h4>
+                    </a>
+                    <p class="card-subtitle mb-3 text-muted">
+                        <i class="fas fa-calendar-alt me-2"></i>Friendship Date: {{ friend.friendship_date }}
+                    </p>
 
-					<!-- Owned Games Section -->
-					<div class="owned-games-list mb-4">
-						<h5 class="mb-2"><i class="fas fa-gamepad me-2"></i>Owned Games</h5>
-						{% if friend[4] != None %}
-						<div class="game-tags-container">
-							<div class="game-tags initial-tags">
-								{% for game in friend[4].split(',')[:5] %}
-								<span class="badge bg-secondary me-1 mb-1">{{ game }}</span>
-								{% endfor %}
-							</div>
+                    <!-- Owned Games Section -->
+                    <div class="owned-games-list mb-4">
+                        <h5 class="mb-2"><i class="fas fa-gamepad me-2"></i>Owned Games</h5>
+                        {% if friend.owned_games %}
+                        <div class="game-tags-container">
+                            <div class="game-tags initial-tags">
+                                {% for game in friend.owned_games[:5] %}
+                                <span class="badge bg-secondary me-1 mb-1">{{ game }}</span>
+                                {% endfor %}
+                            </div>
 
-							{% if friend[4].split(',') | length > 5 %}
-							<div class="collapse mt-2" id="moreOwnedGames{{ friend[0] }}">
-								<div class="game-tags additional-tags">
-									{% for game in friend[4].split(',')[5:] %}
-									<span class="badge bg-secondary me-1 mb-1">{{ game }}</span>
-									{% endfor %}
-								</div>
-							</div>
+                            {% if friend.owned_games|length > 5 %}
+                            <div class="collapse mt-2" id="moreOwnedGames{{ friend.friend_id }}">
+                                <div class="game-tags additional-tags">
+                                    {% for game in friend.owned_games[5:] %}
+                                    <span class="badge bg-secondary me-1 mb-1">{{ game }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
 
-							<div class="toggle-btn-container">
-								<button
-									class="btn btn-sm btn-outline-secondary toggle-btn"
-									type="button"
-									data-bs-target="#moreOwnedGames{{ friend[0] }}"
-									aria-expanded="false"
-									aria-controls="moreOwnedGames{{ friend[0] }}"
-									onclick="toggleContent('moreOwnedGames{{ friend[0] }}', this)">
-									Show More
-								</button>
-							</div>
-							{% endif %}
-						</div>
-						{% else %}
-						<p class="text-muted">No Games Purchased</p>
-						{% endif %}
-					</div>
-
-					<!-- Wishlist Section -->
-					<div class="wishlist-list mb-4">
-						<h5 class="mb-2"><i class="fas fa-star me-2"></i>Wishlist</h5>
-						{% if friend[3] != None %}
-						<div class="game-tags">
-							{% for wish in friend[3].split(',')[:5] %}
-							<span class="badge bg-primary me-1 mb-1">{{ wish }}</span>
-							{% endfor %}
-						</div>
-
-						{% if friend[3].split(',') | length > 5 %}
-						<div class="mt-2">
-							<button
-								class="btn btn-sm btn-outline-primary toggle-btn"
-								type="button"
-								data-bs-target="#moreWishlist{{ friend[0] }}"
-								aria-expanded="false"
-								aria-controls="moreWishlist{{ friend[0] }}"
-								onclick="toggleContent('moreWishlist{{ friend[0] }}', this)">
-								Show More
-							</button>
-						</div>
-
-						<div class="collapse mt-2" id="moreWishlist{{ friend[0] }}">
-							<div class="game-tags">
-								{% for wish in friend[3].split(',')[5:] %}
-								<span class="badge bg-primary me-1 mb-1">{{ wish }}</span>
-								{% endfor %}
-							</div>
-						</div>
-						{% endif %} {% else %}
-						<p class="text-muted">No Games in Wishlist</p>
-						{% endif %}
-					</div>
-
-					<!-- Mutual Friends -->
-					<div class="mutual-friends mb-4">
-						<h5 class="mb-2"><i class="fas fa-users me-2"></i>Mutual Friends</h5>
-						{% if mutuals %}
-						<div class="mutual-friend-list">
-							{% for mutual in mutuals %}
-							<a href="{{ url_for('user_bp.dashboard', user_id =mutual[0]) }}" class="badge bg-info text-decoration-none me-1 mb-1"> {{ mutual[1] }} </a>
-							{% endfor %}
-						</div>
-						{% else %}
-						<p class="text-muted">No mutual friends</p>
-						{% endif %}
-					</div>
-					<!-- Delete Friend Button -->
-
-                    <div class="d-flex gap-2 justify-content-center">  
-                        <a href="{{ url_for('user_bp.dashboard', user_id = friend[0]) }}" class="btn btn-primary"> <i class="fas fa-user"></i> View Profile </a>
-                        <a href="{{ url_for('friendlist_bp.delete_friend', user1_id=friend[0], user2_id=session['user_id']) }}" class="btn btn-danger"> <i class="fas fa-user-minus"></i> Delete Friend </a>
+                            <div class="toggle-btn-container">
+                                <button class="btn btn-sm btn-outline-secondary toggle-btn" type="button"
+                                    data-bs-target="#moreOwnedGames{{ friend.friend_id }}" aria-expanded="false"
+                                    aria-controls="moreOwnedGames{{ friend.friend_id }}"
+                                    onclick="toggleContent('moreOwnedGames{{ friend.friend_id }}', this)">
+                                    Show More
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No Games Purchased</p>
+                        {% endif %}
                     </div>
 
-				</div>
-			</div>
-		</div>
-		{% else %}
-		<div class="col-12">
-			<div class="alert alert-warning" role="alert"><i class="fas fa-exclamation-triangle me-2"></i> No friends found.</div>
-		</div>
-		{% endfor %}
-	</div>
+                    <!-- Wishlist Section -->
+                    <div class="wishlist-list mb-4">
+                        <h5 class="mb-2"><i class="fas fa-star me-2"></i>Wishlist</h5>
+                        {% if friend.wanted_games %}
+                        <div class="game-tags">
+                            {% for wish in friend.wanted_games[:5] %}
+                            <span class="badge bg-primary me-1 mb-1">{{ wish }}</span>
+                            {% endfor %}
+                        </div>
+
+                        {% if friend.wanted_games|length > 5 %}
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-primary toggle-btn" type="button"
+                                data-bs-target="#moreWishlist{{ friend.friend_id }}" aria-expanded="false"
+                                aria-controls="moreWishlist{{ friend.friend_id }}"
+                                onclick="toggleContent('moreWishlist{{ friend.friend_id }}', this)">
+                                Show More
+                            </button>
+                        </div>
+
+                        <div class="collapse mt-2" id="moreWishlist{{ friend.friend_id }}">
+                            <div class="game-tags">
+                                {% for wish in friend.wanted_games[5:] %}
+                                <span class="badge bg-primary me-1 mb-1">{{ wish }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <p class="text-muted">No Games in Wishlist</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Mutual Friends -->
+                    <div class="mutual-friends mb-4">
+                        <h5 class="mb-2"><i class="fas fa-users me-2"></i>Mutual Friends</h5>
+                        {% if friend.mutual_friends %}
+                        <div class="mutual-friend-list">
+                            {% for mutual in friend.mutual_friends %}
+                            <a href="{{ url_for('user_bp.dashboard', user_id=mutual.user_id) }}"
+                                class="badge bg-info text-decoration-none me-1 mb-1">{{ mutual.username }}</a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No mutual friends</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Delete Friend Button -->
+                    <div class="d-flex gap-2 justify-content-center">
+                        <a href="{{ url_for('user_bp.dashboard', user_id = friend_id) }}" class="btn btn-primary"><i class="fas fa-user"></i> View Profile</a>
+                        <a href="{{ url_for('friendlist_bp.delete_friend', friend_id = friend_id)}}" class="btn btn-danger"> <i class="fas fa-user-minus"></i> Delete Friend </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i> No friends found.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script>
-	document.addEventListener("DOMContentLoaded", function () {
-		var collapseElements = [].slice.call(document.querySelectorAll(".collapse"));
-		collapseElements.map(function (collapseEl) {
-			return new bootstrap.Collapse(collapseEl, {
-				toggle: false
-			});
-		});
-	});
+    document.addEventListener("DOMContentLoaded", function () {
+        var collapseElements = [].slice.call(document.querySelectorAll(".collapse"));
+        collapseElements.map(function (collapseEl) {
+            return new bootstrap.Collapse(collapseEl, {
+                toggle: false
+            });
+        });
+    });
 
-	function toggleContent(contentId, button) {
-		const content = document.getElementById(contentId);
-		const container = button.closest(".game-tags-container");
+    function toggleContent(contentId, button) {
+        const content = document.getElementById(contentId);
+        const container = button.closest(".game-tags-container");
 
-		if (content.classList.contains("show")) {
-			content.classList.remove("show");
-			button.textContent = "Show More";
-			button.setAttribute("aria-expanded", "false");
-			container.style.paddingBottom = "40px";
-		} else {
-			content.classList.add("show");
-			button.textContent = "Show Less";
-			button.setAttribute("aria-expanded", "true");
-			container.style.paddingBottom = "0";
-		}
-	}
+        if (content.classList.contains("show")) {
+            content.classList.remove("show");
+            button.textContent = "Show More";
+            button.setAttribute("aria-expanded", "false");
+            container.style.paddingBottom = "40px";
+        } else {
+            content.classList.add("show");
+            button.textContent = "Show Less";
+            button.setAttribute("aria-expanded", "true");
+            container.style.paddingBottom = "0";
+        }
+    }
 </script>
-{% endblock %} {% block styles %}
+{% endblock %}
+
+{% block styles %}
 <style>
-	.friend-card {
-		transition: transform 0.2s;
-	}
-	.friend-card:hover {
-		transform: translateY(-5px);
-	}
-	.game-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-	.badge {
-		font-size: 0.8rem;
-		font-weight: normal;
-	}
-	.mutual-friend-list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-	.toggle-btn {
-		transition: all 0.3s ease;
-	}
-	.toggle-btn[aria-expanded="true"] {
-		background-color: #6c757d;
-		color: white;
-	}
-	.game-tags-container {
-		position: relative;
-		padding-bottom: 40px; /* Space for the button */
-	}
+    .friend-card {
+        transition: transform 0.2s;
+    }
 
-	.toggle-btn-container {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		width: 100%;
-		text-align: center;
-	}
+    .friend-card:hover {
+        transform: translateY(-5px);
+    }
 
-	.toggle-btn {
-		transition: all 0.3s ease;
-	}
+    .game-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
 
-	.toggle-btn[aria-expanded="true"] {
-		background-color: #6c757d;
-		color: white;
-	}
+    .badge {
+        font-size: 0.8rem;
+        font-weight: normal;
+    }
 
-	/* Optional: Add a fade effect for the additional tags */
-	.additional-tags {
-		opacity: 0;
-		transition: opacity 0.3s ease;
-	}
+    .mutual-friend-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
 
-	.collapse.show .additional-tags {
-		opacity: 1;
-	}
+    .toggle-btn {
+        transition: all 0.3s ease;
+    }
+
+    .toggle-btn[aria-expanded="true"] {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .game-tags-container {
+        position: relative;
+        padding-bottom: 40px; /* Space for the button */
+    }
+
+    .toggle-btn-container {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    .toggle-btn {
+        transition: all 0.3s ease;
+    }
+
+    .toggle-btn[aria-expanded="true"] {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    /* Optional: Add a fade effect for the additional tags */
+    .additional-tags {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .collapse.show .additional-tags {
+        opacity: 1;
+    }
 </style>
 {% endblock %}
