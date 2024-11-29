@@ -9,7 +9,7 @@ load_dotenv('config.env')
 
 import hashlib 
 import json 
-import datetime
+from datetime import datetime
 from auth_utils import login_required # Persistent login 
 
 # MongoDB setup 
@@ -251,8 +251,10 @@ def view_price_changes(_id):
 
         # Loop through the data
         for change in price_changes:
-            # Extract and format change_date
-            formatted_date = change['change_date']  # Assuming it's already a string in the format 'YYYY-MM-DD'
+            # Convert string to datetime
+            change_date = datetime.strptime(change['change_date'], '%Y-%m-%d')
+            # Format to 'dd-mm-yyyy'
+            formatted_date = change_date.strftime('%d-%m-%Y')
             dates_new.append(formatted_date)  # Append to dates array
 
             # Calculate final price after applying the discount
