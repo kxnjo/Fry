@@ -1,10 +1,10 @@
 from flask import app, Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
-import mysql.connector
 import pymongo
 
 # images import
 from bson.binary import Binary
 import base64
+import bcrypt
 
 # load up configurations
 from dotenv import load_dotenv
@@ -19,7 +19,7 @@ from auth_utils import login_required  # persistent login
 # MongoDB setup
 import mongo_cfg
 
-# integrating everyone's parts
+# integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
 from mysql_routes.review import user_written_reviews
 from mysql_routes.owned_game import get_owned_game
 from mysql_routes.friend import get_dashboard_mutual_friends
@@ -141,62 +141,52 @@ def generate_id():
     new__id = f"u{new_id_number}"
     return new__id
 
-def get_user(name="", email="", uid=""):
-    """
-    Get user details by user ID.
-    
-    Args:
-    name (str): The user's username.
-    email (str): The user's email address
-    uid (str): The user's unique id (u<id>)
-    
-    Returns:
-    dict: A dictionary containing user details.
-    """
-
-    # Ensure db.new_user is initialized
-    db = initialize_database()  
-    if db.new_user is None:
-        return "Collection not initialized!!", 500
-
-    try:
-        query = {"$or": [{"username": name}, {"email": email}, {"_id": uid}]}
-        user = db.new_user.find_one(query)
-
-        return user
-
-    except pymongo.errors.PyMongoError as e:
-        print(f"Error: {e}")
-        return f"Error retrieving table: {e}"
-
 
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
     """Handle user login."""
     if request.method == "POST":
 
-        # Ensure db.new_user is initialized
-        db = initialize_database()  
-        if db.new_user is None:
-            return "Collection not initialized!!", 500
+        # handle the fields retrieved, make sure that it aligns with db
+        username_email = request.form["username_email"].strip()
+        password = request.form["password"].strip()
+        # validate fields
+        if not username_email or not password:
+            flash("Username/email and password are required.", "danger")
+            return redirect(url_for("user_bp.login"))
+        
 
         try:
-            # handle the fields retrieved, make sure that it aligns with db
-            username_email = request.form["username_email"]
-            password = request.form["password"]
+            # Ensure db.new_user is initialized
+            db = initialize_database()  
+            if db.new_user is None:
+                raise RuntimeError("User collection not initialized!")
+
+            if "@" in username_email:
+                query = {"email": username_email}
+            else:
+                query = {"username": username_email}
+            
+            # Retrieve user from database
+            user = db.new_user.find_one(query, {"_id": 1, "username": 1, "role": 1, "password": 1})
+
+            # Check user existence and password
+            if not user:
+                flash("Invalid username or email.", "danger")
+                return redirect(url_for("user_bp.login"))
 
             # hash the password
             hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
 
-            # Execute the Mongodb statement
-            user = get_user(username_email, username_email, "") # can use either username or email
-            print(f"this is user password {user['password']}")
-            print(f"this is HASHED password {hashed_input_password}")
-            
-            # error handling: if username/email does not exist, user == None, return error. If password wrong also, return error.
-            if not user or user["password"]!= hashed_input_password:
-                flash("Incorrect username/password", "danger")
+            # Compare hashed password (use bcrypt or argon2 instead of hashlib)
+            if not bcrypt.checkpw(password.encode(), user["password"].encode()):
+                flash("Incorrect password.", "danger")
                 return redirect(url_for("user_bp.login"))
+            
+            # # error handling: if username/email does not exist, user == None, return error. If password wrong also, return error.
+            # if not user or user["password"]!= hashed_input_password:
+            #     flash("Incorrect username/password", "danger")
+            #     return redirect(url_for("user_bp.login"))
 
             # save to session
             session["_id"] = user["_id"]
@@ -306,7 +296,6 @@ def logout():
     return redirect(url_for("home"))
 
 
-# TODO: DASHBOARD (maybe half done?? idk i havent fully tested it)
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -326,6 +315,7 @@ def dashboard():
         all_users = []
         all_games = []
 
+        # TODO: PAGINATION NOT WORKING
         # User pagination logic
         all_users_num = get_user_num()  # Retrieve the total number of users
         user_num_per_page = 10
@@ -361,11 +351,12 @@ def dashboard():
         )
 
     elif session["role"] == "user":
-        curr_id = request.args.get("_id", session["_id"], type=str)
         games, user_reviews, mutual_friends = None, None, None
 
         # get user details
-        user = get_user("", "", curr_id)
+        query = {"$or": [{"username": session["name"]}, {"email": session["email"]}, {"_id": session["_id"]}]}
+        user = db.new_user.find_one(query)
+
         # print("this is user", user)
         if "image" in user:
             encoded_image = user["image"]
@@ -417,37 +408,39 @@ def create_user():
         if db is None:
             return "Database not initialized!!", 500
 
-        # Get the form data
-        name = request.form['username']
-        email = request.form['email']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
-        role = request.form['role']
-        hashed_input_password = hashlib.sha256(password.encode()).hexdigest()  # hash the password
 
         # Password confirmation check
         if password != confirm_password:
             flash('Passwords do not match!', 'danger')
             return render_template("user/admin_dashboard.html", show_create_modal=True, form_data={"username": name, "email": email, "role": role})
 
-        # Check if username or email already exists
-        if db.new_user.find_one({"$or": [{"username": name}, {"email": email}]}):
-            flash("User exists! Please use another username/email", "warning")
-            return render_template("user/admin_dashboard.html", show_create_modal=True, form_data={"username": name, "email": email, "role": role})
 
-        # Proceed with creating the user if no errors
+        new_user = {
+            "_id": generate_id(),
+            "username": request.form['username'],
+            "email": request.form['email'],
+            "password": request.form['password'].hashlib.sha256(password.encode()).hexdigest(),  # hash the password,
+            "role": request.form['role'],
+            "created_on": date.today().isoformat()
+        }
+
         try:
-            new_user = {
-                "_id": generate_id(),
-                "username": name,
-                "email": email, 
-                "password": hashed_input_password,
-                "role": role,
-                "created_on": date.today().isoformat()
-            }
-            db.new_user.insert_one(new_user)
-            print(f"Successfully created user {name}")
-            return redirect(url_for("user_bp.dashboard"))
+            result = db.new_user.update_one(
+                {"or": [{"username": name}, {"email": email}]},
+                {"$setOnInsert": new_user}, # only insert if the document does not already have an insert
+                upsert=True
+            )
+
+            # Check if the user was inserted or already existed
+            if result.upserted_id: # This is set if a new document was inserted
+                flash(f"User {form_data['username']} created successfully!", "success")
+                return redirect(url_for("user_bp.dashboard"))
+            else:
+                flash("User already exists! Please use another username/email.", "warning")
+                return render_template("user/admin_dashboard.html", show_create_modal=True, form_data={"username": name, "email": email, "role": role})
+
 
         except pymongo.errors.PyMongoError as e:
             flash(f"An unknown error occurred: {e}", "danger")
