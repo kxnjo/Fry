@@ -353,8 +353,10 @@ def dashboard():
     elif session["role"] == "user":
         games, user_reviews, mutual_friends = None, None, None
 
+        curr_id = request.args.get("_id", session["_id"], type=str)
+
         # get user details
-        query = {"$or": [{"username": session["name"]}, {"email": session["email"]}, {"_id": session["_id"]}]}
+        query = {"$or": [{"username": session["username"]}, {"_id": session["_id"]}]}
         user = db.new_user.find_one(query)
 
         # print("this is user", user)
