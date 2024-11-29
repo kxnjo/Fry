@@ -106,15 +106,14 @@ def getAddedDate(game_id): # Return added date if game is in wishlist else retur
         return "Database not initialized!!", 500
 
     try:
-        documents = db.new_user.find({"_id":  session["_id"],})
-        date = None
+        document = db.new_user.find_one(
+            {"_id": session["_id"], "wanted_games.game_id": game_id},
+            {"wanted_games.$": 1}  # Include only the matched wanted_game
+        )
         
-        for doc in documents:
-            for i in doc["wanted_games"]:
-                if i["game_id"] == game_id:
-                    date = i["added_date"]
-                    break
-        return date
+        if document and "wanted_games" in document:
+            return document["wanted_games"][0]["added_date"]
+        return None
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
     
@@ -130,21 +129,24 @@ def recommendGame(game_id):
         for doc in gameDocument:    
             categories.extend(doc["categories"])
             
-        allGameDocuments = db.new_game.find()
-        count = 0
-        recommendGame = []
-        for doc in allGameDocuments: # Loop through each game
-            match = False
-            for c in categories: # Loop through each category that we are matching
-                for gameCategory in doc["categories"]: # Loop through each categories in each game 
-                    if gameCategory == c:
-                        count += 1
-                        match = True
-                        recommendGame.append(doc["_id"])
-                        break
-                if (match): break # If already found a match in one of the category, break
-            if count >= 20:
-                break
+        # Query to fetch recommended games
+        pipeline = [
+            # Match games with at least one category in the target game's categories
+            {"$match": {"categories": {"$in": categories}}},
+            
+            # Exclude the original game itself
+            {"$match": {"_id": {"$ne": game_id}}},
+
+            # Randomize the results
+            {"$sample": {"size": 3}}
+        ]
+
+        # Run the aggregation pipeline
+        recommendGameDoc = list(db.new_game.aggregate(pipeline))
+
+        # Extract just the game_ids
+        recommendGame = [game["_id"] for game in recommendGameDoc]
+        
         return recommendGame
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
@@ -161,11 +163,10 @@ def viewWishlist():
     
     for i in wishlist_game:
         recommendations.extend(recommendGame(i["game_id"]))
-        seen_game_ids.add(i["game_id"]) # Do not add games already in wishlist into recommendation
     
     # Remove duplicates
     for game_id in recommendations:
-        if game_id not in seen_game_ids :
+        if game_id not in seen_game_ids:
             unique_games.append(game_id)
             seen_game_ids.add(game_id)
 
@@ -221,25 +222,34 @@ def deleteFromWishlist(game_id):
 @wishlist_bp.route("/search-wishlist", methods=["POST"])
 def searchWishlist():
     if request.method == "POST":
-        allGameDetails = {}
-        wishlist_game = gamesInWishlist()
+        wishlist_games = gamesInWishlist()
+        wishlist_game_ids = [game["game_id"] for game in wishlist_games]
         
-        for i in wishlist_game:
-            gameDetails = []
-            gameDetails.append(i["title"])
-            for c in i["categories"]:
-                gameDetails.append(c)
-            for d in i["developers"]:
-                gameDetails.append(d)
-                
-            allGameDetails[i["game_id"]] = gameDetails
+        string = request.form["searchInput"]  # Get search input and convert to lowercase
+
+        # MongoDB query with case-insensitive search in title, categories, and developers
+        search_result = db.new_game.find(
+        {
+            "$and": [
+                {"_id": {"$in": wishlist_game_ids}},  # Ensure game_id is in the wishlist
+                {
+                    "$or": [
+                        {"title": {"$regex": string.lower(), "$options": "i"}},         # Match in title
+                        {"categories": {"$regex": string.lower(), "$options": "i"}},    # Match in categories
+                        {"developers": {"$regex": string.lower(), "$options": "i"}}     # Match in developers
+                    ]
+                }
+            ]
+        },
+        {"_id": 1}  # Get only the game_id 
+    )
         
-        string = request.form["searchInput"]
+        # Extract the game_id values into a list
+        game_ids = [game["_id"] for game in search_result]
         searchResult = []
-        for game_id, details in allGameDetails.items():
-            if any(string.lower() in detail.lower() for detail in details):
-                added_date = getAddedDate(game_id)
-                searchResult.extend(getGame(added_date, game_id))
+        for i in game_ids:
+            added_date = getAddedDate(i)
+            searchResult.extend(getGame(added_date, i))
         
         return render_template("wishlist/wishlist.html", search=True, searchResult=searchResult, string=string)
     return

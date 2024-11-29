@@ -75,8 +75,8 @@
                     {% endif %}
                 </table>
             {% endif %}
-            {% if wishlist != [] %}
-                <h5>Games Recommendation:</h5>
+            {% if wishlist != [] and search == False %}
+                <h4>Games Recommendation:</h4>
                 <br>
                 <div class="row">
                     {% for i in gameRecommendation %}
