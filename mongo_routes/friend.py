@@ -14,6 +14,8 @@ load_dotenv('config.env')
 import hashlib
 import json
 import datetime
+import traceback
+from flask import flash
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
@@ -117,7 +119,6 @@ def view_friends():
     return render_template("friend/friend.html", friend_data=friend_data)
 
 @friendlist_bp.route("/add-friend", methods=["GET", "POST"])
-# Function to add a friend
 def add_friend():
     try:
         db = initialize_database()  
@@ -125,30 +126,53 @@ def add_friend():
             return "Database not initialized!!", 500
         
         if request.method == "POST":
-            user_id = session["_id"]  # Get the user_id from the session
-            friend_username = request.form["friend_username"]
+            # Debugging: Print form data
+            print("Form data:", request.form)
+            
+            # Safely get user_id from session
+            user_id = session.get("_id")
+            if not user_id:
+                flash("User not logged in")
+                return redirect(url_for("login"))
+
+            # Safely get friend username from form
+            friend_username = request.form.get("friend")
+            if not friend_username:
+                flash("Please enter a username")
+                return redirect(url_for("friendlist_bp.add_friend"))
 
             # Retrieve the user's data
             user = db.new_user.find_one({'_id': user_id})
+            if not user:
+                flash("User account not found")
+                return redirect(url_for("login"))
 
             # Check if the friend exists
             friend = db.new_user.find_one({'username': friend_username})
-
             if friend is None:
                 flash("User not found")
-                return redirect(url_for("friendlist_bp.add_friend"))
+                return render_template("friend/add_friend.html")
 
-            # Check if the user is already friends with the friend
-            if friend['_id'] in [friend['friend_id'] for friend in user['friends']]:
+            # Check if trying to add self
+            if friend['_id'] == user_id:
+                flash("You cannot add yourself as a friend")
+                return render_template("friend/add_friend.html")
+
+            # Safely get existing friends list
+            existing_friends = user.get('friends', [])
+
+            # Check if already friends
+            if any(f.get('friend_id') == friend['_id'] for f in existing_friends):
                 flash("You are already friends with this user")
-                return redirect(url_for("friendlist_bp.add_friend"))
+                return render_template("friend/add_friend.html")
 
             # Add the friend to the user's friend list
+            current_time = datetime.datetime.now()
             db.new_user.update_one(
                 {'_id': user_id},
                 {'$push': {'friends': {
                     'friend_id': friend['_id'],
-                    'created_on': datetime.datetime.now()
+                    'created_on': current_time
                 }}}
             )
 
@@ -157,16 +181,18 @@ def add_friend():
                 {'_id': friend['_id']},
                 {'$push': {'friends': {
                     'friend_id': user_id,
-                    'created_on': datetime.datetime.now()
+                    'created_on': current_time
                 }}}
             )
 
             flash("Friend added successfully")
-            return redirect(url_for("friendlist_bp.add_friend"))
+            return redirect(url_for("friendlist_bp.view_friends"))
 
     except Exception as e:
-        print(f"Error: {e}")
-        return f"Error adding friend: {e}"
+        # Log the full error for server-side debugging
+        print(f"Full error adding friend: {traceback.format_exc()}")
+        flash(f"An error occurred: {str(e)}")
+        return redirect(url_for("friendlist_bp.add_friend"))
 
     return render_template("friend/add_friend.html")
 
@@ -179,9 +205,6 @@ def delete_friend(friend_id):
             return "Database not initialized!!", 500
         
         user_id = session["_id"]  # Get the user_id from the session
-
-        # Retrieve the user's data
-        user = db.new_user.find_one({'_id': user_id})
 
         # Check if the friend exists
         friend = db.new_user.find_one({'_id': friend_id})
@@ -201,7 +224,6 @@ def delete_friend(friend_id):
             {'_id': friend_id},
             {'$pull': {'friends': {'friend_id': user_id}}}
         )
-
         flash("Friend deleted successfully")
         return redirect(url_for("friendlist_bp.view_friends"))
 

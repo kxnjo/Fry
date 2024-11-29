@@ -70,6 +70,14 @@
                         </div>
 
                         {% if friend.wanted_games|length > 5 %}
+                        <div class="collapse mt-2" id="moreWishlist{{ friend.friend_id }}">
+                            <div class="game-tags">
+                                {% for wish in friend.wanted_games[5:] %}
+                                <span class="badge bg-primary me-1 mb-1">{{ wish }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
                         <div class="mt-2">
                             <button class="btn btn-sm btn-outline-primary toggle-btn" type="button"
                                 data-bs-target="#moreWishlist{{ friend.friend_id }}" aria-expanded="false"
@@ -79,13 +87,6 @@
                             </button>
                         </div>
 
-                        <div class="collapse mt-2" id="moreWishlist{{ friend.friend_id }}">
-                            <div class="game-tags">
-                                {% for wish in friend.wanted_games[5:] %}
-                                <span class="badge bg-primary me-1 mb-1">{{ wish }}</span>
-                                {% endfor %}
-                            </div>
-                        </div>
                         {% endif %}
                         {% else %}
                         <p class="text-muted">No Games in Wishlist</p>
@@ -106,11 +107,10 @@
                         <p class="text-muted">No mutual friends</p>
                         {% endif %}
                     </div>
-
                     <!-- Delete Friend Button -->
                     <div class="d-flex gap-2 justify-content-center">
-                        <a href="{{ url_for('user_bp.dashboard', user_id = friend_id) }}" class="btn btn-primary"><i class="fas fa-user"></i> View Profile</a>
-                        <a href="{{ url_for('friendlist_bp.delete_friend', friend_id = friend_id)}}" class="btn btn-danger"> <i class="fas fa-user-minus"></i> Delete Friend </a>
+                        <a href="{{ url_for('user_bp.dashboard', user_id = friend.friend_id) }}" class="btn btn-primary"><i class="fas fa-user"></i> View Profile</a>
+                        <a href="{{ url_for('friendlist_bp.delete_friend', friend_id=friend.friend_id) }}" class="btn btn-danger"> <i class="fas fa-user-minus"></i> Delete Friend </a>
                     </div>
                 </div>
             </div>

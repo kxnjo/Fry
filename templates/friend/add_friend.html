@@ -7,11 +7,15 @@
                 <div class="card-body">
                     <!-- Add friend through username Section -->
                     <h1 class="card-title text-center mb-4">Find and Add Friends</h1>
-                    {% if error %}
-                    <div class="alert alert-danger" role="alert">
-                        {{ error }}
-                    </div>
-                    {% endif %}
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <div class="alert alert-info">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% endwith %}
                     <form method="POST" action="{{ url_for('friendlist_bp.add_friend') }}" class="mb-4">
                         <div class="input-group">
                             <input id="friend" name="friend" type="text" class="form-control" placeholder="Enter your friend's profile name" aria-label="Friend's profile name" required>
@@ -20,7 +24,6 @@
                             </button>
                         </div>
                     </form>
-                    
                     <div class="text-center">
                         <a href="{{ url_for('friendlist_bp.view_friends') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Friend List
