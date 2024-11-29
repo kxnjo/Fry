@@ -1,0 +1,25 @@
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+    {% for friend in friendlist %}
+    <div class="col">
+        <div class="card h-100 shadow friend-card">
+            <div class="card-body">
+                <!-- Friend Name and Details -->
+                <a href="{{ url_for('user_bp.dashboard', user_id=friend['user_id']) }}">
+                    <h4 class="card-title text-primary mb-3">{{ friend['friend_id'] }}</h4>
+                </a>
+                <p class="card-subtitle mb-3 text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>Friendship Date: {{ friend['friendsh'] }}
+                </p>
+                <p class="card-text">
+                    <strong>Owned Games:</strong> 
+                    {{ friend['owned_games'] | join(", ") }}
+                </p>
+                <p class="card-text">
+                    <strong>Wanted Games:</strong> 
+                    {{ friend['wanted_games'] | join(", ") }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
