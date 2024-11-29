@@ -1,0 +1,71 @@
+<!-- Temporary page for graph -->
+<!-- TODO: move into game.html later -->
+{%extends "index.html" %}
+{% block content %}
+
+<h1 class="text-center">Price History</h1>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Price History Graph -->
+        <div class="container mt-5" style="max-height: 350px;"> 
+            <h3>Price History</h3>
+            <canvas id="priceChart" ></canvas> <!-- Canvas height adjusted -->
+        </div>
+    </div>
+</div>
+
+<!-- Price history graph -->
+<script>
+    var ctx = document.getElementById('priceChart').getContext('2d');
+
+    // Calculate the minimum price from the prices array
+    var minPrice = Math.min(...{{ prices_new | tojson }});
+
+    var priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ dates_new | tojson }},
+            datasets: [{
+                label: 'Price (in $)',
+                data: {{ prices_new | tojson }},
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,  // Allow custom height
+            scales: {
+                y: {
+                    beginAtZero: false,  // Ensure it does not start at 0
+                    min: minPrice - 0.1, // Set the minimum value for the Y-axis
+                    title: {
+                        display: true,
+                        text: 'Price (in $)',
+                        color: 'white' // Change Y-axis title to white
+                    },
+                    ticks: {
+                        color: 'white' // Change Y-axis ticks to white
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: 'white' // Change X-axis ticks to white
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: 'white' // Change legend label color to white
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+{% endblock %}
