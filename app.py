@@ -51,10 +51,6 @@ def home():
     print(f"session: {session}")
     return render_template("main/home.html")
 
-@app.route("/wishlist")
-def wishlist():
-    return render_template("wishlist/wishlist.html")
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=True)

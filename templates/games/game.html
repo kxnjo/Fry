@@ -42,6 +42,7 @@
                     <button type="submit" class="btn btn-light" style="width: 210px;">Purchase</button>
                 </form>   
             {% if user_logged_in %}
+            <!-- Actual add to wishlist and purchase button but need update the backend -->
             <div class="d-flex flex-column">
                 <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}" class="mb-2">
                     <input type="text" name="game_id" value="{{ game.game_id }}" hidden>

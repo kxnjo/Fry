@@ -176,6 +176,12 @@ def viewWishlist():
         gameRecommendation.extend(getGame("-", game_id))
         count += 1
         if (count >= 3): break
+    
+    gameInWishlist = getAddedDate("g10")
+    if gameInWishlist != None:
+        print("Found in wishlist!")
+    else:
+        print("Not in wishlist!")
 
     return render_template("wishlist/wishlist.html", wishlist_game=wishlist_game, search=False, gameRecommendation=gameRecommendation)
 
