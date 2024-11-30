@@ -134,22 +134,5 @@
     }
 </script>
 
-<!-- Add this script at the end of your template -->
-<!-- <script>
-document.getElementById('gameSearch').addEventListener('keyup', function() {
-    let searchText = this.value.toLowerCase();
-    let tableRows = document.querySelectorAll('tbody tr');
-    
-    tableRows.forEach(row => {
-        let title = row.querySelector('h5').textContent.toLowerCase();
-        let categories = Array.from(row.querySelectorAll('.badge')).map(badge => badge.textContent.toLowerCase()).join(' ');
-        
-        if (title.includes(searchText) || categories.includes(searchText)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
-</script> -->
+
 {% endblock %}

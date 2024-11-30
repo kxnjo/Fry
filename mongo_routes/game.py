@@ -171,12 +171,33 @@ def view_game(game_id):
                 "recommended": user_review.get("recommended", "NA")  # Recommended value or "NA" if not available
             }
         game_reviews = get_all_reviews_for_game(game_id)
-
-
         gameInWishlist = getAddedDate(game_id)
+
+        price_changes = PriceChanges(game_id)
+        print("owned_game in view: ", price_changes)
+
+        # Initialize arrays
+        dates_new = []
+        prices_new = []
+
+        # Loop through the data
+        for change in price_changes:
+            # Convert string to datetime
+            change_date = datetime.strptime(change['change_date'], '%Y-%m-%d')
+            # Format to 'dd-mm-yyyy'
+            formatted_date = change_date.strftime('%d-%m-%Y')
+            dates_new.append(formatted_date)  # Append to dates array
+
+            # Calculate final price after applying the discount
+            final_price = change['base_price'] - (change['base_price'] * (change['discount'] / 100))
+            prices_new.append(final_price)  # Append to prices array
+
+        # Output the arrays
+        print("Dates:", dates_new)
+        print("Prices:", prices_new)
+
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
-
 
     return render_template("games/game.html",
                            game=game,
@@ -186,7 +207,9 @@ def view_game(game_id):
                            user_logged_in=bool(user_id),
                            user_owned=bool(user_owned),
                            get_user_review=get_user_review,
-                           game_reviews=game_reviews
+                           game_reviews=game_reviews, 
+                           dates_new = dates_new, 
+                           prices_new = prices_new
                         #    dates=dates,
                         #    prices=prices
                            )
@@ -239,8 +262,6 @@ def edit_game(game_id):
     except Exception as e:
         return f"Failed to update the game: {e}", 500
     
-
-
 @game_bp.route("/create-game", methods=["POST"])
 def create_game(game_id):
     # something (placeholder)
@@ -252,4 +273,54 @@ def delete_game(game_id):
     # something (placeholder)
 
     return redirect(url_for("user_bp.dashboard"))
+
+def PriceChanges(_id): 
+    db = get_db()
+    if db is None: 
+        return "Database is not initalized!!", 500 
+  
+    try: 
+        # Retrieve all documents 
+        documents = db.new_game.find({"_id": _id,})
+
+        # Iterate through documents and print them 
+        # Fetch all owned_games from user's doc in db
+        game = []
+        for doc in documents:
+            game.extend(doc["price_changes"])
+        
+        print("game in PriceChanges():", game)
+
+        # Fetch additional details about the game
+        price_changes_details = []
+        for i in game:
+            price_changes_details.extend(getPriceChangeDetails(_id, i["change_date"], i["base_price"], i["discount"]))
+        print("owned_games_details", price_changes_details)
+
+        return price_changes_details
+    except Exception as e: 
+        return f"Failed to connect to MongoDB: {e}", 500 
+
+# get price change details
+def getPriceChangeDetails(_id, change_date, base_price, discount):
+    db = get_db()
+    if db is None: 
+        return "Databse not initialized", 500 
+    try:
+        # Retrieve all documents 
+        documents = db.new_game.find({"_id": _id})
+        price_changes = []
+        for doc in documents: 
+            price_changes.append({
+                "game_id": doc["_id"],
+                "change_date": change_date,
+                "base_price": base_price, 
+                "discount": discount
+            })
+        return price_changes
+        print("price_changes: ", price_changes)
+    except Exception as e:
+        return f"Failed to connect to MongoDB: {e}", 500
+
+
 
