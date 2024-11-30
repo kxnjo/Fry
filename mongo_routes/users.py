@@ -12,7 +12,7 @@ import os
 load_dotenv('config.env')
 
 import json
-from datetime import date
+from datetime import datetime
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
@@ -51,89 +51,22 @@ def get_db():
 
 db = get_db()
 
-@user_bp.route('/test-db-connection')
-def mongo_connection():
-    # Ensure db.new_user is initialized
-    try:
-        # Retrieve all documents
-        documents = db.new_user.find()
-
-        # Iterate through documents and print them
-        all_users = []
-        for doc in documents:
-            all_users.append({
-                "_id": doc["_id"],
-                "username": doc["username"],
-                "email": doc["email"],
-                "password": doc["password"],
-                "created_on": doc["created_on"]
-            })
-
-        for doc in documents:
-            print(doc)
-
-        return f"Successfully connected to MongoDB. all_users: {all_users}", 200
-    except Exception as e:
-        return f"Failed to connect to MongoDB: {e}", 500
-
 # MARK: custom functions
-def get_all_users(start=0, end=10):
-    """
-    Get a list of users within a specified range.
-    
-    Args:
-    start (int): The starting index.
-    end (int): The ending index.
-    
-    Returns:
-    list: A list of user dictionaries.
-    """
-    # MONGO = = =
-    # Retrieve all documents
-    # Ensure db.new_user is initialized
-    db = get_db()
-        
-    user_documents = db.new_user.find()
-
-    all_users = []
-    # Iterate through documents and print them
-    for doc in user_documents:
-        all_users.append({
-            "_id": doc["_id"],
-            "username": doc["username"],
-            "email": doc["email"],
-            "password": doc["password"],
-            "created_on": doc["created_on"],
-            "role": doc["role"]
-        })
-
-    return all_users
-
-def get_user_num():
-    """
-    Get the total number of users in the database.
-    
-    Returns:
-    int: The total number of users.
-    """
-    return len(get_all_users())
-
 def generate_id():
     # Retrieve all _ids that match the pattern `u<number>`
     existing_ids = db.new_user.find(
-        {"_id": {"$regex": "^u\\d+$"}}, 
-        {"_id": 1}
+        {"_id": {"$regex": "^u\\d+$"}},     # find for id values with u<number>
+        {"_id": 1}                          # retrieve only id
     )
     
     # Extract numeric parts of _ids into a sorted list
-    used_numbers = sorted(int(doc["_id"][1:]) for doc in existing_ids)
+    used_numbers = sorted(int(doc["_id"][1:]) for doc in existing_ids) # loop through all ids and sort values
     
     # Find the lowest available ID by checking for gaps
     new_id_number = used_numbers[-1] + 1
 
-    # Format the new ID
-    new__id = f"u{new_id_number}"
-    return new__id
+    # Format and Return the new ID
+    return f"u{new_id_number}"
 
 
 # MARK: LOGIN
@@ -162,7 +95,7 @@ def login():
                 query = {"username": username_email}
             
             # Retrieve user from database
-            user = db.new_user.find_one(query, {"_id": 1, "username": 1, "role": 1, "password": 1})
+            user = db.new_user.find_one(query, {"_id": 1, "username": 1, "role": 1, "password": 1}) # get only id, username, role and password fields
 
             # Check user existence and password
             if not user:
@@ -200,7 +133,7 @@ def register():
         # Ensure db.new_user is initialized
         db = get_db()  
 
-        # handle the fields retrieved, make sure that it aligns with db
+        # get user details: name, email and password
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
@@ -210,12 +143,12 @@ def register():
 
         try: 
             new_user = {
-                "_id": generate_id(),
+                "_id": generate_id(),   # auto generate a unique id
                 "username": name,
                 "email": email, 
                 "password": bcrypt_hashed_password,
-                "role": "user",
-                "created_on": date.today().isoformat()
+                "role": "user",         # default create new user role only. admin + developer created by admin
+                "created_on": datetime.now().date().isoformat()
             }
             db.new_user.insert_one(new_user)
             print(f"Create user {name} success !")
@@ -287,16 +220,14 @@ def dashboard():
 
     # print(f"this is current role: {session['role']}")
     if session["role"] == "admin":
-        # Retrieve filter type (accounts or games) and page number
+        # Retrieve filter type (accounts or games) and page number from query params
         filter_type = request.args.get("filter_type", "accounts", type=str)
-        page = request.args.get("page", 1, type=int)
-        items_per_page = 10  # Customize the number of items per page
-        sort_field = request.args.get("sort_field", "_id") # set default value to _id
-        sort_order = int(request.args.get("sort_order", 1))  # 1 for ascending, -1 for descending
-        search_query = request.args.get("search", "")
-
-        print(f"this is sort_field: {sort_field}, sort_order: {sort_order}, and search query: {search_query}")
-
+        page = request.args.get("page", 1, type=int)            # get current page number, default to first page
+        items_per_page = 10                                     # set the number of items per page
+        sort_field = request.args.get("sort_field", "_id")      # get field to sort, default to _id
+        sort_order = int(request.args.get("sort_order", 1))     # get sort order, 1 for ascending, -1 for descending
+        search_query = request.args.get("search", "")           # get search value, default to nothing
+ 
         users, games = [], []
         user_total_pages, game_total_pages = 0, 0
 
@@ -305,17 +236,17 @@ def dashboard():
             if search_query:
                 query = {
                     "$or": [
-                        {"username": {"$regex": search_query, "$options": "i"}},
-                        {"email": {"$regex": search_query, "$options": "i"}},
+                        {"username": {"$regex": search_query, "$options": "i"}},    # search by username, NOT case sensitive (options 'i')
+                        {"email": {"$regex": search_query, "$options": "i"}},       # search by email, NOT case sensitive (options 'i')
                     ]
                 }
 
-            total_users = db.new_user.count_documents(query)
+            total_users = db.new_user.count_documents(query)    # get the number of users
             users = list(
                 db.new_user.find(query)
-                .sort({sort_field: sort_order})
-                .skip((page - 1) * items_per_page)
-                .limit(items_per_page)
+                .sort({sort_field: sort_order})         # sort by field 
+                .skip((page - 1) * items_per_page)      # for pagination, start at x entry
+                .limit(items_per_page)                  # for pagination, stop at x entry (depending on size)
             )
             user_total_pages = (total_users + items_per_page - 1) // items_per_page
 
@@ -327,7 +258,7 @@ def dashboard():
             total_games = db.new_game.count_documents(query)
             games = list(
                 db.new_game.find(query)
-                .sort(sort_field, sort_order)
+                .sort({sort_field: sort_order})
                 .skip((page - 1) * items_per_page)
                 .limit(items_per_page)
             )
@@ -344,6 +275,8 @@ def dashboard():
             sort_field=sort_field,
             sort_order=sort_order,
             search_query=search_query,
+            max=max,    # because jinja dont have built-in function for max/min, so js pass in from python flask
+            min=min,    # because jinja dont have built-in function for max/min, so js pass in from python flask
         )
 
     elif session["role"] == "user":
@@ -362,16 +295,16 @@ def dashboard():
             encoded_image = "https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
 
         # INSERT GAMES OWNED
-        games = get_owned_game(curr_id)
+        games = get_owned_game(curr_id) # TODO: UPDAGTE TO MONGO VERSION
 
         # INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER
-        user_reviews = user_written_reviews(curr_id)
+        user_reviews = user_written_reviews(curr_id) # TODO: UPDAGTE TO MONGO VERSION
 
         # INSERT MUTUAL FRIENDS LIST
         if curr_id == session["_id"]:
-            mutual_friends = get_dashboard_mutual_friends(curr_id, curr_id)
+            mutual_friends = get_dashboard_mutual_friends(curr_id, curr_id) # TODO: UPDAGTE TO MONGO VERSION
         else:
-            mutual_friends = get_dashboard_mutual_friends(curr_id, session["_id"])
+            mutual_friends = get_dashboard_mutual_friends(curr_id, session["_id"]) # TODO: UPDAGTE TO MONGO VERSION
 
 
         return render_template(
@@ -384,7 +317,7 @@ def dashboard():
         )
 
     elif session["role"] == "developer":
-        games = db.new_game.find()[:10]
+        games = db.new_game.find()[:10] # TODO: UPDAGTE TO MONGO VERSION
 
         all_games = []
         for game in games:            
@@ -423,7 +356,7 @@ def create_user():
             "email": email,
             "password": bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
             "role": role,
-            "created_on": date.today().isoformat()
+            "created_on": datetime.now().date().isoformat()
         }
 
         try:

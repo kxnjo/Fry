@@ -45,15 +45,22 @@ def initialize_database():
 def generate_random_date():
     """
     Generates a random date and time within the current year.
+    
     Returns:
-        A `datetime` object representing the random date and time.
+        datetime: A `datetime` object representing the random date and time.
     """
-    start_date = datetime(datetime.now().year, 1, 1)  # Start of the year
-    end_date = datetime(datetime.now().year, 12, 31, 23, 59, 59)  # End of the year
+    # Define the range for the current year
+    current_year = datetime.now().year
+    start_date = datetime(current_year, 1, 1)  # Start of the year
+    end_date = datetime(current_year, 12, 31, 23, 59, 59)  # End of the year
+    
+    # Calculate the difference between start and end dates
     delta = end_date - start_date
 
-    # Random number of seconds to add to the start_date
+    # Generate a random number of seconds within the range
     random_seconds = random.randint(0, int(delta.total_seconds()))
+
+    # Return the random date
     return start_date + timedelta(seconds=random_seconds)
 
 
