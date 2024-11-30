@@ -39,15 +39,7 @@
             </div>
             <br>
             <div class="mt-auto"> <!-- Align to bottom -->
-                <!-- Temporary add to wishlist and purchase button -->
-                <form method="POST" action="{{ url_for('wishlist_bp.addToWishlist') }}" class="mb-2">
-                    <input type="text" name="game_id" value="{{ game.game_id }}" hidden>
-                    <button type="submit" class="btn btn-light" style="width: 210px;">Add to Wishlist</button>
-                </form>
-                <form method="POST" action="{{ url_for('owned_game_bp.add_owned_game') }}">
-                    <input type="text" name="game" value="{{ game.game_id }}" hidden>
-                    <button type="submit" class="btn btn-light" style="width: 210px;">Purchase</button>
-                </form>   
+
             {% if user_logged_in %}
             <!-- Actual add to wishlist and purchase button but need update the backend -->
             <div class="d-flex flex-column">

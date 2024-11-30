@@ -23,6 +23,7 @@ from mysql_routes.review import user_written_reviews,mongo_find_review,mongo_fin
 from mysql_routes.owned_game import get_owned_game
 from mysql_routes.friend import get_dashboard_mutual_friends
 # from mysql_routes.game import getGameNum, getGames, get_all_games
+from mongo_routes.wishlist import getAddedDate
 
 # Create a Blueprint object
 game_bp = Blueprint("game_bp", __name__)
@@ -178,15 +179,17 @@ def view_game(game_id):
         else:
             print("No reviews found for this game.")
 
+        gameInWishlist = getAddedDate(game_id)
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
-    
+
+
     return render_template("games/game.html",
                            game=game,
                         #    reviews=reviews,
                         #    recommended_data=recommended_data,
-                        #    gameInWishlist=gameInWishlist,
-                        #    user_logged_in=bool(user_id),
+                           gameInWishlist=gameInWishlist,
+                           user_logged_in=bool(user_id),
                            user_owned=bool(user_owned),
                            get_user_review=get_user_review,
                            game_reviews=game_reviews
