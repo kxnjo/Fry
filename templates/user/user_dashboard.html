@@ -100,9 +100,9 @@
                                 <!-- Game Card (One-third width) -->
                                 <div class="col-md-4">
                                     <div class="card bg-transparent border-0">
-                                        <img class="card-img-top" src="{{ url_for('static', filename='img/default_game.jpeg') }}" alt="{{ game.game_title }}" />
+                                        <img class="card-img-top" src="{{ game.image if game.image else url_for('static', filename='img/default_game.jpeg') }}" alt="{{ game.title }}" style="min-height:150px; width:auto; object-fit: cover;"/>
                                         <div class="card-body">
-                                            <h5 class="card-title">{{ game.game_title }}</h5>
+                                            <h5 class="card-title">{{ game.title }}</h5>
                                             <p>Hours played: {{ game.hours_played }} h</p>
                                             <p>Purchase date: {{ game.purchase_date }}</p>
                                             <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="btn btn-info btn-sm">View Game</a>

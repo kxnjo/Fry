@@ -20,7 +20,7 @@ import mongo_cfg
 
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
 from mysql_routes.review import user_written_reviews
-from mysql_routes.owned_game import get_owned_game
+from mongo_routes.owned_game import gamesInOwned
 from mysql_routes.friend import get_dashboard_mutual_friends
 from mysql_routes.game import getGameNum, getGames, get_all_games
 
@@ -294,8 +294,8 @@ def dashboard():
         else:
             encoded_image = "https://static.vecteezy.com/system/resources/previews/023/465/688/non_2x/contact-dark-mode-glyph-ui-icon-address-book-profile-page-user-interface-design-white-silhouette-symbol-on-black-space-solid-pictogram-for-web-mobile-isolated-illustration-vector.jpg"
 
-        # INSERT GAMES OWNED
-        games = get_owned_game(curr_id) # TODO: UPDAGTE TO MONGO VERSION
+        # INSERT GAMES OWNED from owned_game.py
+        games = gamesInOwned(curr_id)
 
         # INSERT REVIEWS CODE TO DISPLAY REVIEWS LIST MADE BY USER
         user_reviews = user_written_reviews(curr_id) # TODO: UPDAGTE TO MONGO VERSION

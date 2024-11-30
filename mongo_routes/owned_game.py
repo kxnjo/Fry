@@ -71,14 +71,17 @@ def mongo_connection():
         return f"Failed to connect to MongoDB: {e}", 500
 
 # Get all owned games by user 
-def gamesInOwned(): 
+def gamesInOwned(user_id=None): 
     db = initialize_database()
     if db is None: 
         return "Database is not initalized!!", 500 
   
     try: 
+        if user_id == None:
+            user_id = session['_id']
+        
         # Retrieve all documents 
-        documents = db.new_user.find({"_id": session["_id"],})
+        documents = db.new_user.find({"_id": user_id,})
 
         # Iterate through documents and print them 
         # Fetch all owned_games from user's doc in db
@@ -86,7 +89,7 @@ def gamesInOwned():
         for doc in documents:
             owned_games_array.extend(doc["owned_games"])
         
-        print("owned game array:", owned_games_array)
+        # print("owned game array:", owned_games_array)
 
         # Fetch additional details about the game
         owned_games_details = []
@@ -115,6 +118,7 @@ def getGameDetails(game_id, purchase_date, hours_played):
                 "title": doc["title"],
                 "purchase_date": purchase_date, 
                 "hours_played": hours_played,
+                "image": doc.get("image", None),
                 "price_changes" : doc["price_changes"]
                 # "price": doc["price"],
                 # "categories": doc["categories"],
