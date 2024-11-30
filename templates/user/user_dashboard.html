@@ -164,13 +164,13 @@
                                 <!-- Edit Review Button -->
                                 <button type="button" class="btn btn-warning btn-sm"
                                         data-bs-toggle="modal"
-                                        data-bs-target="#editReviewModal{{ review.review_id }}">
+                                        data-bs-target="#editReviewModal{{ review.game_id }}">
                                     Edit
                                 </button>
                                 <!-- Delete Button -->
                                 <button type="button" class="btn btn-danger btn-sm"
                                         data-bs-toggle="modal"
-                                        data-bs-target="#deleteReviewModal{{review_id}}"
+                                        data-bs-target="#deleteReviewModal{{review.game_id}}"
                                 class="btn btn-danger btn-sm">Delete</button>
                             </div>
                         </td>
@@ -244,19 +244,19 @@
 
         <!-- Modal for editing review -->
         {% for review in user_reviews %}
-        <div class="modal fade" id="editReviewModal{{ review.review_id }}" tabindex="-1"
-             aria-labelledby="editReviewModalLabel{{ review.review_id }}" aria-hidden="true">
+        <div class="modal fade" id="editReviewModal{{ review.game_id }}" tabindex="-1"
+             aria-labelledby="editReviewModalLabel{{ review.game_id }}" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-
+                    <form method="POST" action="{{ url_for('review_bp.mongo_add') }}">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="editReviewModalLabel{{ review.review_id }}">Edit Review for {{ review.game_title }}</h5>
+                            <h5 class="modal-title" id="editReviewModalLabel{{ review.game_id }}">Edit Review for {{ review.game_title }}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <!-- Hidden input to pass the review ID -->
                             <input type="hidden" name="review_id" value="{{review.review_id}}">
-                            <input type ="hidden" name="game_id" value=" {{review.game_id}}">
+                            <input type ="hidden" name="game_id" value="{{review.game_id}}">
                             <input type="hidden" name="source" value="dashboard">
 
                             <!-- Review Text Field -->
@@ -274,9 +274,9 @@
                                     <label for="recommended{{ review.review_id }}">Recommended</label>
                                     <select class="form-control" id="recommended{{ review.review_id }}"
                                             name="recommended">
-                                        <option value="Recommended" {% if review.recommended == "Recommended" %} selected {% endif %}>Recommended</option>
-                                        <option value="Not Recommended" {% if review.recommended == "Not Recommended" %} selected {% endif %}>Not Recommended</option>
-                                    </select>
+                                     <option value="Recommended" {% if review.recommended %} selected {% endif %}>Recommended</option>
+                                        <option value="Not Recommended" {% if not review.recommended %} selected {% endif %}>Not Recommended</option>
+                                </select>
                                 </div>
                             </div>
                         </div>
@@ -284,28 +284,33 @@
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary">Save Changes</button>
                         </div>
+                    </form>
 
                 </div>
             </div>
         </div>
 
 
-		<!-- Modal for Deleting User -->
-		<div class="modal fade" id="deleteReviewModal{{ review_id }}" tabindex="-1" aria-labelledby="deleteReviewModal{{ review_id }}" aria-hidden="true">
+		<!-- Modal for Deleting Review -->
+		<div class="modal fade" id="deleteReviewModal{{review.game_id}}" tabindex="-1" aria-labelledby="deleteReviewModal{{review.game_id}}" aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
+                    <form method="GET" action="{{ url_for('review_bp.delete_review') }}">
 					<div class="modal-header">
-						<h5 class="modal-title" id="deleteReviewModalLabel{{ review_id }}">Confirm Review Deletion</h5>
+						<h5 class="modal-title" id="deleteReviewModalLabel{{review.game_id}}">Confirm Review Deletion</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
+                        <input type ="hidden" name="game_id" value="{{review.game_id}}">
+                        <input type="hidden" name="source" value="dashboard">
 						<p>Are you sure you want to delete your review? This action cannot be undone.</p>
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-						<!-- Form for Deleting User -->
-<a href="{{ url_for('review_bp.delete_review', review_id=review.review_id, game_id='', source='dashboard') }}" class="btn btn-danger">Delete Review</a>
+						<!-- Form for Deleting Review -->
+                        <button type="submit" class="btn btn-danger">Delete Review</button>
 					</div>
+                    </form>
 				</div>
 			</div>
 		</div>

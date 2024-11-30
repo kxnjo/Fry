@@ -75,6 +75,83 @@
         </div>
     </div>
 </div>
+<!-- Show Reviews -->
+<div class="container">
+    <h1>Reviews</h1>
+    <div class="col">
+        {% if user_owned %}
+            {% if get_user_review %}
+                <p>You already reviewed this game.</p>
+                <div class="card review-card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Date: {{ get_user_review.review_date }}</h6>
+                        <p class="card-text">{{ get_user_review.review_text }}</p>
+                        {% if get_user_review.recommended%}
+                        <span class="text-success">Recommended</span>
+                        {% else %}
+                        <span class="text-danger">Not Recommended</span>
+                        {% endif %}
+                    </div>
+                    <!-- Update Button -->
+                    <div class="row">
+                        <div class="col">
+<!--                            <a href="{{ url_for('review_bp.mongo_add') }}"-->
+                            <a href="{{ url_for('review_bp.edit_reviews', game_id=game.game_id) }}"
+                               class="btn btn-warning btn-sm w-100">Update Review</a>
+                        </div>
+                        <div class="col">
+                            <form method="GET" action="{{ url_for('review_bp.delete_review') }}">
+                        <input type ="hidden" name="game_id" value="{{game.game_id}}">
+                        <input type="hidden" name="source" value="">
+                        <button type="submit" class="btn btn-danger btn-sm w-100">Delete Review</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+            <form method="GET" action="{{ url_for('review_bp.edit_reviews', game_id=game.game_id) }}">
+                <button type="submit" class="btn btn-primary">Add Review</button>
+            </form>
+            {% endif %}
+        {% elif user_logged_in %}
+        <div class="alert alert-warning" role="alert">
+            You can only leave a review after purchasing the game.
+        </div>
+        {% endif %}
+    </div>
+        <!-- Recommended and Not Recommended Reviews Section -->
+    <div class="row">
+        <div class="col-sm">
+            <h6>Recommended: {{game_reviews["recommended_reviews"] | length }}</h6>
+            <ul class="list-group">
+                {% for review in game_reviews["recommended_reviews"] if review.recommended %}
+                <div class="card review-card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">User: {{ review.username }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
+                        <p class="card-text">{{ review.review_text }}</p>
+                        <span class="text-success">Recommended</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </ul>
+        </div>
 
-
+        <div class="col-sm">
+            <h6>Not Recommended: {{game_reviews["not_recommended_reviews"] | length }}</h6>
+            <ul class="list-group">
+                {% for review in game_reviews["not_recommended_reviews"] if not review.recommended %}
+                <div class="card review-card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">User: {{ review.username }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">Date: {{ review.review_date }}</h6>
+                        <p class="card-text">{{ review.review_text }}</p>
+                        <span class="text-danger">Not Recommended</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
 {% endblock %}

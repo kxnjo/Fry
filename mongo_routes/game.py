@@ -19,7 +19,7 @@ from auth_utils import login_required  # persistent login
 import mongo_cfg
 
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
-from mysql_routes.review import user_written_reviews
+from mysql_routes.review import user_written_reviews,mongo_find_review,mongo_find_owned, get_all_reviews_for_game
 from mysql_routes.owned_game import get_owned_game
 from mysql_routes.friend import get_dashboard_mutual_friends
 # from mysql_routes.game import getGameNum, getGames, get_all_games
@@ -155,6 +155,28 @@ def view_game(game_id):
             "categories": doc.get("categories", []),
             "developers": doc.get("developers", [])
         }
+        user_id = session.get('_id')
+
+        user_owned = mongo_find_owned(user_id, game_id)
+
+        # Find the review
+        find_user_review = mongo_find_review(user_id, game_id)
+        get_user_review = None
+
+        if find_user_review:  # If there's a review found
+            user_review = find_user_review["reviews"][0]  # Get the review object
+            get_user_review = {
+                "review_date": user_review.get("review_date", "NA"),  # Review date or "NA" if not available
+                "review_text": user_review.get("review_text", "No review text"),  # Review text
+                "recommended": user_review.get("recommended", "NA")  # Recommended value or "NA" if not available
+            }
+        game_reviews = get_all_reviews_for_game(game_id)
+        if game_reviews:
+            print("Game Title:", game_reviews["title"])
+            print("Recommended Reviews Count:", len(game_reviews["recommended_reviews"]))
+            print("Not Recommended Reviews Count:", len(game_reviews["not_recommended_reviews"]))
+        else:
+            print("No reviews found for this game.")
 
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
@@ -165,8 +187,9 @@ def view_game(game_id):
                         #    recommended_data=recommended_data,
                         #    gameInWishlist=gameInWishlist,
                         #    user_logged_in=bool(user_id),
-                        #    user_owned=bool(user_owned),
-                        #    get_user_review=get_user_review,
+                           user_owned=bool(user_owned),
+                           get_user_review=get_user_review,
+                           game_reviews=game_reviews
                         #    dates=dates,
                         #    prices=prices
                            )

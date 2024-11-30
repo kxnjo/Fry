@@ -11,45 +11,56 @@
                 <div class="col-12">
                     <div class="row mb-3">
                         <div class="col-12">
-<!--                            {% if review_info %}-->
-<!--                            <form method="POST"-->
-<!--                                  action="{{ url_for('review_bp.add_review', review_id=review_info[0]) }}">-->
-<!--                                {% else %}-->
-                                <form method="POST"
-                                      action="{{ url_for('review_bp.mongo_add') }}">
-                                    {% endif %}
+                            {% if review_info %}
+                                <form method="POST" action="{{ url_for('review_bp.mongo_add') }}">
+                                    {% for review in review_info %}
                                     <div class="form-group">
                                         <label for="gameFilter">Game:</label>
                                         <input type="hidden" id="gameId" name="game_id" value="{{selected_game}}">
                                         <input type="hidden" name="source" value="game-page">
-
-                                        <input class="form-control" type="text" id="gameFilter"
-                                               value="{{game_title}}"
-                                               readonly>
+                                        <input class="form-control" type="text" id="gameFilter" value="{{game_title}}" readonly>
                                     </div>
-
 
                                     <div class="form-group">
                                         <label for="exampleFormControlSelect1">Recommended</label>
                                         <select class="form-control" id="exampleFormControlSelect1" name="recommended">
-                                            <option value="Recommended" {% if review_info and review_info[2]==
-                                            "Recommended" %} selected {% endif %}>
-                                            Recommended
-                                            </option>
-                                            <option value="Not Recommended" {% if review_info and review_info[2]==
-                                            "Not Recommended" %} selected {% endif %}>
-                                            Not Recommended
-                                            </option>
+                                            <option value="Recommended" {% if review.recommended %} selected {% endif %}>Recommended</option>
+                                            <option value="Not Recommended" {% if not review.recommended %} selected {% endif %}>Not Recommended</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
                                         <label for="review_text_area">Review Text</label>
-                                        <textarea class="form-control" id="review_text_area" rows="3" oninput ="updateCharCount()" maxlength="5000"
-                                                  name="review_text">{{ review_info[3] if review_info else '' }}</textarea>
+                                        <textarea class="form-control" id="review_text_area" rows="3" oninput="updateCharCount()" maxlength="5000" name="review_text">{{ review.review_text if review_info else '' }}</textarea>
+                                        <small id="charCount" class="form-text text-muted">0 characters</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                    {% endfor %}
+                                </form>
+                            {% else %}
+                                <!-- Optionally, you can also show a form for the user to submit a new review -->
+                                <form method="POST" action="{{ url_for('review_bp.mongo_add') }}">
+                                    <div class="form-group">
+                                        <label for="gameFilter">Game:</label>
+                                        <input type="hidden" id="gameId" name="game_id" value="{{selected_game}}">
+                                        <input type="hidden" name="source" value="game-page">
+                                        <input class="form-control" type="text" id="gameFilter" value="{{game_title}}" readonly>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="exampleFormControlSelect1">Recommended</label>
+                                        <select class="form-control" id="exampleFormControlSelect1" name="recommended">
+                                            <option value="Recommended">Recommended</option>
+                                            <option value="Not Recommended">Not Recommended</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="review_text_area">Review Text</label>
+                                        <textarea class="form-control" id="review_text_area" rows="3" oninput="updateCharCount()" maxlength="5000" name="review_text"></textarea>
                                         <small id="charCount" class="form-text text-muted">0 characters</small>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Submit</button>
                                 </form>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -57,10 +68,11 @@
         </div>
     </div>
 </div>
+
 <script>
     function updateCharCount() {
-        const textarea = document.getElementById(`review_text_area`);
-        const charCountSpan = document.getElementById(`charCount`);
+        const textarea = document.getElementById("review_text_area");
+        const charCountSpan = document.getElementById("charCount");
         const currentLength = textarea.value.length;
         charCountSpan.textContent = `${currentLength}/5000 characters`;
     }
@@ -69,6 +81,5 @@
     document.addEventListener("DOMContentLoaded", function() {
         updateCharCount();  // Initialize the count for any pre-filled text
     });
-
 </script>
 {% endblock %}
