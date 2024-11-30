@@ -66,10 +66,9 @@ def mongo_connection():
         for game in documents:            
             # print(f"this is indiv game! {game}")
             all_games.append(game)
-        # for doc in documents:
-        #     print(doc)
 
         return f"Successfully connected to MongoDB. all_games: {all_games}", 200
+    
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
     
@@ -172,12 +171,7 @@ def view_game(game_id):
                 "recommended": user_review.get("recommended", "NA")  # Recommended value or "NA" if not available
             }
         game_reviews = get_all_reviews_for_game(game_id)
-        if game_reviews:
-            print("Game Title:", game_reviews["title"])
-            print("Recommended Reviews Count:", len(game_reviews["recommended_reviews"]))
-            print("Not Recommended Reviews Count:", len(game_reviews["not_recommended_reviews"]))
-        else:
-            print("No reviews found for this game.")
+
 
         gameInWishlist = getAddedDate(game_id)
     except Exception as e:
