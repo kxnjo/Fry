@@ -17,7 +17,7 @@
             <div class="card h-100 shadow friend-card">
                 <div class="card-body">
                     <!-- Friend Name and Details -->
-                    <a href="{{ url_for('user_bp.dashboard', user_id=friend.friend_id) }}">
+                    <a href="{{ url_for('user_bp.dashboard', _id = friend.friend_id) }}">
                         <h4 class="card-title text-primary mb-3">{{ friend.username }}</h4>
                     </a>
                     <p class="card-subtitle mb-3 text-muted">
@@ -99,7 +99,7 @@
                         {% if friend.mutual_friends %}
                         <div class="mutual-friend-list">
                             {% for mutual in friend.mutual_friends %}
-                            <a href="{{ url_for('user_bp.dashboard', user_id=mutual.user_id) }}"
+                            <a href="{{ url_for('user_bp.dashboard', _id=mutual.user_id) }}"
                                 class="badge bg-info text-decoration-none me-1 mb-1">{{ mutual.username }}</a>
                             {% endfor %}
                         </div>
@@ -109,7 +109,7 @@
                     </div>
                     <!-- Delete Friend Button -->
                     <div class="d-flex gap-2 justify-content-center">
-                        <a href="{{ url_for('user_bp.dashboard', user_id = friend.friend_id) }}" class="btn btn-primary"><i class="fas fa-user"></i> View Profile</a>
+                        <a href="{{ url_for('user_bp.dashboard', _id = friend.friend_id) }}" class="btn btn-primary"><i class="fas fa-user"></i> View Profile</a>
                         <a href="{{ url_for('friendlist_bp.delete_friend', friend_id=friend.friend_id) }}" class="btn btn-danger"> <i class="fas fa-user-minus"></i> Delete Friend </a>
                     </div>
                 </div>

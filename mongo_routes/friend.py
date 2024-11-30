@@ -1,21 +1,17 @@
-from flask import app, Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
-import mysql.connector
+from flask import app, Blueprint, jsonify, render_template, request, url_for, redirect, session, flash, get_flashed_messages
 import pymongo
 
 # images import
 from bson.binary import Binary
-import base64
 
 # load up configurations
 from dotenv import load_dotenv
 import os
 load_dotenv('config.env')
 
-import hashlib
-import json
 import datetime
 import traceback
-from flask import flash
+import random
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
@@ -125,48 +121,55 @@ def add_friend():
         if db is None:
             return "Database not initialized!!", 500
         
-        if request.method == "POST":
-            # Debugging: Print form data
-            print("Form data:", request.form)
-            
-            # Safely get user_id from session
-            user_id = session.get("_id")
-            if not user_id:
-                flash("User not logged in")
-                return redirect(url_for("login"))
+        # Get user_id from session
+        user_id = session.get("_id")
+        if not user_id:
+            return redirect(url_for("login"))
 
-            # Safely get friend username from form
+        # Retrieve the user's data
+        user = db.new_user.find_one({'_id': user_id})
+        if not user:
+            return redirect(url_for("login"))
+
+        # Get existing friend IDs
+        existing_friend_ids = [friend.get('friend_id') for friend in user.get('friends', [])]
+        
+        # Find suggested friends (users not in friend list)
+        all_suggested_friends = list(db.new_user.find({
+            '_id': {
+                '$ne': user_id,  
+                '$nin': existing_friend_ids  
+            }
+        }))
+
+        # Randomly pick 4 suggestions
+        suggested_friends = random.sample(all_suggested_friends, min(len(all_suggested_friends), 4))
+
+        if request.method == "POST":
             friend_username = request.form.get("friend")
             if not friend_username:
-                flash("Please enter a username")
                 return redirect(url_for("friendlist_bp.add_friend"))
-
-            # Retrieve the user's data
-            user = db.new_user.find_one({'_id': user_id})
-            if not user:
-                flash("User account not found")
-                return redirect(url_for("login"))
 
             # Check if the friend exists
             friend = db.new_user.find_one({'username': friend_username})
             if friend is None:
                 flash("User not found")
-                return render_template("friend/add_friend.html")
+                get_flashed_messages()
+                return render_template("friend/add_friend.html", suggested_friends=suggested_friends)
 
             # Check if trying to add self
             if friend['_id'] == user_id:
                 flash("You cannot add yourself as a friend")
-                return render_template("friend/add_friend.html")
-
-            # Safely get existing friends list
-            existing_friends = user.get('friends', [])
+                get_flashed_messages()
+                return render_template("friend/add_friend.html", suggested_friends=suggested_friends)
 
             # Check if already friends
-            if any(f.get('friend_id') == friend['_id'] for f in existing_friends):
+            if any(f.get('friend_id') == friend['_id'] for f in user.get('friends', [])):
                 flash("You are already friends with this user")
-                return render_template("friend/add_friend.html")
+                get_flashed_messages()
+                return render_template("friend/add_friend.html", suggested_friends=suggested_friends)
 
-            # Add the friend to the user's friend list
+            # Add friend logic
             current_time = datetime.datetime.now()
             db.new_user.update_one(
                 {'_id': user_id},
@@ -176,7 +179,6 @@ def add_friend():
                 }}}
             )
 
-            # Add the user to the friend's friend list
             db.new_user.update_one(
                 {'_id': friend['_id']},
                 {'$push': {'friends': {
@@ -186,15 +188,16 @@ def add_friend():
             )
 
             flash("Friend added successfully")
+            get_flashed_messages()
             return redirect(url_for("friendlist_bp.view_friends"))
 
     except Exception as e:
-        # Log the full error for server-side debugging
         print(f"Full error adding friend: {traceback.format_exc()}")
         flash(f"An error occurred: {str(e)}")
+        get_flashed_messages()
         return redirect(url_for("friendlist_bp.add_friend"))
 
-    return render_template("friend/add_friend.html")
+    return render_template("friend/add_friend.html", suggested_friends=suggested_friends)
 
 @friendlist_bp.route("/delete-friend/<friend_id>")
 # Function to delete a friend
@@ -210,7 +213,6 @@ def delete_friend(friend_id):
         friend = db.new_user.find_one({'_id': friend_id})
 
         if friend is None:
-            flash("Friend not found")
             return redirect(url_for("friendlist_bp.view_friends"))
 
         # Remove the friend from the user's friend list
@@ -224,7 +226,6 @@ def delete_friend(friend_id):
             {'_id': friend_id},
             {'$pull': {'friends': {'friend_id': user_id}}}
         )
-        flash("Friend deleted successfully")
         return redirect(url_for("friendlist_bp.view_friends"))
 
     except Exception as e:

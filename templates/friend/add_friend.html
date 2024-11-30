@@ -15,7 +15,7 @@
                             {% endfor %}
                             </div>
                         {% endif %}
-                        {% endwith %}
+                    {% endwith %}
                     <form method="POST" action="{{ url_for('friendlist_bp.add_friend') }}" class="mb-4">
                         <div class="input-group">
                             <input id="friend" name="friend" type="text" class="form-control" placeholder="Enter your friend's profile name" aria-label="Friend's profile name" required>
@@ -38,16 +38,16 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <!-- Add friends through suggest friends Section -->
+                    {% if suggested_friends %}
                     <h2 class="card-title text-center mb-4">Suggested Friends</h2>
                     <div id="suggested-friends" class="row row-cols-1 row-cols-md-2 g-4">
-                        {% if suggested_friends %}
                         {% for friend in suggested_friends %}
-                            <div class="col">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ friend[1] }}</h5>
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                        <h5 class="card-title">{{ friend.username }}</h5>
                                         <form method="POST" action="{{ url_for('friendlist_bp.add_friend') }}" >
-                                            <input type="hidden" name="friend" value="{{ friend[1] }}">
+                                            <input type="hidden" name="friend" value="{{ friend.username }}">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="fas fa-user-plus me-2"></i>Add Friend
                                             </button>
