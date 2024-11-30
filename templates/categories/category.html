@@ -1,12 +1,28 @@
 {% extends "index.html" %}
 {% block content %}
 <div class="container mt-5">
-    <h1>Games that include <u>{{ games[0].category_name }}</u></h1>
+    <h1>Games that include <u>{{ category }}</u></h1>
     <!-- view all games with category -->
     {% for game in games %}
         <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="text-decoration-none">
             <h5 class="card-title">{{ game.game_title }}</h5>
         </a>
     {% endfor %}
+
+<br>
+<br>
+
+<!-- pagination -->
+<div class="text-center">
+    <div class="pagination d-inline-flex">
+        {% if page > 1 %}
+        <a class="nav-link" href="{{ url_for('category_bp.view_category', category=category, page=page-1) }}">Previous</a>
+        {% endif %}
+
+        {% if page < total_pages %}
+        <a class="nav-link ms-5" href="{{ url_for('category_bp.view_category', category=category, page=page+1) }}">Next</a>
+        {% endif %}
+    </div>
+</div>
 
 {% endblock %}

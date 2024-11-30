@@ -13,11 +13,12 @@ from mongo_routes.wishlist import wishlist_bp
 from mongo_routes.owned_game import owned_game_bp
 from mongo_routes.friend import friendlist_bp
 from mongo_routes.game import game_bp
+from mongo_routes.category import category_bp
 
 # from mysql_routes.game import game_bp
 from mysql_routes.sample import sample_bp
 from mysql_routes.review import review_bp
-from mysql_routes.category import category_bp
+# from mysql_routes.category import category_bp
 from mysql_routes.developer import developer_bp
 # from mysql_routes.friend import friendlist_bp
 # from mysql_routes.wishlist import wishlist_bp

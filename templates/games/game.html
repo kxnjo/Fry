@@ -18,10 +18,9 @@
             <h5><strong>Categories:</strong>
                 {% if game.categories %}
                     {% for category in game.categories %}
-                        <!-- <a href="{{ url_for('category_bp.view_category', category_id=category.category_id) }}" class="text-decoration-none"></a> -->
-                           
-                            {{ category}}{% if not loop.last %}, {% endif %}
-                        <!-- </a> -->
+                        <a href="{{ url_for('category_bp.view_category', category=category) }}" class="text-decoration-none">
+                            {{ category }}{% if not loop.last %}, {% endif %}
+                        </a>
                     {% endfor %}
                 {% else %}
                     <div class="alert alert-warning" role="alert">

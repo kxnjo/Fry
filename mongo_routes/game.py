@@ -51,34 +51,6 @@ def get_db():
 
 db = get_db()
 
-# def get_all_games():
-
-#     db = get_db()
-
-#     if db is None:
-#         return "Database not initialized!!", 500
-
-#     try:
-
-#         game_docs = db.new_game.find()
-
-#         cur = conn.cursor(dictionary=True)
-#         # execute query
-#         cur.execute(
-#             "SELECT * FROM game;"
-#         )
-#         total = cur.fetchall()
-
-#         # close connection
-#         cur.close()
-#         conn.close()
-#         return total
-
-#     except mysql.connector.Error as e:
-#         print(f"Error: {e}")
-#         return f"Error retrieving table: {e}"
-    
-
 @game_bp.route('/gametest-db-connection')
 def mongo_connection():
     # Ensure db.new_user is initialized
@@ -116,16 +88,7 @@ def view_all_games():
     # Calculate the offset for the SQL query
     offset = (page - 1) * per_page
 
-    # if sort_by == 'price':
-    #     order_by = 'g.price'
-    # elif sort_by == 'release_date':
-    #     order_by = 'g.release_date'
-    # else:
-    #     order_by = 'g.title'  # Default is alphabetically by title
-
-    # order_direction = 'ASC' if sort_order == 'asc' else 'DESC'
     sort_direction = 1 if sort_order == 'asc' else -1
-
 
     if db is None:
         return "Database not initialized!!", 500
@@ -143,8 +106,17 @@ def view_all_games():
         elif sort_by == "release_date":
             sort_field = "release_date"
 
-        # Query the database with search and sort
-        documents = db.new_game.find(search_filter).sort(sort_field, sort_direction)[:10]
+        # Query the database with search, sort, skip, and limit
+        documents = (
+            db.new_game.find(search_filter)
+            .sort(sort_field, sort_direction)
+            .skip(offset)
+            .limit(per_page)
+        )
+
+        # Count the total documents matching the filter
+        total_documents = db.new_game.count_documents(search_filter)
+
 
         # Iterate through documents and print them
         all_games = []
@@ -158,11 +130,14 @@ def view_all_games():
                 "categories": doc["categories"]
             })
 
+        # Calculate total pages
+        total_pages = (total_documents + per_page - 1) // per_page
+
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
     
     return render_template("games/view_games.html", games=all_games, page=page, sort_by=sort_by,
-                           sort_order=sort_order, search=search)
+                           sort_order=sort_order, search=search, total_pages = total_pages)
 
 
 # route to view individual game page

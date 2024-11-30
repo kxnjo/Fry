@@ -101,6 +101,23 @@
     </div>
 
 
+    <br>
+    <br>
+    
+    <!-- pagination -->
+    <div class="text-center">
+        <div class="pagination d-inline-flex">
+            {% if page > 1 %}
+            <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page-1, sort=sort_by, order=sort_order, query=search) }}">Previous</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+            <a class="nav-link ms-5" href="{{ url_for('game_bp.view_all_games', page=page+1, sort=sort_by, order=sort_order, query=search) }}">Next</a>
+            {% endif %}
+        </div>
+    </div>
+
+
 <!-- sorting options javascript -->
 <script>
     function toggleSortOrder() {

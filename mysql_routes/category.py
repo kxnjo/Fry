@@ -1,23 +1,55 @@
-from flask import Blueprint, render_template, request
-import mysql.connector
+from flask import app, Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
+import pymongo
 
+# images import
+from bson.binary import Binary
+import base64
+import bcrypt
+
+# load up configurations
 from dotenv import load_dotenv
 import os
-
 load_dotenv('config.env')
+
+import json
+from datetime import date
+from auth_utils import login_required  # persistent login
+
+# MongoDB setup
+import mongo_cfg
+
+# integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
+from mysql_routes.review import user_written_reviews
+from mysql_routes.owned_game import get_owned_game
+from mysql_routes.friend import get_dashboard_mutual_friends
+# from mysql_routes.game import getGameNum, getGames, get_all_games
 
 # Create a Blueprint object
 category_bp = Blueprint("category_bp", __name__)
 
+db = None
 
-def create_connection():
-    # Replace with your database connection details
-    return mysql.connector.connect(
-        host=os.environ.get("DB_HOST"),
-        user=os.environ.get("DB_USER"),
-        password=os.environ.get("DB_PASSWORD"),
-        database=os.environ.get("DB_DATABASE"),
-    )
+# MARK: initialise database
+def get_db():
+    """Helper function to initialize the MongoDB user collection."""
+    global db
+    if db is None:
+        # Attempt to get an existing connection first
+        db = mongo_cfg.get_NoSQLdb()
+        
+        # If no existing connection, initialize a new one
+        if db is None:
+            db = mongo_cfg.noSQL_init(app)
+        
+        return db
+            
+    # After ensuring db is initialized, return the user collection if db is available
+    if db is not None:
+        return db
+    else:
+        raise Exception("Failed to initialize MongoDB connection")
+
+db = get_db()
 
 # route to view all categories
 @category_bp.route("/categories")
