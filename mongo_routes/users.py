@@ -318,14 +318,33 @@ def dashboard():
         )
 
     elif session["role"] == "developer":
-        games = db.new_game.find()[:10] # TODO: UPDAGTE TO MONGO VERSION
 
-        all_games = []
-        for game in games:            
-            print(f"this is indiv game! {game}")
-            all_games.append(game)
+        page = request.args.get("page", 1, type=int)            # get current page number, default to first page
+        items_per_page = 10                                     # set the number of items per page
+        sort_field = request.args.get("sort_field", "_id")      # get field to sort, default to _id
+        sort_order = int(request.args.get("sort_order", 1))     # get sort order, 1 for ascending, -1 for descending
 
-        return render_template("user/developer_dashboard.html", games=all_games)
+        games, game_total_pages = [], 0 
+
+        total_games = db.new_game.count_documents({})
+        games = list(
+            db.new_game.find({})
+            .sort({sort_field: sort_order})
+            .skip((page - 1) * items_per_page)
+            .limit(items_per_page)
+        )
+        game_total_pages = (total_games + items_per_page - 1) // items_per_page
+
+        return render_template(
+            "user/developer_dashboard.html", 
+            games=games,
+            page=page,
+            game_total_pages=game_total_pages,
+            sort_field=sort_field,
+            sort_order=sort_order,
+            max=max,
+            min=min,
+        )
 
 
 # MARK: ADMIN CREATE USER

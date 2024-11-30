@@ -1,4 +1,75 @@
 {% extends "index.html" %}
+
+{% block scripts %}
+<script>
+    // for pagination use
+    function update_params(collection, key, value) {
+		const url = new URL(window.location.href);
+
+		// add the query params in
+		url.searchParams.set('filter_type', collection);
+		url.searchParams.set(key, value); 
+
+		// refresh/redirect with query
+		window.location.href = url.toString(); 
+	}
+
+    function handleReset() {
+        const url = new URL(window.location.href); // Get the current URL
+        
+        // Clear all query parameters
+        url.search = ""; 
+
+        // Redirect without query parameters
+        console.log("Clearing all query parameters. Redirecting to:", url.toString());
+        window.location.href = url.toString();
+    }
+
+    function handleSortChange(selectElement) {
+		const url = new URL(window.location.href); // Get the current URL
+
+		// extract out the field to sort, and the order
+		if (selectElement.value == "clear") {
+			// Clear all query parameters
+			url.search = ""; 
+
+			// Redirect without query parameters
+			console.log("Clearing all query parameters. Redirecting to:", url.toString());
+			window.location.href = url.toString();
+		}
+		else {
+			const [collection, field, order] = selectElement.value.split('-');
+	
+			if (field && order) {	
+				// add the query params in
+				url.searchParams.set('sort_field', field);
+				url.searchParams.set('sort_order', (order === "asc") ? 1 : -1);
+				url.searchParams.delete('page'); // Reset pagination to first page
+	
+				// refresh/redirect with query
+				console.log("Redirecting to:", url.toString());
+				window.location.href = url.toString();
+			}
+		}
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+		const urlParams = new URLSearchParams(window.location.search); // Get query parameters
+		const sortField = urlParams.get("sort_field"); // Get 'sort_field' value
+		const sortOrder = urlParams.get("sort_order") == "1" ? "asc" : "desc" ;
+
+		if (sortField) {
+            const selectElement = document.getElementById("games-uid-sort");
+            let selected = "games-" + sortField + "-" + sortOrder;
+            console.log("selected: " + selected);
+            selectElement.value = selected; // Set the dropdown value
+		}
+
+    });
+
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-5">
     <!-- Header Section -->
@@ -17,14 +88,106 @@
     <div class="card">
         <div class="card-header bg-dark text-white">
             <div class="row align-items-center">
-                <div class="col">
-                    <h3 class="mb-0">Games Overview</h3>
+                <!-- Sorting Dropdown -->
+                <div class="col-md-4">
+                    <label for="games-uid-sort" class="form-label mb-1">Sort Games:</label>
+                    <select id="games-uid-sort" class="form-select sort-select" onchange="handleSortChange(this)">
+                        <option value="clear">Select Sorting</option>	
+                        <option value="games-title-asc">Title A-Z</option>
+                        <option value="games-title-desc">Title Z-A</option>
+                        <option value="games-release_date-asc">Date Created Ascending</option>
+                        <option value="games-release_date-desc">Date Created Descending</option>
+                    </select>
                 </div>
-                <div class="col-3">
-                    <input type="text" class="form-control" id="gameSearch" placeholder="Search games...">
+        
+                <!-- Search Bar and Button -->
+                <div class="col-md-5">
+                    <label for="gameSearch" class="form-label mb-1">Search Games:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="gameSearch" placeholder="Search games...">
+                        <button class="btn btn-primary" type="button" onclick="handleSearch()">Search</button>
+                    </div>
+                </div>
+        
+                <!-- Additional Actions (Optional) -->
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-secondary mt-2" onclick="handleReset()">Reset</button>
                 </div>
             </div>
-        </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-3">
+                <nav aria-label="Game page navigation">
+                    <ul class="pagination">
+                        <!-- Previous Page -->
+                        <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                            <a 
+                                class="page-link" 
+                                href="javascript:update_params('games', 'page', {{ max(1, page - 1) }})" 
+                                aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+
+                        <!-- Page Numbers -->
+                        {% set max_visible_pages = 10 %} {# Updated threshold to 10 pages #}
+                        {% if game_total_pages <= max_visible_pages %}
+                            {# If total pages are 10 or less, show all pages #}
+                            {% for p in range(1, game_total_pages + 1) %}
+                                <li class="page-item {% if p == page %}active{% endif %}">
+                                    <a class="page-link" href="javascript:update_params('games', 'page', {{ p }})">{{ p }}</a>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            {# Complex pagination for more than 10 pages #}
+                            {# Always show first page #}
+                            <li class="page-item {% if page == 1 %}active{% endif %}">
+                                <a class="page-link" href="javascript:update_params('games', 'page', 1)">1</a>
+                            </li>
+
+                            {# Show ellipsis before middle pages if far from start #}
+                            {% if page > (max_visible_pages // 2 + 1) %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+
+                            {# Middle pages #}
+                            {% set start_page = max(2, page - (max_visible_pages // 2)) %}
+                            {% set end_page = min(game_total_pages - 1, page + (max_visible_pages // 2 - 1)) %}
+                            {% for p in range(start_page, end_page + 1) %}
+                                {% if p > 1 and p < game_total_pages %}
+                                    <li class="page-item {% if p == page %}active{% endif %}">
+                                        <a class="page-link" href="javascript:update_params('games', 'page', {{ p }})">{{ p }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {# Show ellipsis after middle pages if far from end #}
+                            {% if page < game_total_pages - (max_visible_pages // 2) %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+
+                            {# Always show last page #}
+                            <li class="page-item {% if page == game_total_pages %}active{% endif %}">
+                                <a class="page-link" href="javascript:update_params('games', 'page', {{ game_total_pages }})">{{ game_total_pages }}</a>
+                            </li>
+                        {% endif %}
+
+                        <!-- Next Page -->
+                        <li class="page-item {% if page >= game_total_pages %}disabled{% endif %}">
+                            <a 
+                                class="page-link" 
+                                href="javascript:update_params('games', 'page', {{ min(game_total_pages, page + 1) }})" 
+                                aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+
+        </div>        
+        
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
