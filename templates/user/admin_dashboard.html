@@ -433,7 +433,7 @@
 	<div class="modal fade" id="editGameModal{{game.game_id}}" tabindex="-1" aria-labelledby="editGameModalLabel{{game.game_id}}" aria-hidden="true">
 		<div class="modal-dialog">
 			<div class="modal-content">
-				<form action="{{ url_for('game_bp.edit_game', game_id=game.game_id) }}" method="POST">
+				<form action="{{ url_for('game_bp.edit_game', game_id=game._id) }}" method="POST">
 					<div class="modal-header">
 						<h5 class="modal-title">Edit Game Details</h5>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

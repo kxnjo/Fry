@@ -12,7 +12,7 @@ import os
 load_dotenv('config.env')
 
 import json
-from datetime import date
+from datetime import datetime
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
@@ -191,28 +191,55 @@ def view_game(game_id):
                         #    prices=prices
                            )
 
-@game_bp.route("/edit-game/<game_id>", methods=["POST"])
+@game_bp.route("/edit_game/<game_id>", methods=['POST'])
 def edit_game(game_id):
+
+    db = get_db()
+
+    # Get form data
+    title = request.form.get("title")
+    new_price = request.form.get("price")
+
+    # Validate form data (you can add more checks if needed)
+    if not title or not new_price:
+        return "Title and price are required!", 400
+    
     try:
-        db = get_db()
+        # Retrieve the current game document
+        game = db.new_game.find_one({"_id": game_id})
+        if not game:
+            return "Game not found!", 404
 
-        # Retrieve all documents
-        documents = db.new_game.find({"_id":  game_id,})
+        # Get the current price to compare with the new price
+        current_price = game.get("price")
 
-        # Iterate through documents and print them
-        all_games = []
-        for doc in documents:
-            all_games.append({
-                "game_id": doc["_id"],
-                "game_title": doc["title"],
-                "game_release_date": doc["release_date"],
-                "game_price": doc["price"]
-            })
+        # Update the game document
+        update_data = {"title": title}
+        if current_price != new_price:  # Only add price change if the price is updated
+            update_data["price"] = new_price
+
+            # Create a new price change record
+            new_price_change = {
+                "change_date": datetime.utcnow().strftime("%Y-%m-%d"),
+                "base_price": float(new_price),
+                "discount": game.get("price_changes", [{}])[-1].get("discount", 0),  # Preserve the last discount
+            }
+
+            # Append the new price change to the `price_changes` array
+            db.new_game.update_one(
+                {"_id": game_id},
+                {"$push": {"price_changes": new_price_change}}
+            )
+
+        # Update the other fields
+        db.new_game.update_one({"_id": game_id}, {"$set": update_data})
+
+        return redirect(url_for("user_bp.dashboard"))
 
     except Exception as e:
-        return f"Failed to connect to MongoDB: {e}", 500
+        return f"Failed to update the game: {e}", 500
+    
 
-    return redirect(url_for("user_bp.dashboard"))
 
 @game_bp.route("/create-game", methods=["POST"])
 def create_game(game_id):
