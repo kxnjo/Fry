@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 import os
 load_dotenv('config.env')
 
-import hashlib
 import json
 from datetime import date
 from auth_utils import login_required  # persistent login
@@ -30,7 +29,8 @@ user_bp = Blueprint("user_bp", __name__)
 
 db = None
 
-def initialize_database():
+# MARK: initialise database
+def get_db():
     """Helper function to initialize the MongoDB user collection."""
     global db
     if db is None:
@@ -49,15 +49,11 @@ def initialize_database():
     else:
         raise Exception("Failed to initialize MongoDB connection")
 
+db = get_db()
 
-# MONGO connections
 @user_bp.route('/test-db-connection')
 def mongo_connection():
     # Ensure db.new_user is initialized
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
-
     try:
         # Retrieve all documents
         documents = db.new_user.find()
@@ -80,7 +76,7 @@ def mongo_connection():
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
 
-# other functions for accessiblity
+# MARK: custom functions
 def get_all_users(start=0, end=10):
     """
     Get a list of users within a specified range.
@@ -95,9 +91,7 @@ def get_all_users(start=0, end=10):
     # MONGO = = =
     # Retrieve all documents
     # Ensure db.new_user is initialized
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_db()
         
     user_documents = db.new_user.find()
 
@@ -142,6 +136,7 @@ def generate_id():
     return new__id
 
 
+# MARK: LOGIN
 @user_bp.route("/login", methods=["GET", "POST"])
 def login():
     """Handle user login."""
@@ -155,10 +150,9 @@ def login():
             flash("Username/email and password are required.", "danger")
             return redirect(url_for("user_bp.login"))
         
-
         try:
             # Ensure db.new_user is initialized
-            db = initialize_database()  
+            db = get_db()  
             if db.new_user is None:
                 raise RuntimeError("User collection not initialized!")
 
@@ -175,18 +169,10 @@ def login():
                 flash("Invalid username or email.", "danger")
                 return redirect(url_for("user_bp.login"))
 
-            # hash the password
-            hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
-
-            # Compare hashed password (use bcrypt or argon2 instead of hashlib)
+            # Compare hashed password (use bcrypt)
             if not bcrypt.checkpw(password.encode(), user["password"].encode()):
                 flash("Incorrect password.", "danger")
                 return redirect(url_for("user_bp.login"))
-            
-            # # error handling: if username/email does not exist, user == None, return error. If password wrong also, return error.
-            # if not user or user["password"]!= hashed_input_password:
-            #     flash("Incorrect username/password", "danger")
-            #     return redirect(url_for("user_bp.login"))
 
             # save to session
             session["_id"] = user["_id"]
@@ -199,23 +185,20 @@ def login():
         except pymongo.errors.PyMongoError as e:
             # Handle any pymongo-related error
             flash(f"An unknown error occurred: {e}", "danger")
-            print(f"An unknown error occurred: {e}")
             return redirect(url_for("user_bp.login"))
             
 
     # if the method is GET instead, load the html
     return render_template("user/login.html")
 
-
+# MARK: REGISTER ACCOUNT
 @user_bp.route("/register", methods=["GET", "POST"])
 def register():
     """Handle user registration."""
     if request.method == "POST":
 
         # Ensure db.new_user is initialized
-        db = initialize_database()  
-        if db is None:
-            return "Database not initialized!!", 500
+        db = get_db()  
 
         # handle the fields retrieved, make sure that it aligns with db
         name = request.form["name"]
@@ -223,14 +206,14 @@ def register():
         password = request.form["password"]
 
         # hash the password
-        hashed_input_password = hashlib.sha256(password.encode()).hexdigest()
+        bcrypt_hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
         try: 
             new_user = {
                 "_id": generate_id(),
                 "username": name,
                 "email": email, 
-                "password": hashed_input_password,
+                "password": bcrypt_hashed_password,
                 "role": "user",
                 "created_on": date.today().isoformat()
             }
@@ -252,27 +235,25 @@ def register():
     # if the method is GET instead, load the html
     return render_template("user/register.html")
 
-
+# MARK: FORGET PASSWORD
 @user_bp.route("/forgot", methods=["GET", "POST"])
 def forgot():
     """Handle password reset."""
     if request.method == "POST":
 
         # Ensure db is initialized
-        db = initialize_database()  
-        if db is None:
-            return "Database not initialized!!", 500
+        db = get_db()  
             
         # Retrieve form data
         username_email = request.form["username_email"]
         password = request.form["password"]
         # hash the password
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        bcrypt_hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
         try:
             result = db.new_user.update_one(
-                {"$or": [ {"username": username_email}, {"email": username_email}]},  # filter to find each user by either username or email
-                {"$set": {"password": hashed_password}}
+                {"$or": [{"username": username_email}, {"email": username_email}]},  # filter to find each user by either username or email
+                {"$set": {"password": bcrypt_hashed_password}}
             )
 
             if result.modified_count > 0:
@@ -288,7 +269,7 @@ def forgot():
     # if the method is GET instead, load the html
     return render_template("user/forgot.html")
 
-
+# MARK: LOGOUT
 @user_bp.route("/logout")
 def logout():
     """Handle user logout."""
@@ -296,58 +277,73 @@ def logout():
     return redirect(url_for("home"))
 
 
+# MARK: DASHBOARD
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_db()
 
     """Display user or admin dashboard."""
 
     # print(f"this is current role: {session['role']}")
     if session["role"] == "admin":
-        # Get the current page number, set default to start from 1
+        # Retrieve filter type (accounts or games) and page number
         filter_type = request.args.get("filter_type", "accounts", type=str)
         page = request.args.get("page", 1, type=int)
+        items_per_page = 10  # Customize the number of items per page
+        sort_field = request.args.get("sort_field", "_id") # set default value to _id
+        sort_order = int(request.args.get("sort_order", 1))  # 1 for ascending, -1 for descending
+        search_query = request.args.get("search", "")
 
-        # Default variables for pagination
-        all_users = []
-        all_games = []
+        print(f"this is sort_field: {sort_field}, sort_order: {sort_order}, and search query: {search_query}")
 
-        # TODO: PAGINATION NOT WORKING
-        # User pagination logic
-        all_users_num = get_user_num()  # Retrieve the total number of users
-        user_num_per_page = 10
-        user_total_pages = (
-            all_users_num + user_num_per_page - 1
-        ) // user_num_per_page  # Calculate total pages
+        users, games = [], []
+        user_total_pages, game_total_pages = 0, 0
 
-        # Paginate the users
-        user_start = (page - 1) * user_num_per_page
-        user_end = user_start + user_num_per_page
-        all_users = get_all_users(user_start, user_end)  # Get users for current page
+        if filter_type == "accounts":
+            query = {}
+            if search_query:
+                query = {
+                    "$or": [
+                        {"username": {"$regex": search_query, "$options": "i"}},
+                        {"email": {"$regex": search_query, "$options": "i"}},
+                    ]
+                }
 
-        # Game pagination logic
-        all_games_num = getGameNum()  # Retrieve the total number of games
-        game_num_per_page = 50
-        game_total_pages = (
-            all_games_num + game_num_per_page - 1
-        ) // game_num_per_page  # Calculate total pages
+            total_users = db.new_user.count_documents(query)
+            users = list(
+                db.new_user.find(query)
+                .sort({sort_field: sort_order})
+                .skip((page - 1) * items_per_page)
+                .limit(items_per_page)
+            )
+            user_total_pages = (total_users + items_per_page - 1) // items_per_page
 
-        # Paginate the games
-        game_start = (page - 1) * game_num_per_page
-        game_end = game_start + game_num_per_page
-        all_games = getGames(game_start, game_end)  # Get games for current page
+        elif filter_type == "games":
+            query = {}
+            if search_query:
+                query = {"title": {"$regex": search_query, "$options": "i"}}
+
+            total_games = db.new_game.count_documents(query)
+            games = list(
+                db.new_game.find(query)
+                .sort(sort_field, sort_order)
+                .skip((page - 1) * items_per_page)
+                .limit(items_per_page)
+            )
+            game_total_pages = (total_games + items_per_page - 1) // items_per_page
 
         return render_template(
             "user/admin_dashboard.html",
-            users=all_users,
-            user_total_pages=user_total_pages,
-            games=all_games,
-            game_total_pages=game_total_pages,
-            page=page,  # Pass the current page to the template,
+            users=users,
+            games=games,
             filter_type=filter_type,
+            page=page,
+            user_total_pages=user_total_pages,
+            game_total_pages=game_total_pages,
+            sort_field=sort_field,
+            sort_order=sort_order,
+            search_query=search_query,
         )
 
     elif session["role"] == "user":
@@ -356,7 +352,7 @@ def dashboard():
         curr_id = request.args.get("_id", session["_id"], type=str)
 
         # get user details
-        query = {"$or": [{"username": session["username"]}, {"_id": session["_id"]}]}
+        query = {"_id": curr_id}
         user = db.new_user.find_one(query)
 
         # print("this is user", user)
@@ -398,6 +394,7 @@ def dashboard():
         return render_template("user/developer_dashboard.html", games=all_games)
 
 
+# MARK: ADMIN CREATE USER
 # TODO: roadblock- i dont know how to display error message while modal is open heh
 @user_bp.route("/create-user", methods=["POST"])
 @login_required
@@ -406,11 +403,12 @@ def create_user():
     if request.method == "POST":
         
         # Ensure db is initialized
-        db = initialize_database()  
-        if db is None:
-            return "Database not initialized!!", 500
-
+        db = get_db()  
+        
+        name = request.form['username']
+        email = request.form['email']
         password = request.form['password']
+        role = request.form.get('role') 
         confirm_password = request.form['confirm_password']
 
         # Password confirmation check
@@ -421,10 +419,10 @@ def create_user():
 
         new_user = {
             "_id": generate_id(),
-            "username": request.form['username'],
-            "email": request.form['email'],
-            "password": request.form['password'].hashlib.sha256(password.encode()).hexdigest(),  # hash the password,
-            "role": request.form['role'],
+            "username": name,
+            "email": email,
+            "password": bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
+            "role": role,
             "created_on": date.today().isoformat()
         }
 
@@ -437,7 +435,7 @@ def create_user():
 
             # Check if the user was inserted or already existed
             if result.upserted_id: # This is set if a new document was inserted
-                flash(f"User {form_data['username']} created successfully!", "success")
+                flash(f"User {name} created successfully!", "success")
                 return redirect(url_for("user_bp.dashboard"))
             else:
                 flash("User already exists! Please use another username/email.", "warning")
@@ -452,15 +450,14 @@ def create_user():
     return render_template("user/admin_dashboard.html")
 
 
+# MARK: EDIT USER
 @user_bp.route("/edit-user/<string:_id>", methods=["POST"])
 @login_required
 def edit_user(_id):
     """Edit user details."""
 
     # Ensure db is initialized
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_db()
 
     # Retrieve form data
     username = request.form["username"]
@@ -501,15 +498,14 @@ def edit_user(_id):
     return redirect(request.referrer or url_for("user_bp.dashboard"))
 
 
+# MARK: DELETE USER
 @user_bp.route("/delete_user/<string:_id>")
 @login_required
 def delete_user(_id):
     """Delete a user account."""
 
     # Ensure db is initialized
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_db()
 
     result = db.new_user.delete_one({"_id": _id})
     # Check if a document was deleted

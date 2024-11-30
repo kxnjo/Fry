@@ -3,14 +3,72 @@
 {% block scripts %}
 <!-- Show modal if there's an error -->
 <script>
+	function update_params(key, value) {
+		const url = new URL(window.location.href);
+
+		// add the query params in
+		url.searchParams.set(key, value); 
+
+		// refresh/redirect with query
+		window.location.href = url.toString(); 
+	}
+
+	function search_params() {
+		const url = new URL(window.location.href);
+		
+		// get the search query
+		const query = document.querySelector('input[name="search_query"]').value;
+
+		// add the query params in
+		url.searchParams.set("search", query); 
+		url.searchParams.delete('page'); // Reset query
+		url.searchParams.delete('sort_field'); // Reset query
+		url.searchParams.delete('order'); // Reset query
+
+		// refresh/redirect with query
+		window.location.href = url.toString(); 
+	}
+
+	function handleSortChange(selectElement) {
+		// extract out the field to sort, and the order
+		// console.log("Dropdown changed:", selectElement.value);
+        const [field, order] = selectElement.value.split('-');
+
+        if (field && order) {
+            const url = new URL(window.location.href);
+
+			// add the query params in
+			url.searchParams.set('sort_field', field);
+			url.searchParams.set('order', (order === "asc") ? 1 : -1);
+			url.searchParams.delete('page'); // Reset pagination to first page
+
+			// refresh/redirect with query
+			console.log("Redirecting to:", url.toString());
+			window.location.href = url.toString();
+        }
+    }
+
 	document.addEventListener("DOMContentLoaded", function() {
-		{% if show_create_modal %}
-			// Open the modal if there's an error
-			var modal = new bootstrap.Modal(document.getElementById("createUserModal"));
-			modal.show();
-		{% endif %}
-	});
+		const urlParams = new URLSearchParams(window.location.search); // Get query parameters
+		const sortField = urlParams.get("sort_field"); // Get 'sort_field' value
+		const sortOrder = urlParams.get("order") == "1" ? "asc" : "desc" ;
+
+		if (sortField) {
+			const selectElement = document.getElementById("uid-sort");
+			let selected = sortField + "-" + sortOrder;
+			selectElement.value = selected; // Set the dropdown value
+		}
+		
+        {% if show_create_modal %}
+            // Open the modal if there's an error
+            var modal = new bootstrap.Modal(document.getElementById("createUserModal"));
+            modal.show();
+        {% endif %}
+
+    });
+
 </script>
+
 {% endblock %}
 
 {% block content %}
@@ -20,32 +78,66 @@
 			<a
 				class="nav-link {% if filter_type == 'accounts' %}active{% endif %}"
 				id="user-tab"
-				data-bs-toggle="tab"
-				href="#user-management"
+				href="{{ url_for('user_bp.dashboard', filter_type='accounts', page=1) }}"
 				role="tab"
 				aria-controls="user-management"
 				aria-selected="{{ 'true' if filter_type == 'accounts' else 'false' }}"
-				>User Management</a
 			>
+				User Management
+			</a>
 		</li>
 		<li class="nav-item" role="presentation">
-			<a class="nav-link {% if filter_type == 'games' %}active{% endif %}" id="game-tab" data-bs-toggle="tab" href="#game-management" role="tab" aria-controls="game-management" aria-selected="{{ 'true' if filter_type == 'games' else 'false' }}"
-				>Game Management</a
+			<a
+				class="nav-link {% if filter_type == 'games' %}active{% endif %}"
+				id="game-tab"
+				href="{{ url_for('user_bp.dashboard', filter_type='games', page=1) }}"
+				role="tab"
+				aria-controls="game-management"
+				aria-selected="{{ 'true' if filter_type == 'games' else 'false' }}"
 			>
+				Game Management
+			</a>
 		</li>
 	</ul>
 
+	
 	<div class="tab-content" id="dashboardTabContent">
 		<!-- User Management Tab -->
 		<div class="tab-pane fade {% if filter_type == 'accounts' %}show active{% endif %}" id="user-management" role="tabpanel" aria-labelledby="user-tab">
 			<h2 class="mt-4">User Management</h2>
-
-			<!-- Create Account Button -->
-			<button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#createUserModal">Create Account</button>
-
+			
+			<!-- Improved Header Row with Inline Search and Sorting -->
+			<div class="row mb-3 align-items-center">
+				<div class="col-md-4">
+					<form method="GET" onsubmit="event.preventDefault(); search_params();" class="d-flex">
+						<input type="text" name="search_query" class="form-control" placeholder="Search..." value="{{ search_query }}">
+						<button type="submit" class="btn btn-primary ms-2"><i class="fas fa-search"></i></button>
+					</form>
+				</div>
+				<div class="col-md-4">
+					<div class="row">
+						<div class="col-6">
+							<select id="uid-sort" class="form-select sort-select" onchange="handleSortChange(this)">
+								<option>Sort by: </option>
+								<option value="_id-asc">UID Ascending</option>
+								<option value="_id-desc">UID Descending</option>
+								<hr class="dropdown-divider">
+								<option value="username-asc">Username A-Z</option>
+								<option value="username-desc">Username Z-A</option>
+								<hr class="dropdown-divider">
+								<option value="created_on-asc">Date Created Ascending</option>
+								<option value="created_on-desc">Date Created Descending</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-4 text-end">
+					<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">Create Account</button>
+				</div>
+			</div>
+	
 			<!-- User Table -->
 			<table class="table table-striped mt-4">
-				<!-- The table structure remains the same -->
 				<thead>
 					<tr>
 						<th scope="col">UID</th>
@@ -72,9 +164,44 @@
 					{% endfor %}
 				</tbody>
 			</table>
-
-			<!-- Pagination (remains unchanged) -->
-		</div>
+	
+			<!-- User Pagination -->
+			<nav aria-label="User page navigation">
+				<ul class="pagination">
+					<!-- Previous Page -->
+					<li class="page-item {% if page <= 1 %}disabled{% endif %}">
+						<a 
+							class="page-link" 
+							href="javascript:update_params('page', {{ page-1 if page > 1 else 1 }})" 
+							aria-label="Previous">
+							<span aria-hidden="true">&laquo;</span>
+						</a>
+					</li>	
+			
+					<!-- Page Numbers -->
+					{% for p in range(1, user_total_pages + 1) %}
+					<li class="page-item {% if p == page %}active{% endif %}">
+						<a 
+							class="page-link" 
+							href="javascript:update_params('page', {{ p }})">
+							{{ p }}
+						</a>
+					</li>
+					{% endfor %}
+			
+					<!-- Next Page -->
+					<li class="page-item {% if page >= user_total_pages %}disabled{% endif %}">
+						<a 
+							class="page-link" 
+							href="javascript:update_params('page', {{ page+1 if page < user_total_pages else user_total_pages }})" 
+							aria-label="Next">
+							<span aria-hidden="true">&raquo;</span>
+						</a>
+					</li>
+				</ul>
+			</nav>
+			
+		</div>	
 
 		<!-- Game Management Tab -->
 		<div class="tab-pane fade {% if filter_type == 'games' %}show active{% endif %}" id="game-management" role="tabpanel" aria-labelledby="game-tab">
@@ -93,7 +220,7 @@
 				<tbody>
 					{% for game in games %}
 					<tr>
-						<td>{{ game.game_id }}</td>
+						<td>{{ game._id }}</td>
 						<td>{{ game.title }}</td>
 						<td>{{ game.release_date }}</td>
 						<td>{{ game.price }}</td>
@@ -105,26 +232,40 @@
 				</tbody>
 			</table>
 
-			<!-- Pagination for Games -->
+			<!-- Game Pagination -->
 			<nav aria-label="Game page navigation">
 				<ul class="pagination">
 					<li class="page-item {% if page <= 1 %}disabled{% endif %}">
-						<a class="page-link" href="{{ url_for('user_bp.dashboard', page=page-1, filter_type='games') }}" aria-label="Previous">
+						<a 
+							class="page-link" 
+							href="{{ url_for('user_bp.dashboard', page=page-1) }}" 
+							aria-label="Previous">
 							<span aria-hidden="true">&laquo;</span>
 						</a>
 					</li>
+			
 					{% for p in range(1, game_total_pages + 1) %}
 					<li class="page-item {% if p == page %}active{% endif %}">
-						<a class="page-link" href="{{ url_for('user_bp.dashboard', page=p, filter_type='games') }}">{{ p }}</a>
+						<a 
+							class="page-link" 
+							href="{{ url_for('user_bp.dashboard', page=p) }}">
+							{{ p }}
+						</a>
 					</li>
 					{% endfor %}
+			
 					<li class="page-item {% if page >= game_total_pages %}disabled{% endif %}">
-						<a class="page-link" href="{{ url_for('user_bp.dashboard', page=page+1, filter_type='games') }}" aria-label="Next">
+						<a 
+							class="page-link" 
+							href="{{ url_for('user_bp.dashboard', page=page+1) }}" 
+							aria-label="Next">
 							<span aria-hidden="true">&raquo;</span>
 						</a>
 					</li>
 				</ul>
 			</nav>
+			
+
 		</div>
 	</div>
 
