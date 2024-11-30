@@ -25,6 +25,22 @@
         window.location.href = url.toString();
     }
 
+    function games_search_params() {
+		const url = new URL(window.location.href);
+		
+		// get the search query
+		const query = document.querySelector('input[name="games_search_query"]').value;
+
+		// add the query params in
+		url.searchParams.set("search", query); 
+		url.searchParams.delete('page'); // Reset query
+		url.searchParams.delete('sort_field'); // Reset query
+		url.searchParams.delete('sort_order'); // Reset query
+
+		// refresh/redirect with query
+		window.location.href = url.toString(); 
+	}
+
     function handleSortChange(selectElement) {
 		const url = new URL(window.location.href); // Get the current URL
 
@@ -103,10 +119,10 @@
                 <!-- Search Bar and Button -->
                 <div class="col-md-5">
                     <label for="gameSearch" class="form-label mb-1">Search Games:</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="gameSearch" placeholder="Search games...">
+                    <form method="GET" onsubmit="event.preventDefault(); games_search_params();" class="d-flex">
+                        <input type="text" name="games_search_query" class="form-control" placeholder="Search..." value="{{ games_search_query }}">
                         <button class="btn btn-primary" type="button" onclick="handleSearch()">Search</button>
-                    </div>
+                    </form>
                 </div>
         
                 <!-- Additional Actions (Optional) -->
@@ -431,23 +447,5 @@
         </div>
     </div>
 </div>
-
-<!-- Add this script at the end of your template -->
-<script>
-document.getElementById('gameSearch').addEventListener('keyup', function() {
-    let searchText = this.value.toLowerCase();
-    let tableRows = document.querySelectorAll('tbody tr');
     
-    tableRows.forEach(row => {
-        let title = row.querySelector('h5').textContent.toLowerCase();
-        let categories = Array.from(row.querySelectorAll('.badge')).map(badge => badge.textContent.toLowerCase()).join(' ');
-        
-        if (title.includes(searchText) || categories.includes(searchText)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
-});
-</script>
 {% endblock %}

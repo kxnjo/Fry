@@ -22,7 +22,6 @@ import mongo_cfg
 from mysql_routes.review import user_written_reviews
 from mongo_routes.owned_game import gamesInOwned
 from mongo_routes.friend import get_user_friends, get_mutual_friends
-from mysql_routes.game import getGameNum, getGames, get_all_games
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
@@ -323,12 +322,17 @@ def dashboard():
         items_per_page = 10                                     # set the number of items per page
         sort_field = request.args.get("sort_field", "_id")      # get field to sort, default to _id
         sort_order = int(request.args.get("sort_order", 1))     # get sort order, 1 for ascending, -1 for descending
+        search_query = request.args.get("search", "")           # get search value, default to nothing
 
         games, game_total_pages = [], 0 
 
-        total_games = db.new_game.count_documents({})
+        query = {}
+        if search_query:
+            query = {"title": {"$regex": search_query, "$options": "i"}}
+
+        total_games = db.new_game.count_documents(query)
         games = list(
-            db.new_game.find({})
+            db.new_game.find(query)
             .sort({sort_field: sort_order})
             .skip((page - 1) * items_per_page)
             .limit(items_per_page)
@@ -342,6 +346,7 @@ def dashboard():
             game_total_pages=game_total_pages,
             sort_field=sort_field,
             sort_order=sort_order,
+            search_query=search_query,
             max=max,
             min=min,
         )
