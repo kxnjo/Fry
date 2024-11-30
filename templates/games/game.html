@@ -7,7 +7,7 @@
             <h1>{{ game.game_title }}</h1>
             <h5><strong>Developed By:</strong>
                 {% for developer in game.developers %}
-                <a href="{{ url_for('developer_bp.view_developer', developer_id=developer.developer_id) }}"
+                <a href="{{ url_for('developer_bp.view_developer', developer=developer) }}"
                    class="text-decoration-none">
                     {{ developer }}{% if not loop.last %}, {% endif %}
                 </a>
