@@ -1,9 +1,14 @@
 {% extends "index.html" %}
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center">Games</h1>
-    <br>
-    <br>
+<div class="container-fluid mt-5">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-4">Games Library</h1>
+            </div>
+        </div>
+    </div>
 
     <!-- sorting and searching -->
     <form method="GET" class="mb-3">
@@ -34,41 +39,67 @@
         </div>
     </form>
 
-    <!-- display game info -->
-    <div class="row">
-        <div class="col-12">
-            {% for game in games %}
-            <a href="{{ url_for('game_bp.view_game', game_id=game.game_id) }}" class="text-decoration-none">
-                <div class="card game-card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ game.game_title }}</h5>
-                        <h6 class="card-subtitle mb-2 text-muted"> Released on: {{ game.game_release_date }}</h6>
-                        <h6 class="card-subtitle mb-2 text-muted"> Price: {{ game.game_price }}</h6>
-                    </div>
+    <!-- Games Table Section -->
+    <div class="card">
+        <!-- <div class="card-header bg-dark text-white">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h3 class="mb-0">Games Overview</h3>
                 </div>
-            </a>
-            {% else %}
-            <div class="alert alert-warning" role="alert">
-                No games found.
+                <div class="col-3">
+                    <input type="text" class="form-control" id="gameSearch" placeholder="Search games...">
+                </div>
             </div>
-            {% endfor %}
+        </div> -->
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table">
+                        <tr>
+                            <th style="width: 40%">Game Details</th>
+                            <th>Release Date</th>
+                            <th>Price</th>
+                            <th>Categories</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for game in games %}
+                        <tr>
+                            <!-- Game Details Column -->
+                            
+                            <td>
+                                <a href="{{ url_for('game_bp.view_game', game_id=game._id) }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ game.image if game.image else url_for('static', filename='img/default_game.jpeg') }}" 
+                                            class="rounded me-3" style="width: 120px; height: 68px; object-fit: cover;"
+                                            alt="{{ game.title }}">
+                                        <div>
+                                            <h5 class="mb-1">{{ game.title }}</h5>
+                                            <small class="text-muted">ID: {{ game._id }}</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </td>
+                            <!-- Release Date Column -->
+                            <td>{{ game.release_date }}</td>
+                            
+                            <!-- Price Column -->
+                            <td>${{ "%.2f"|format(game.price) }}</td>
+                            
+                            <!-- Categories Column -->
+                            <td>
+                                {% for category in game.categories %}
+                                <span class="badge bg-secondary me-1">{{ category }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
-<br>
-<br>
-
-<!-- pagination -->
-<div class="text-center">
-    <div class="pagination d-inline-flex">
-        {% if page > 1 %}
-        <a class="nav-link" href="{{ url_for('game_bp.view_all_games', page=page-1, sort=sort_by, order=sort_order, query=search) }}">Previous</a>
-        {% endif %}
-
-        <a class="nav-link ms-5" href="{{ url_for('game_bp.view_all_games', page=page+1, sort=sort_by, order=sort_order, query=search) }}">Next</a>
-    </div>
-</div>
 
 <!-- sorting options javascript -->
 <script>
@@ -85,4 +116,23 @@
         }
     }
 </script>
+
+<!-- Add this script at the end of your template -->
+<!-- <script>
+document.getElementById('gameSearch').addEventListener('keyup', function() {
+    let searchText = this.value.toLowerCase();
+    let tableRows = document.querySelectorAll('tbody tr');
+    
+    tableRows.forEach(row => {
+        let title = row.querySelector('h5').textContent.toLowerCase();
+        let categories = Array.from(row.querySelectorAll('.badge')).map(badge => badge.textContent.toLowerCase()).join(' ');
+        
+        if (title.includes(searchText) || categories.includes(searchText)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+</script> -->
 {% endblock %}
