@@ -49,9 +49,9 @@
                     <tbody>
                         {% for friend in mutual_friends %}
                         <tr>
-                            <td>{{ friend[1] }}</td>
+                            <td>{{ friend.username }}</td>
                             <td>
-                                <a href="{{ url_for('user_bp.dashboard', _id = friend[0]) }}" class="btn btn-info btn-sm">View Profile</a>
+                                <a href="{{ url_for('user_bp.dashboard', _id = friend._id) }}" class="btn btn-info btn-sm">View Profile</a>
                             </td>
                         </tr>
                         {% endfor %}

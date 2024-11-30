@@ -21,7 +21,7 @@ import mongo_cfg
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
 from mysql_routes.review import user_written_reviews
 from mongo_routes.owned_game import gamesInOwned
-from mysql_routes.friend import get_dashboard_mutual_friends
+from mongo_routes.friend import get_user_friends, get_mutual_friends
 from mysql_routes.game import getGameNum, getGames, get_all_games
 
 # Create a Blueprint object
@@ -302,10 +302,11 @@ def dashboard():
 
         # INSERT MUTUAL FRIENDS LIST
         if curr_id == session["_id"]:
-            mutual_friends = get_dashboard_mutual_friends(curr_id, curr_id) # TODO: UPDAGTE TO MONGO VERSION
+            mutual_friends = get_user_friends()
         else:
-            mutual_friends = get_dashboard_mutual_friends(curr_id, session["_id"]) # TODO: UPDAGTE TO MONGO VERSION
+            mutual_friends = get_mutual_friends(curr_id, session["_id"])
 
+        print(f"this is mutual_friends {mutual_friends}")
 
         return render_template(
             "user/user_dashboard.html",

@@ -40,7 +40,56 @@ def initialize_database():
         return db
     else:
         raise Exception("Failed to initialize MongoDB connection")
+
+# MARK: FUNCTIONS USED BY OTHER FILES
+def get_user_friends(user_id=None):
+    db = initialize_database()
+    if db is None:
+        return "Database not initialized!", 500
+
+    if user_id == None:
+        user_id = session['_id']
+
+    # Retrieve the user document
+    user = db.new_user.find_one({'_id': user_id}, {'friends': 1})  # Only fetch the 'friends' field
+    if not user:
+        return f"User with ID {user_id} not found!", 404
+
+    # Extract the list of friend IDs
+    friend_ids = [friend['friend_id'] for friend in user.get('friends', [])]
     
+    # Fetch friend details
+    friends = list(db.new_user.find({'_id': {'$in': friend_ids}}, {'_id': 1, 'username': 1}))
+    
+    return friends
+
+
+def get_mutual_friends(user_id_1, user_id_2):
+    db = initialize_database()
+    if db is None:
+        return "Database not initialized!", 500
+
+    # Fetch friends for both users
+    user1 = db.new_user.find_one({'_id': user_id_1}, {'friends': 1})
+    user2 = db.new_user.find_one({'_id': user_id_2}, {'friends': 1})
+
+    if not user1 or not user2:
+        return "One or both users not found!", 404
+
+    # Get friend IDs for both users
+    user1_friend_ids = {friend['friend_id'] for friend in user1.get('friends', [])}
+    user2_friend_ids = {friend['friend_id'] for friend in user2.get('friends', [])}
+
+    # Find mutual friend IDs (intersection of sets)
+    mutual_friend_ids = user1_friend_ids & user2_friend_ids
+
+    # Fetch details of mutual friends
+    mutual_friends = list(db.new_user.find({'_id': {'$in': list(mutual_friend_ids)}}, {'_id': 1, 'username': 1}))
+
+    return mutual_friends
+    
+
+# MARK: ROUTE FUNCTIONS
 @friendlist_bp.route("/view-friends")
 @login_required
 def view_friends():
