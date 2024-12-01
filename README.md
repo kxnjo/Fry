@@ -5,6 +5,23 @@ FryGames is a centralized platform where users can browse and purchase games, co
 
 # steam? fry nicer 👩‍🍳👩‍🍳🧑‍🍳🧑‍🍳👩‍🍳👩‍🍳
 
+# File Directory
+- [Mongo Routes](./mongo_routes/)
+
+    Find all .py files here (contains routes and noSQL queries)
+  - [category.py](./mongo_routes/category.py)
+  - [developer.py](./mongo_routes/developer.py)
+  - [friend.py](./mongo_routes/friend.py)
+  - [game.py](./mongo_routes/game.py)
+  - [owned_game.py](./mongo_routes/owned_game.py)
+  - [review.py](./mongo_routes/review.py)
+  - [users.py](./mongo_routes/users.py)
+  - [wishlist.py](./mongo_routes/wishlist.py)
+  
+
+  - [HTML Templates](./templates/)
+
+
 ## Start up
 To create your own environment, run:
 ```bash
