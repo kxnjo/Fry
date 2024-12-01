@@ -8,6 +8,12 @@
         <table class="table">
             {% for i in owned_game %}
             <tr>
+                <td style="width: 200px; height: 133px; text-align: center;">
+                    <img class="card-img-top" 
+                         src="{{ i.image if i.image else url_for('static', filename='img/default_game.jpeg') }}" 
+                         alt="{{ i.title }}" 
+                         style="height: 100%; width: 100%; object-fit: cover; aspect-ratio: 3 / 2; border-radius: 5px;"/>
+                </td>
                 <td>
                     <!-- game details to display -->
                     <h6>Game Title: {{ i["title"] }}</h6>

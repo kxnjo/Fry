@@ -125,7 +125,7 @@ def view_all_games():
                 "_id": doc["_id"],
                 "title": doc["title"],
                 "release_date": doc["release_date"],
-                "price": doc["price"],
+                "price": float(doc["price"]),
                 "image": doc.get("image"),
                 "categories": doc["categories"]
             })

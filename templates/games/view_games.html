@@ -10,32 +10,28 @@
         </div>
     </div>
 
-    <!-- sorting and searching -->
-    <form method="GET" class="mb-3">
-        <div class="row">
-            <div class="col-md-4">
-                <label for="sort_by" class="form-label">Sort by:</label>
-                <select name="sort" id="sort_by" class="form-select">
-                    <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>
-                    <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
-                    <option value="release_date" {% if sort_by == 'release_date' %}selected{% endif %}>Release Date</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="sort_order" class="form-label">Order:</label>
-                <button type="button" onclick="toggleSortOrder()" id="orderButton" class="btn btn-primary">
-                    {% if sort_order == 'asc' %}Ascending{% else %}Descending{% endif %}
-                </button>
-                <input type="hidden" name="order" id="sort_order" value="{{ sort_order }}">
-                <button type="submit" class="btn btn-secondary">Sort</button>
-            </div>
-            <div class="col-md-4">
-                <label for="search_game" class="form-label">Search:</label>
-                <form method="GET" action="{{ url_for('game_bp.view_all_games') }}" class="d-flex mb-3">
-                    <input class="form-control me-2" type="search" name="query" placeholder="Search for games" aria-label="Search" value="{{ request.args.get('query', '') }}">
-                    <button class="btn btn-outline-success" type="submit">Search</button>
-                </form>
-            </div>
+    <!-- Sorting and Searching -->
+    <form method="GET" action="{{ url_for('game_bp.view_all_games') }}" class="d-flex align-items-center mb-3">
+        <div class="me-3">
+            <label for="sort_by" class="form-label me-2">Sort by:</label>
+            <select name="sort" id="sort_by" class="form-select d-inline-block w-auto">
+                <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title</option>
+                <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
+                <option value="release_date" {% if sort_by == 'release_date' %}selected{% endif %}>Release Date</option>
+            </select>
+        </div>
+        <div class="me-3">
+            <label for="sort_order" class="form-label me-2">Order:</label>
+            <button type="button" onclick="toggleSortOrder()" id="orderButton" class="btn btn-primary me-2">
+                {% if sort_order == 'asc' %}Ascending{% else %}Descending{% endif %}
+            </button>
+            <input type="hidden" name="order" id="sort_order" value="{{ sort_order }}">
+            <button type="submit" class="btn btn-secondary">Sort</button>
+        </div>
+        <div class="ms-auto">
+            <label for="search_game" class="form-label visually-hidden">Search:</label>
+            <input class="form-control me-2 d-inline-block w-auto" type="search" name="query" placeholder="Search for games" aria-label="Search" value="{{ request.args.get('query', '') }}">
+            <button class="btn btn-outline-success" type="submit">Search</button>
         </div>
     </form>
 
