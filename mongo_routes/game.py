@@ -199,6 +199,7 @@ def edit_game(game_id):
     new_price = request.form.get("price")
     categories = request.form.getlist("categories[]")
     release_date = request.form.get("release_date")
+    gameImage = request.files.get("game_image")
 
     # Validate form data (you can add more checks if needed)
     if not title or not new_price:
@@ -239,6 +240,12 @@ def edit_game(game_id):
 
         if release_date:
             update_data["release_date"] = release_date
+
+        if gameImage and gameImage.filename != '':
+            print("Game image Detected!")
+            encoded_img = "data:image/jpeg;base64," + base64.b64encode(gameImage.read()).decode("utf-8")  # Convert image to binary
+            update_data["image"] = encoded_img
+
 
         # Update the other fields
         db.new_game.update_one({"_id": game_id}, {"$set": update_data})

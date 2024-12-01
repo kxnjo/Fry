@@ -355,9 +355,9 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
-                                    <label class="form-label">Current Image</label>
+                                    <label class="form-label">Old Image</label>
                                     <img src="{{ game.image if game.image else url_for('static', filename='img/default_game.jpeg') }}" 
-                                         class="img-fluid rounded mb-2" alt="{{ game.title }}">
+                                         class="img-fluid rounded mb-2" alt="{{ game.title }}" name="game_image">
                                     <input type="file" class="form-control" id="game_image{{ game._id }}" name="game_image">
                                 </div>
                             </div>
