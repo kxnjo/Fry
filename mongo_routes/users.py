@@ -84,9 +84,7 @@ def login():
         
         try:
             # Ensure db.new_user is initialized
-            db = get_db()  
-            if db.new_user is None:
-                raise RuntimeError("User collection not initialized!")
+            db = get_db()
 
             if "@" in username_email:
                 query = {"email": username_email}

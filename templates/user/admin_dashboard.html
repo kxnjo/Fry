@@ -21,7 +21,7 @@
 		const query = document.querySelector('input[name="accounts_search_query"]').value;
 
 		// add the query params in
-		url.searchParams.set('filter_type', "user");
+		url.searchParams.set('filter_type', "accounts");
 		url.searchParams.set("search", query); 
 		url.searchParams.delete('page'); // Reset query
 		url.searchParams.delete('sort_field'); // Reset query
@@ -177,7 +177,10 @@
 					<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">Create Account</button>
 				</div>
 			</div>
-	
+			
+			{% if users|length == 0 %}
+				<h3>User not found! 😢</h3>
+			{% else %}
 			<!-- User Table -->
 			<table class="table table-striped mt-4">
 				<thead>
@@ -206,6 +209,7 @@
 					{% endfor %}
 				</tbody>
 			</table>
+			{% endif %}
 	
 			<!-- User Pagination -->
 			<nav aria-label="User page navigation">
@@ -271,7 +275,7 @@
 					</div>
 				</div>
 				<div class="col-md-4 text-end">
-					<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createUserModal">Create Account</button>
+					<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createGameModal">Create Game</button>
 				</div>
 			</div>
 	
