@@ -15,15 +15,20 @@ review_bp = Blueprint("review_bp", __name__)
 @review_bp.route('/test-db-connection')
 def mongo_connection():
     db = get_NoSQLdb()
-    db.game_indexed.create_index([('title', 1)])
+
+    # create index for user and game collection
+    db.new_game.create_index([('title', 1)])
+    db.new_user.create_index([('username', 1)])
 
     # Get the list of indexes
-    indexes = db.game_indexed.list_indexes()
+    g_indexes = db.new_game.list_indexes()
+    u_indexes = db.new_user.list_indexes()
 
-    # Prepare a string of index names to return
-    index_names = [index["name"] for index in indexes]
+    # get the names of indexes
+    g_index_names = [index["name"] for index in g_indexes]
+    u_index_names = [index["name"] for index in u_indexes]
 
-    return f"Indexes: {', '.join(index_names)}"
+    return f"Game Indexes: {', '.join(g_index_names)} | User Indexes: {', '.join(u_index_names)}"
 
 @review_bp.route("/mongo-test", methods=["GET"])
 def mongo_test():
@@ -95,7 +100,6 @@ def mongo_test():
     )
 
 @review_bp.route('/review-add', methods=['POST'])
-# @review_bp.route('review-add/<review_id>', methods=['POST'])
 def mongo_add():
     db = get_NoSQLdb()
     user_id = session.get('_id')
@@ -106,7 +110,7 @@ def mongo_add():
     review_text = request.form['review_text']  # contain the review_text content
 
     source = request.form['source']
-    # Determine the recommended value
+    # Determine the recommended value since db stores it as bool
     recommended_val = True if recommended == "Recommended" else False
 
     review_check = mongo_find_review(user_id,selected_game)
