@@ -24,6 +24,7 @@ from mysql_routes.owned_game import get_owned_game
 from mysql_routes.friend import get_dashboard_mutual_friends
 # from mysql_routes.game import getGameNum, getGames, get_all_games
 from mongo_routes.wishlist import getAddedDate
+from mongo_routes.owned_game import getAddedDates
 
 # Create a Blueprint object
 game_bp = Blueprint("game_bp", __name__)
@@ -172,6 +173,7 @@ def view_game(game_id):
             }
         game_reviews = get_all_reviews_for_game(game_id)
         gameInWishlist = getAddedDate(game_id)
+        gamePurchased = getAddedDates(game_id)
 
         price_changes = PriceChanges(game_id)
         print("owned_game in view: ", price_changes)
@@ -204,6 +206,7 @@ def view_game(game_id):
                         #    reviews=reviews,
                         #    recommended_data=recommended_data,
                            gameInWishlist=gameInWishlist,
+                           gamePurchased=gamePurchased,
                            user_logged_in=bool(user_id),
                            user_owned=bool(user_owned),
                            get_user_review=get_user_review,

@@ -52,7 +52,7 @@
                         {% endif %}
                     </button>
                 </form>
-                {% if user_owned %}
+                {% if gamePurchased %}
                 <a href="{{ url_for('owned_game_bp.delete_owned_game', game_id=game.game_id) }}"
                     class="btn btn-danger" style="width: 210px; ">Delete</a>
                 {% else %}

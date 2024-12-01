@@ -10,6 +10,7 @@ load_dotenv('config.env')
 import hashlib 
 import json 
 from datetime import datetime
+import datetime
 from auth_utils import login_required # Persistent login 
 
 # MongoDB setup 
@@ -128,17 +129,38 @@ def getGameDetails(game_id, purchase_date, hours_played):
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
 
+# Used to check if game is purchased as well
+def getAddedDates(game_id): # Return added date if game is in wishlist else return None
+    db = initialize_database()  
+    if db is None:
+        return "Database not initialized!!", 500
+
+    try:
+        document = db.new_user.find_one(
+            {"_id": session["_id"], "owned_games.game_id": game_id},
+            {"owned_games.$": 1}  # Include only the matched wanted_game
+        )
+        
+        if document and "owned_games" in document:
+            return document["owned_games"][0]["added_date"]
+        return None
+    except Exception as e:
+        return f"Failed to connect to MongoDB: {e}", 500
+
 # ---Routes---
 # View owned_game
 @owned_game_bp.route("/view-owned_game")
 @login_required
 def view_owned_game():
-    # db = initialize_database()
-    # if db is None: 
-    #     return "Database not initialized!!", 500
 
     user_id = request.args.get("uid", session['_id'])    # get user id from query params, if not avail, load current logged in user data: session['_id']
     owned_game = gamesInOwned(user_id)
+
+    gamePurchased = getAddedDates("g466860")
+    if gamePurchased != None:
+        print("Purchased!")
+    else:
+        print("Not Purchased!")
 
     return render_template("owned_game/owned_game.html", owned_game = owned_game, current_id = user_id)
 
@@ -155,7 +177,6 @@ def add_owned_game():
             game_id = request.form["game"]
             # if not game_id:
             #     return "Game ID is required!", 400
-            print("hi")
             date = datetime.datetime.today().strftime("%Y-%m-%d")
             hours = 0
 
@@ -166,14 +187,10 @@ def add_owned_game():
                 "hours_played" : hours
             }
 
-            print("hi1")
-
             db.new_user.update_one(
                 {"_id" : session["_id"]},
                 {"$push" : {"owned_games" : new_owned_game}}
             )
-
-            print("hi2")
 
         return view_owned_game()
     except Exception as e: 
@@ -193,81 +210,3 @@ def delete_owned_game(game_id):
         return view_owned_game()
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
-
-# PRICE HISTORY GRAPH stuff 
-# TODO: move into game.py later 
-
-def PriceChanges(_id): 
-    db = initialize_database()
-    if db is None: 
-        return "Database is not initalized!!", 500 
-  
-    try: 
-        # Retrieve all documents 
-        documents = db.new_game.find({"_id": _id,})
-
-        # Iterate through documents and print them 
-        # Fetch all owned_games from user's doc in db
-        game = []
-        for doc in documents:
-            game.extend(doc["price_changes"])
-        
-        print("game in PriceChanges():", game)
-
-        # Fetch additional details about the game
-        price_changes_details = []
-        for i in game:
-            price_changes_details.extend(getPriceChangeDetails(_id, i["change_date"], i["base_price"], i["discount"]))
-        print("owned_games_details", price_changes_details)
-
-        return price_changes_details
-    except Exception as e: 
-        return f"Failed to connect to MongoDB: {e}", 500 
-
-# get price change details
-def getPriceChangeDetails(_id, change_date, base_price, discount):
-    db = initialize_database()
-    if db is None: 
-        return "Databse not initialized", 500 
-    try:
-        # Retrieve all documents 
-        documents = db.new_game.find({"_id": _id})
-        price_changes = []
-        for doc in documents: 
-            price_changes.append({
-                "game_id": doc["_id"],
-                "change_date": change_date,
-                "base_price": base_price, 
-                "discount": discount
-            })
-        return price_changes
-        print("price_changes: ", price_changes)
-    except Exception as e:
-        return f"Failed to connect to MongoDB: {e}", 500
-
-# Get all owned games by user 
-@owned_game_bp.route('/getPriceChanges/<_id>', methods=["GET"])
-def view_price_changes(_id):
-        price_changes = PriceChanges(_id)
-        print("owned_game in view: ", price_changes)
-
-    # Initialize arrays
-        dates_new = []
-        prices_new = []
-
-        # Loop through the data
-        for change in price_changes:
-            # Convert string to datetime
-            change_date = datetime.strptime(change['change_date'], '%Y-%m-%d')
-            # Format to 'dd-mm-yyyy'
-            formatted_date = change_date.strftime('%d-%m-%Y')
-            dates_new.append(formatted_date)  # Append to dates array
-
-            # Calculate final price after applying the discount
-            final_price = change['base_price'] - (change['base_price'] * (change['discount'] / 100))
-            prices_new.append(final_price)  # Append to prices array
-
-        # Output the arrays
-        print("Dates:", dates_new)
-        print("Prices:", prices_new)
-        return render_template("owned_game/graph.html", dates_new = dates_new, prices_new = prices_new)
