@@ -100,50 +100,65 @@ def view_friends():
         
         user_id = session["_id"]  # Get the user_id from the session
 
-        # Retrieve the user's data
-        user = db.new_user.find_one({'_id': user_id})
+        # Retrieve the user's friends with a single projection
+        user = db.new_user.find_one({'_id': user_id}, {'friends': 1})
         if not user:
             return "User not found", 404
 
-        # Safely get friends, defaulting to empty list if None
-        user_friends = user.get('friends', [])
+        # Get friend IDs
+        friend_ids = [friend.get('friend_id') for friend in user.get('friends', [])]
         
-        # Get friend IDs, handling potential None values
-        friend_ids = [friend.get('friend_id') for friend in user_friends if friend and friend.get('friend_id')]
-        
-        # Retrieve friends' data
-        friends = list(db.new_user.find({"_id": {"$in": friend_ids}}))
+        # Fetch friends in a single query with limited fields
+        friends = list(db.new_user.find(
+            {"_id": {"$in": friend_ids}}, 
+            {
+                '_id': 1, 
+                'username': 1, 
+                'owned_games': 1, 
+                'wanted_games': 1, 
+                'friends': 1,
+                'created_on': 1
+            }
+        ))
+
+        # Collect all game IDs to fetch in bulk
+        owned_game_ids = []
+        wanted_game_ids = []
+        for friend in friends:
+            owned_game_ids.extend([game['game_id'] for game in friend.get('owned_games', [])])
+            wanted_game_ids.extend([game['game_id'] for game in friend.get('wanted_games', [])])
+
+        # Fetch game titles in bulk
+        owned_games_dict = {game['_id']: game['title'] for game in 
+            db.new_game.find({'_id': {'$in': list(set(owned_game_ids))}}, {'title': 1})}
+        wanted_games_dict = {game['_id']: game['title'] for game in 
+            db.new_game.find({'_id': {'$in': list(set(wanted_game_ids))}}, {'title': 1})}
 
         # Prepare friend data
         friend_data = []
-        
         for friend in friends:
-            # Safely get friends for this friend
-            friend_friends = friend.get('friends', [])
-            
-            # Find mutual friends
-            mutual_friend_ids = [
-                f.get('friend_id') for f in user_friends 
-                if f and f.get('friend_id') in [f2.get('friend_id') for f2 in friend_friends]
-            ]
-            
-            # Retrieve mutual friends details
-            mutual_friends = list(db.new_user.find({
-                '_id': {'$in': mutual_friend_ids}
-            }))
-
-            # Safely get game titles
+            # Process owned games
             owned_game_titles = [
-                db.new_game.find_one({'_id': game['game_id']})['title'] 
-                for game in friend.get('owned_games', []) 
-                if db.new_game.find_one({'_id': game['game_id']})
+                owned_games_dict.get(game['game_id'], 'Unknown') 
+                for game in friend.get('owned_games', [])
             ]
 
+            # Process wanted games
             wanted_game_titles = [
-                db.new_game.find_one({'_id': game['game_id']})['title'] 
-                for game in friend.get('wanted_games', []) 
-                if db.new_game.find_one({'_id': game['game_id']})
+                wanted_games_dict.get(game['game_id'], 'Unknown') 
+                for game in friend.get('wanted_games', [])
             ]
+
+            # Find mutual friends
+            friend_friend_ids = {f.get('friend_id') for f in friend.get('friends', [])}
+            user_friend_ids = set(friend_ids)
+            mutual_friend_ids = friend_friend_ids & user_friend_ids
+
+            # Fetch mutual friends in a single query
+            mutual_friends = list(db.new_user.find(
+                {'_id': {'$in': list(mutual_friend_ids)}}, 
+                {'_id': 1, 'username': 1}
+            ))
 
             friend_data.append({
                 'friend_id': friend['_id'],
