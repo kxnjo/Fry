@@ -34,7 +34,7 @@ def view_all_developers():
     page = request.args.get('page', 1, type=int)
 
     # Define the limit of items per page
-    per_page = 10
+    per_page = 20
 
     # Calculate the offset for the SQL query
     offset = (page - 1) * per_page

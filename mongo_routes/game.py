@@ -176,8 +176,6 @@ def view_game(game_id):
 
     return render_template("games/game.html",
                            game=game,
-                        #    reviews=reviews,
-                        #    recommended_data=recommended_data,
                            gameInWishlist=gameInWishlist,
                            user_owned=user_owned,
                            user_logged_in=bool(user_id),
@@ -185,8 +183,6 @@ def view_game(game_id):
                            game_reviews=game_reviews, 
                            dates_new = dates_new, 
                            prices_new = prices_new
-                        #    dates=dates,
-                        #    prices=prices
                            )
 
 @game_bp.route("/edit_game/<game_id>", methods=['POST'])
@@ -257,13 +253,14 @@ def edit_game(game_id):
     
 @game_bp.route("/create-game/<developer_name>", methods=["POST"])
 def create_game(developer_name):
-    db = get_db()
+    db = get_NoSQLdb()
 
     # Get form data
     title = request.form.get("title")
     release_date = request.form.get("release_date")
     price = request.form.get("price")
     categories = request.form.getlist("categories[]")  # Get selected categories as a list
+    game_image = request.files.get("game_image")
 
     # Validate form data
     if not title or not release_date or not price or not categories:
@@ -288,6 +285,11 @@ def create_game(developer_name):
             "developers": [developer_name],  # Save the developer_name as a list with one item
         }
 
+        if game_image and game_image.filename != '':
+            encoded_img = "data:image/jpeg;base64," + base64.b64encode(game_image.read()).decode("utf-8")  # Convert image to binary and then base64
+            new_game["image"] = encoded_img
+
+
         # Insert the new game into the database
         db.new_game.insert_one(new_game)
 
@@ -301,7 +303,7 @@ def create_game(developer_name):
 
 @game_bp.route("/delete-game/<game_id>", methods=["POST"])
 def delete_game(game_id):
-    db = get_db()  # Connect to the database
+    db = get_NoSQLdb()  # Connect to the database
 
     try:
         # Attempt to delete the game from the database
