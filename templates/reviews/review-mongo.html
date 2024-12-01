@@ -65,41 +65,77 @@
             {% endfor %}
         </div>
     </div>
-			<!-- User Pagination -->
-			<nav aria-label="User page navigation">
-				<ul class="pagination">
-					<!-- Previous Page -->
-					<li class="page-item {% if page <= 1 %}disabled{% endif %}">
-						<a
-							class="page-link"
-							href="javascript:update_params('page', {{ page-1 if page > 1 else 1 }})"
-							aria-label="Previous">
-							<span aria-hidden="true">&laquo;</span>
-						</a>
-					</li>
 
-					<!-- Page Numbers -->
-					{% for p in range(1, total_pages + 1) %}
-					<li class="page-item {% if p == page %}active{% endif %}">
-						<a
-							class="page-link"
-							href="javascript:update_params('page', {{ p }})">
-							{{ p }}
-						</a>
-					</li>
-					{% endfor %}
+    <div class="d-flex justify-content-center mt-3">
+        <!-- User Pagination -->
+        <nav aria-label="User page navigation">
+            <ul class="pagination">
+                <!-- Previous Page -->
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a
+                        class="page-link"
+                        href="javascript:update_params('page', {{ page-1 if page > 1 else 1 }})"
+                        aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
 
-					<!-- Next Page -->
-					<li class="page-item {% if page >= total_pages %}disabled{% endif %}">
-						<a
-							class="page-link"
-							href="javascript:update_params('page', {{ page+1 if page < total_pages else total_pages }})"
-							aria-label="Next">
-							<span aria-hidden="true">&raquo;</span>
-						</a>
-					</li>
-				</ul>
-			</nav>
+                <!-- Page Numbers -->
+                {% set max_visible_pages = 10 %} {# Updated threshold to 10 pages #}
+                {% if total_pages <= max_visible_pages %}
+                    {# If total pages are 10 or less, show all pages #}
+                    {% for p in range(1, total_pages + 1) %}
+                        <li class="page-item {% if p == page %}active{% endif %}">
+                            <a class="page-link" href="javascript:update_params('page', {{ p }})">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    {# Complex pagination for more than 10 pages #}
+                    {# Always show first page #}
+                    <li class="page-item {% if page == 1 %}active{% endif %}">
+                        <a class="page-link" href="javascript:update_params('page', 1)">1</a>
+                    </li>
+
+                    {# Show ellipsis before middle pages if far from start #}
+                    {% if page > (max_visible_pages // 2 + 1) %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+
+                    {# Middle pages #}
+                    {% set start_page = max(2, page - (max_visible_pages // 2)) %}
+                    {% set end_page = min(total_pages - 1, page + (max_visible_pages // 2 - 1)) %}
+                    {% for p in range(start_page, end_page + 1) %}
+                        {% if p > 1 and p < total_pages %}
+                            <li class="page-item {% if p == page %}active{% endif %}">
+                                <a class="page-link" href="javascript:update_params('page', {{ p }})">{{ p }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {# Show ellipsis after middle pages if far from end #}
+                    {% if page < total_pages - (max_visible_pages // 2) %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+
+                    {# Always show last page #}
+                    <li class="page-item {% if page == total_pages %}active{% endif %}">
+                        <a class="page-link" href="javascript:update_params('page', {{ total_pages }})">{{ total_pages }}</a>
+                    </li>
+                {% endif %}
+
+                <!-- Next Page -->
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a
+                        class="page-link"
+                        href="javascript:update_params('page', {{ page+1 if page < total_pages else total_pages }})"
+                        aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    
 </div>
 <script>
 

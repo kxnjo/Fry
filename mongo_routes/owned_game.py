@@ -136,9 +136,11 @@ def view_owned_game():
     # db = initialize_database()
     # if db is None: 
     #     return "Database not initialized!!", 500
-    owned_game = gamesInOwned()
-    print("owned_game in view: ",owned_game)
-    return render_template("owned_game/owned_game.html", owned_game = owned_game)
+
+    user_id = request.args.get("uid", session['_id'])    # get user id from query params, if not avail, load current logged in user data: session['_id']
+    owned_game = gamesInOwned(user_id)
+
+    return render_template("owned_game/owned_game.html", owned_game = owned_game, current_id = user_id)
 
 # add to owned_game
 @owned_game_bp.route("/add-owned_game", methods=["POST"])

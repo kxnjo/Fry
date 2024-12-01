@@ -110,7 +110,9 @@ def mongo_test():
         selected_game=selected_game,
         recommended=recommended,
         page=page,
-        total_pages=total_pages
+        total_pages=total_pages,
+        max=max,    # because jinja dont have built-in function for max/min, so js pass in from python flask
+        min=min,    # because jinja dont have built-in function for max/min, so js pass in from python flask
     )
 
 @review_bp.route('/review-add', methods=['POST'])

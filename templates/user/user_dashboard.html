@@ -68,7 +68,7 @@
 			<div class="d-flex row justify-content-between align-items-center mb-2">
 
 				<!-- Games Owned Header -->
-                <a class="col" href="{{ url_for('owned_game_bp.view_owned_game') }}"><h3>Games Purchased</h3></a>
+                <a class="col" href="{{ url_for('owned_game_bp.view_owned_game', uid = user._id) }}"><h3>Games Purchased</h3></a>
                 <!-- Carousel Controls -->
                 <div class="col px-3 d-flex justify-content-end">
                     <button class="btn btn-link" type="button" data-bs-target="#gamesCarousel" data-bs-slide="prev">

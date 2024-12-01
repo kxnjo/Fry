@@ -14,9 +14,12 @@
                     <h6>Purchase Date: {{ i["purchase_date"] }}</h6>
                     <h6>Hours Played: {{ i["hours_played"] }}</h6>
                 
+                    {% if current_id == session['_id'] %}
                     <!-- Delete Button -->
-                <a href="{{ url_for('owned_game_bp.delete_owned_game', game_id=i['game_id']) }}"
-                class="btn btn-danger btn-sm">Delete</a>
+                    <a href="{{ url_for('owned_game_bp.delete_owned_game', game_id=i['game_id']) }}"
+                    class="btn btn-danger btn-sm">Delete</a>
+                    {% endif %}
+                    
                 </td>
             <tr>
             {% endfor %}
