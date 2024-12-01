@@ -13,34 +13,18 @@ from mongo_cfg import get_NoSQLdb
 # Create a Blueprint object
 review_bp = Blueprint("review_bp", __name__)
 
-
-def create_connection():
-    # Replace with your database connection details
-    return mysql.connector.connect(
-        host=os.environ.get("DB_HOST"),
-        user=os.environ.get("DB_USER"),
-        password=os.environ.get("DB_PASSWORD"),
-        database=os.environ.get("DB_DATABASE"),
-    )
-
 @review_bp.route('/test-db-connection')
 def mongo_connection():
-    #
-    # db = get_NoSQLdb()
-    # get_reviews = db.new_game.find({"reviews": 1})
-    #
-    # print(get_reviews)
     db = get_NoSQLdb()
+    db.game_indexed.create_index([('title', 1)])
 
-    # Correct way to query MongoDB for specific fields
-    # Use projection to get only the "reviews" field
-    get_reviews = db.new_game.find({}, {"reviews": 1})
+    # Get the list of indexes
+    indexes = db.game_indexed.list_indexes()
 
-    # Convert the MongoDB cursor to a list and print the result
-    reviews_list = list(get_reviews)  # Convert cursor to list to retrieve all documents
-    print(reviews_list)  # This will print the reviews in the terminal/log
+    # Prepare a string of index names to return
+    index_names = [index["name"] for index in indexes]
 
-    return {"reviews": reviews_list}  # Return the reviews in the response (JSON)
+    return f"Indexes: {', '.join(index_names)}"
 
 @review_bp.route("/mongo-test", methods=["GET"])
 def mongo_test():
@@ -125,18 +109,14 @@ def mongo_add():
     selected_game = request.form['game_id']  # This will contain the game ID
     recommended = request.form['recommended']  # contain the recommended value
     review_text = request.form['review_text']  # contain the review_text content
-    print("mongo_add g_id : " + selected_game)
-    print("mongo recommended: " + recommended)
-    print("mongo review_Text: " + review_text)
 
     source = request.form['source']
     # Determine the recommended value
     recommended_val = True if recommended == "Recommended" else False
 
-
     review_check = mongo_find_review(user_id,selected_game)
-    if review_check:
-        # The review exists, so we will update it
+    if review_check: # review exists
+        # create query to hold fields to be updated
         update_review = {
             '$set': {
                 'reviews.$.review_text': review_text,  # Update the review_text of the matched review
@@ -147,13 +127,11 @@ def mongo_add():
         # Update the review in the database
         db.new_game.update_one(
             {'_id': selected_game, 'reviews.user_id': user_id},  # Find the game and review by user_id
-            update_review  # Apply the update
+            update_review
         )
-        print("updated one")
-    else: # ITS NEW
-        print("nope new")
+    else: # Its a new entry
         date = datetime.datetime.today().strftime("%Y-%m-%d")
-        print(date)
+
         new_review = {
             'review_text': review_text,
             'review_date': date,
@@ -180,24 +158,20 @@ def mongo_find_review(user_id, game_id):
     # Find the game by game_id and user_id
     result = db.new_game.find(
         {
-            "_id": game_id,  # Match the game_id to the _id field
+            "_id": game_id,  # Match the game_id to _id
             "reviews": {"$elemMatch": {"user_id": user_id}}  # Match the user_id inside reviews
         },
-        {"title": 1, "reviews.$": 1}  # Projection to return only title and matched review
+        {"title": 1, "reviews.$": 1}  # return title and matched review
     )
     # Convert the result to a list and check if there are any reviews
     result_list = list(result)  # Convert the cursor to a list
     if result_list:
-        print("this is list[0]")
-        print(result_list[0])
-        return result_list[0]  # Return the first (and possibly only) document with reviews
+        return result_list[0]
     else:
-        return None  # No review found for this user and game
+        return None  # No review found
 
-# @review_bp.route('/review-edit/<game_id>/<review_id>', methods=['GET', 'POST'])
 @review_bp.route('/mongo-edit/<game_id>/', methods=['GET', 'POST'])
 def edit_reviews(game_id):
-
     db = get_NoSQLdb()
     selected_game = game_id
     user_id = session.get('_id')  # Get user_id from the session
@@ -206,26 +180,20 @@ def edit_reviews(game_id):
         {
             "_id": game_id,  # Match the game_id to the _id field
         },
-        {"title": 1}  # Projection to return only title and matched review
+        {"title": 1}  # return only title and matched review
     )
     if game_title:
         title = game_title['title']
-    # Get the title from the document and print it
+
     find_user_review = mongo_find_review(user_id, game_id)
 
-    # Print the structure of find_user_review to debug
-    print("find_user_review:", find_user_review)
-
-    if find_user_review:  # If there's a review found
-        user_reviews = find_user_review.get("reviews", [])  # Get all reviews (not just the first one)
+    if find_user_review:
+        user_reviews = find_user_review.get("reviews", [])
 
         if user_reviews:
-            print("User reviews found:", user_reviews)  # Debugging print for review details
-
-            # Iterate through all reviews
             review_info = []
             for user_review in user_reviews:
-                review_info.append({
+                review_info.append({ #hold the existing data to populate on html
                     "review_date": user_review.get("review_date", "NA"),  # Review date or "NA" if not available
                     "review_text": user_review.get("review_text", "No review text"),  # Review text
                     "recommended": user_review.get("recommended", "NA")  # Recommended value or "NA" if not available
@@ -241,24 +209,20 @@ def edit_reviews(game_id):
         "reviews/review-edit-mongo.html",
         selected_game=selected_game,
         game_title=title,
-        review_info=review_info,  # This will contain all the reviews
+        review_info=review_info,
     )
 
 def user_written_reviews(user_id):
-    # Start connection
     db = get_NoSQLdb()
-    # Find the game by game_id and user_id
+
     user_reviews = db.new_game.find(
         {
             "reviews": {"$elemMatch": {"user_id": user_id}}  # Match the user_id inside reviews
         },
-        {"game_id": 1, "title": 1, "reviews.$": 1}  # Projection to return only title and matched review
+        {"game_id": 1, "title": 1, "reviews.$": 1}  # return only title and matched review
     )
 
-    # Convert cursor to list and print to inspect the results
     reviews = []
-
-    # Convert the cursor to a list and check if we found any reviews
     user_reviews_list = list(user_reviews)
     if user_reviews_list:
         for game in user_reviews_list:
@@ -279,7 +243,6 @@ def user_written_reviews(user_id):
     return reviews  # Return the list of reviews for the user
 
 # Delete Review
-# @review_bp.route("review-delete/<review_id>", methods=['GET'])
 @review_bp.route("review-delete/", methods=['GET'])
 def delete_review():
     db = get_NoSQLdb()
@@ -329,12 +292,6 @@ def get_all_reviews_for_game(game_id):
 
         for review in not_recommended_reviews:
             review["username"] = user_map.get(review["user_id"], "Unknown User")
-
-        print(recommended_reviews)
-        # Print for debugging purposes
-        print(f"Game Title: {result['title']}")
-        print(f"Recommended Reviews: {len(recommended_reviews)}")
-        print(f"Not Recommended Reviews: {len(not_recommended_reviews)}")
 
         return {
             "title": result["title"],

@@ -1,5 +1,4 @@
 from flask import app, Blueprint, jsonify, render_template, request, url_for, redirect, session, flash
-import mysql.connector
 import pymongo
 
 # images import
@@ -18,12 +17,6 @@ from auth_utils import login_required  # persistent login
 
 # MongoDB setup
 from mongo_cfg import get_NoSQLdb
-
-# integrating everyone's parts
-from mysql_routes.review import user_written_reviews
-from mysql_routes.owned_game import get_owned_game
-from mysql_routes.friend import get_dashboard_mutual_friends
-from mysql_routes.game import getGameNum, getGames, get_all_games
 
 # Create a Blueprint object
 wishlist_bp = Blueprint("wishlist_bp", __name__)

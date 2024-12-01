@@ -91,7 +91,6 @@ def view_friends():
                 'owned_games': 1, 
                 'wanted_games': 1, 
                 'friends': 1,
-                'created_on': 1
             }
         ))
 
@@ -136,7 +135,7 @@ def view_friends():
 
             friend_data.append({
                 'friend_id': friend['_id'],
-                'friendship_date': friend.get('created_on', 'Unknown'),
+                'friendship_date': next((f.get('friendship_date') for f in friend.get('friends', []) ), 'Unknown'),
                 'username': friend.get('username', 'Unknown'),
                 'wanted_games': wanted_game_titles,
                 'owned_games': owned_game_titles,
@@ -206,12 +205,12 @@ def add_friend():
                 return render_template("friend/add_friend.html", suggested_friends=suggested_friends)
 
             # Add friend logic
-            current_time = datetime.datetime.now()
+            current_time = datetime.datetime.now().date().isoformat()
             db.new_user.update_one(
                 {'_id': user_id},
                 {'$push': {'friends': {
                     'friend_id': friend['_id'],
-                    'created_on': current_time
+                    'friendship_date': current_time
                 }}}
             )
 
@@ -219,7 +218,7 @@ def add_friend():
                 {'_id': friend['_id']},
                 {'$push': {'friends': {
                     'friend_id': user_id,
-                    'created_on': current_time
+                    'friendship_date': current_time
                 }}}
             )
 

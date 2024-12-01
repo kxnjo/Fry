@@ -18,8 +18,8 @@ from auth_utils import login_required  # persistent login
 # MongoDB setup
 from mongo_cfg import get_NoSQLdb
 
-# integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
-from mysql_routes.review import user_written_reviews
+# integrating everyone's parts 
+from mongo_routes.review import user_written_reviews
 from mongo_routes.owned_game import gamesInOwned
 from mongo_routes.friend import get_user_friends, get_mutual_friends
 
@@ -330,9 +330,6 @@ def dashboard():
             min=min,
         )
 
-
-# MARK: ADMIN CREATE USER
-# TODO: roadblock- i dont know how to display error message while modal is open heh
 @user_bp.route("/create-user", methods=["POST"])
 @login_required
 def create_user():
@@ -407,11 +404,8 @@ def edit_user(_id):
     # update profile picture
     profile_picture = request.files.get("profile-picture")
     if profile_picture and profile_picture.filename != '':
-        print("Profile picture detected!")
         encoded_img = "data:image/jpeg;base64," + base64.b64encode(profile_picture.read()).decode("utf-8")  # Convert image to binary
         updated_user["image"] = encoded_img
-    
-    # print("Updated user document:", updated_user)
 
     try:
         result = db.new_user.update_one(
