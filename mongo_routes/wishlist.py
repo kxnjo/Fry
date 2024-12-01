@@ -17,7 +17,7 @@ import datetime
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
-import mongo_cfg
+from mongo_cfg import get_NoSQLdb
 
 # integrating everyone's parts
 from mysql_routes.review import user_written_reviews
@@ -28,33 +28,10 @@ from mysql_routes.game import getGameNum, getGames, get_all_games
 # Create a Blueprint object
 wishlist_bp = Blueprint("wishlist_bp", __name__)
 
-db = None
-
-# Functions
-def initialize_database():
-    """Helper function to initialize the MongoDB user collection."""
-    global db
-    if db is None:
-        # Attempt to get an existing connection first
-        db = mongo_cfg.get_NoSQLdb()
-        
-        # If no existing connection, initialize a new one
-        if db is None:
-            db = mongo_cfg.noSQL_init(app)
-        
-        return db
-            
-    # After ensuring db is initialized, return the user collection if db is available
-    if db is not None:
-        return db
-    else:
-        raise Exception("Failed to initialize MongoDB connection")
 
 # Get all games in wishlist by user
 def gamesInWishlist():
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
 
     try:
         # Retrieve all documents
@@ -76,9 +53,7 @@ def gamesInWishlist():
 
 # Get game details
 def getGame(added_date, game_id):
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
 
     try:
         # Retrieve all documents
@@ -101,9 +76,7 @@ def getGame(added_date, game_id):
 
 # Used to check if game is in wishlist as well
 def getAddedDate(game_id): # Return added date if game is in wishlist else return None
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
 
     try:
         document = db.new_user.find_one(
@@ -119,9 +92,7 @@ def getAddedDate(game_id): # Return added date if game is in wishlist else retur
     
 # Recommend game by game category
 def recommendGame(game_id):
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
 
     try:
         gameDocument = db.new_game.find({"_id":  game_id,})
@@ -187,9 +158,7 @@ def viewWishlist():
 
 @wishlist_bp.route("/add-to-wishlist", methods=["POST"])
 def addToWishlist():
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
 
     try:
         if request.method == "POST":
@@ -212,9 +181,7 @@ def addToWishlist():
 
 @wishlist_bp.route("/delete-from-wishlist/<game_id>", methods=["GET"])
 def deleteFromWishlist(game_id):
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
 
     try:
         db.new_user.update_one(
@@ -228,6 +195,8 @@ def deleteFromWishlist(game_id):
 @wishlist_bp.route("/search-wishlist", methods=["POST"])
 def searchWishlist():
     if request.method == "POST":
+        db = get_NoSQLdb()
+        
         wishlist_games = gamesInWishlist()
         wishlist_game_ids = [game["game_id"] for game in wishlist_games]
         

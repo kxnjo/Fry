@@ -16,7 +16,7 @@ from datetime import datetime
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
-import mongo_cfg
+from mongo_cfg import get_NoSQLdb
 
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
 from mysql_routes.review import user_written_reviews
@@ -25,30 +25,6 @@ from mongo_routes.friend import get_user_friends, get_mutual_friends
 
 # Create a Blueprint object
 user_bp = Blueprint("user_bp", __name__)
-
-db = None
-
-# MARK: initialise database
-def get_db():
-    """Helper function to initialize the MongoDB user collection."""
-    global db
-    if db is None:
-        # Attempt to get an existing connection first
-        db = mongo_cfg.get_NoSQLdb()
-        
-        # If no existing connection, initialize a new one
-        if db is None:
-            db = mongo_cfg.noSQL_init(app)
-        
-        return db
-            
-    # After ensuring db is initialized, return the user collection if db is available
-    if db is not None:
-        return db
-    else:
-        raise Exception("Failed to initialize MongoDB connection")
-
-db = get_db()
 
 # MARK: custom functions
 def generate_id():
@@ -84,7 +60,7 @@ def login():
         
         try:
             # Ensure db.new_user is initialized
-            db = get_db()
+            db = get_NoSQLdb()
 
             if "@" in username_email:
                 query = {"email": username_email}
@@ -128,7 +104,7 @@ def register():
     if request.method == "POST":
 
         # Ensure db.new_user is initialized
-        db = get_db()  
+        db = get_NoSQLdb()  
 
         # get user details: name, email and password
         name = request.form["name"]
@@ -172,7 +148,7 @@ def forgot():
     if request.method == "POST":
 
         # Ensure db is initialized
-        db = get_db()  
+        db = get_NoSQLdb()  
             
         # Retrieve form data
         username_email = request.form["username_email"]
@@ -211,7 +187,7 @@ def logout():
 @user_bp.route("/dashboard")
 @login_required
 def dashboard():
-    db = get_db()
+    db = get_NoSQLdb()
 
     """Display user or admin dashboard."""
 
@@ -359,7 +335,7 @@ def create_user():
     if request.method == "POST":
         
         # Ensure db is initialized
-        db = get_db()  
+        db = get_NoSQLdb()  
         
         name = request.form['username']
         email = request.form['email']
@@ -413,7 +389,7 @@ def edit_user(_id):
     """Edit user details."""
 
     # Ensure db is initialized
-    db = get_db()
+    db = get_NoSQLdb()
 
     # Retrieve form data
     username = request.form["username"]
@@ -461,7 +437,7 @@ def delete_user(_id):
     """Delete a user account."""
 
     # Ensure db is initialized
-    db = get_db()
+    db = get_NoSQLdb()
 
     result = db.new_user.delete_one({"_id": _id})
     # Check if a document was deleted

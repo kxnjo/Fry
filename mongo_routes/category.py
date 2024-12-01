@@ -16,7 +16,7 @@ from datetime import date
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
-import mongo_cfg
+from mongo_cfg import get_NoSQLdb
 
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
 from mysql_routes.review import user_written_reviews
@@ -26,31 +26,6 @@ from mysql_routes.friend import get_dashboard_mutual_friends
 
 # Create a Blueprint object
 category_bp = Blueprint("category_bp", __name__)
-
-db = None
-
-# MARK: initialise database
-def get_db():
-    """Helper function to initialize the MongoDB user collection."""
-    global db
-    if db is None:
-        # Attempt to get an existing connection first
-        db = mongo_cfg.get_NoSQLdb()
-        
-        # If no existing connection, initialize a new one
-        if db is None:
-            db = mongo_cfg.noSQL_init(app)
-        
-        return db
-            
-    # After ensuring db is initialized, return the user collection if db is available
-    if db is not None:
-        return db
-    else:
-        raise Exception("Failed to initialize MongoDB connection")
-
-db = get_db()
-
 
 # route to view all categories
 @category_bp.route("/categories")
@@ -64,7 +39,7 @@ def view_all_categories():
     # Calculate the offset for the SQL query
     offset = (page - 1) * per_page
 
-    db = get_db()  # Assuming you're using MongoDB and `get_db()` retrieves the db connection
+    db = get_NoSQLdb()  # Assuming you're using MongoDB and `get_db()` retrieves the db connection
 
     try:
         # Find all unique categories from the "categories" field in all game documents
@@ -92,7 +67,7 @@ def view_all_categories():
 def view_category(category):
 
     # Connect to the database
-    db = get_db()
+    db = get_NoSQLdb()
 
     # Get the current page number from the request (default to 1 if not provided)
     page = request.args.get('page', 1, type=int)
