@@ -30,10 +30,6 @@ def mongo_test():
     selected_game = request.args.get("game")  # returns game_id from selected dropdown
     recommended = request.args.get("recommended")
 
-    # Print for debugging
-    print("Selected value: " + (selected_game if selected_game is not None else "None"))
-    print("Recommended value: " + (recommended if recommended is not None else "None"))
-
     filter_query = {}
     if selected_game:
         filter_query["_id"] = selected_game
@@ -202,8 +198,6 @@ def edit_reviews(game_id):
     else:
         print("No user review found for this game.")
 
-    print(review_info)
-
     return render_template(
         "reviews/review-edit-mongo.html",
         selected_game=selected_game,
@@ -249,8 +243,6 @@ def delete_review():
     # Retrieve game_id and source from URL query parameters
     game_id = request.args.get('game_id')
     source = request.args.get('source')
-    print(game_id)
-    print(source)
     db.new_game.update_one(
         {'_id': game_id},  # Match the game document by ID
         {'$pull': {'reviews': {'user_id': user_id}}}  # Remove the review with the matching user_id

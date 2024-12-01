@@ -17,37 +17,12 @@ from auth_utils import login_required  # persistent login
 
 # MongoDB setup
 from mongo_cfg import get_NoSQLdb
-
-# integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
 from mongo_routes.review import user_written_reviews,mongo_find_review, get_all_reviews_for_game
-# from mysql_routes.game import getGameNum, getGames, get_all_games
 from mongo_routes.wishlist import getAddedDate
 from mongo_routes.owned_game import getAddedDates
 
 # Create a Blueprint object
 game_bp = Blueprint("game_bp", __name__)
-
-
-@game_bp.route('/gametest-db-connection')
-def mongo_connection():
-    # Ensure db.new_user is initialized
-    try:
-        db = get_NoSQLdb()
-
-        # Retrieve all documents
-        documents = db.new_game.find()
-
-        # Iterate through documents and print them
-        all_games = []
-        for game in documents:            
-            # print(f"this is indiv game! {game}")
-            all_games.append(game)
-
-        return f"Successfully connected to MongoDB. all_games: {all_games}", 200
-    
-    except Exception as e:
-        return f"Failed to connect to MongoDB: {e}", 500
-    
 
 # route to view games page
 @game_bp.route("/games", methods=['GET'])
@@ -61,7 +36,7 @@ def view_all_games():
     # Define the limit of items per page
     per_page = 10
 
-    # Calculate the offset for the SQL query
+    # Calculate the offset for query
     offset = (page - 1) * per_page
 
     sort_direction = 1 if sort_order == 'asc' else -1
@@ -93,7 +68,6 @@ def view_all_games():
         # Count the total documents matching the filter
         total_documents = db.new_game.count_documents(search_filter)
 
-
         # Iterate through documents and print them
         all_games = []
         for doc in documents:
@@ -112,8 +86,13 @@ def view_all_games():
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
     
-    return render_template("games/view_games.html", games=all_games, page=page, sort_by=sort_by,
-                           sort_order=sort_order, search=search, total_pages = total_pages)
+    return render_template("games/view_games.html", 
+                           games=all_games, 
+                           page=page, 
+                           sort_by=sort_by,
+                           sort_order=sort_order, 
+                           search=search, 
+                           total_pages = total_pages)
 
 
 # route to view individual game page
@@ -140,16 +119,15 @@ def view_game(game_id):
         if find_user_review:  # If there's a review found
             user_review = find_user_review["reviews"][0]  # Get the review object
             get_user_review = {
-                "review_date": user_review.get("review_date", "NA"),  # Review date or "NA" if not available
+                "review_date": user_review.get("review_date", "NA"),  # Review date
                 "review_text": user_review.get("review_text", "No review text"),  # Review text
-                "recommended": user_review.get("recommended", "NA")  # Recommended value or "NA" if not available
+                "recommended": user_review.get("recommended", "NA")  # Recommended value
             }
         game_reviews = get_all_reviews_for_game(game_id)
         gameInWishlist = getAddedDate(game_id)
         user_owned = getAddedDates(game_id)
 
         price_changes = PriceChanges(game_id)
-        print("owned_game in view: ", price_changes)
 
         # Initialize arrays
         dates_new = []
@@ -166,10 +144,6 @@ def view_game(game_id):
             # Calculate final price after applying the discount
             final_price = change['base_price'] - (change['base_price'] * (change['discount'] / 100))
             prices_new.append(final_price)  # Append to prices array
-
-        # Output the arrays
-        print("Dates:", dates_new)
-        print("Prices:", prices_new)
 
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
@@ -197,7 +171,7 @@ def edit_game(game_id):
     release_date = request.form.get("release_date")
     gameImage = request.files.get("game_image")
 
-    # Validate form data (you can add more checks if needed)
+    # Validate form data
     if not title or not new_price:
         return "Title and price are required!", 400
     
@@ -238,10 +212,8 @@ def edit_game(game_id):
             update_data["release_date"] = release_date
 
         if gameImage and gameImage.filename != '':
-            print("Game image Detected!")
             encoded_img = "data:image/jpeg;base64," + base64.b64encode(gameImage.read()).decode("utf-8")  # Convert image to binary
             update_data["image"] = encoded_img
-
 
         # Update the other fields
         db.new_game.update_one({"_id": game_id}, {"$set": update_data})
@@ -271,14 +243,14 @@ def create_game(developer_name):
 
         # Create the new game document with the required structure
         new_game = {
-            "_id": f"g{int(datetime.utcnow().timestamp())}",  # Generate a unique _id based on timestamp (you can change this logic)
+            "_id": f"g{int(datetime.utcnow().timestamp())}",  # Generate a unique _id based on timestamp
             "title": title,
             "release_date": release_date,
             "price": float(price),  # Ensure the price is saved as a float
             "price_changes": [{
                 "change_date": datetime.utcnow().strftime("%Y-%m-%d"),
                 "base_price": float(price),
-                "discount": 0  # You can handle discounts later if needed
+                "discount": 0  
             }],
             "reviews": [],  # Initial empty reviews array
             "categories": categories,  # Save the selected categories
@@ -294,11 +266,12 @@ def create_game(developer_name):
         db.new_game.insert_one(new_game)
 
         flash("Game created successfully!", "success")
-        return redirect(url_for("user_bp.dashboard"))  # Redirect to the dashboard or wherever appropriate
+        return redirect(url_for("user_bp.dashboard"))
 
     except Exception as e:
         flash(f"Failed to create the game: {e}", "danger")
-        return redirect(url_for("game_bp.create_game", developer_name=developer_name))
+        return redirect(url_for("game_bp.create_game", 
+                                developer_name=developer_name))
 
 
 @game_bp.route("/delete-game/<game_id>", methods=["POST"])
@@ -332,14 +305,11 @@ def PriceChanges(_id):
         game = []
         for doc in documents:
             game.extend(doc["price_changes"])
-        
-        print("game in PriceChanges():", game)
 
         # Fetch additional details about the game
         price_changes_details = []
         for i in game:
             price_changes_details.extend(getPriceChangeDetails(_id, i["change_date"], i["base_price"], i["discount"]))
-        print("owned_games_details", price_changes_details)
 
         return price_changes_details
     except Exception as e: 
@@ -362,9 +332,6 @@ def getPriceChangeDetails(_id, change_date, base_price, discount):
                 "discount": discount
             })
         return price_changes
-        print("price_changes: ", price_changes)
+
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
-
-
-

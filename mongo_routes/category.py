@@ -18,12 +18,6 @@ from auth_utils import login_required  # persistent login
 # MongoDB setup
 from mongo_cfg import get_NoSQLdb
 
-# integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
-from mysql_routes.review import user_written_reviews
-from mysql_routes.owned_game import get_owned_game
-from mysql_routes.friend import get_dashboard_mutual_friends
-# from mysql_routes.game import getGameNum, getGames, get_all_games
-
 # Create a Blueprint object
 category_bp = Blueprint("category_bp", __name__)
 
@@ -36,10 +30,10 @@ def view_all_categories():
     # Define the limit of items per page
     per_page = 20
 
-    # Calculate the offset for the SQL query
+    # Calculate the offset for the query
     offset = (page - 1) * per_page
 
-    db = get_NoSQLdb()  # Assuming you're using MongoDB and `get_db()` retrieves the db connection
+    db = get_NoSQLdb() 
 
     try:
         # Find all unique categories from the "categories" field in all game documents
@@ -55,12 +49,10 @@ def view_all_categories():
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
 
-    return render_template(
-        "categories/view_categories.html",
-        categories=categories_paginated,
-        page=page,
-        total_pages=total_pages
-    )
+    return render_template("categories/view_categories.html",
+                            categories=categories_paginated,
+                            page=page,
+                            total_pages=total_pages)
 
 # route to view individual category page with pagination
 @category_bp.route("/category/<category>")
@@ -99,4 +91,8 @@ def view_category(category):
         return f"Failed to connect to MongoDB: {e}", 500
 
     # Return the category page template with the filtered games and pagination info
-    return render_template("categories/category.html", games=game_data, category=category, page=page, total_pages=total_pages)
+    return render_template("categories/category.html", 
+                            games=game_data, 
+                            category=category, 
+                            page=page, 
+                            total_pages=total_pages)

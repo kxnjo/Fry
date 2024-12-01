@@ -17,14 +17,6 @@ from mongo_routes.category import category_bp
 from mongo_routes.developer import developer_bp
 from mongo_routes.review import review_bp
 
-# from mysql_routes.game import game_bp
-from mysql_routes.sample import sample_bp
-# from mysql_routes.category import category_bp
-# from mysql_routes.developer import developer_bp
-# from mysql_routes.friend import friendlist_bp
-# from mysql_routes.wishlist import wishlist_bp
-# from mysql_routes.owned_game import owned_game_bp
-
 app = Flask(__name__)
 noSQL_init(app)
 app.secret_key = "INF2003DatabaseProject"  # for session security
@@ -39,7 +31,6 @@ def make_session_permanent():
 # add url route to all endpoints under /users
 app.register_blueprint(user_bp, url_prefix="/user")
 app.register_blueprint(game_bp, url_prefix="/game")
-app.register_blueprint(sample_bp, url_prefix="/sample")
 app.register_blueprint(review_bp, url_prefix="/review")
 app.register_blueprint(category_bp, url_prefix="/category")
 app.register_blueprint(developer_bp, url_prefix="/developer")

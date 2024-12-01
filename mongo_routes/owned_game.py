@@ -16,37 +16,8 @@ from auth_utils import login_required # Persistent login
 # MongoDB setup 
 from mongo_cfg import get_NoSQLdb
 
-# Integrating everyone part 
-from mysql_routes.review import user_written_reviews
-from mysql_routes.owned_game import get_owned_game
-from mysql_routes.friend import get_dashboard_mutual_friends
-from mysql_routes.game import getGameNum, getGames, get_all_games
-
 # Create a Blueprint object 
 owned_game_bp = Blueprint("owned_game_bp", __name__)
-
-# MONGO connections 
-@owned_game_bp.route('/test-db-connection')
-def mongo_connection(): 
-    db = get_NoSQLdb()
-    
-    try: 
-        # Retrieve all documents 
-        documents = db.new_user.find()
-
-        # Iterate through the documents and print them
-        all_games = [] 
-        for doc in documents: 
-            all_games.append({
-                "owned_games": doc["owned_games"]
-            })
-
-        for doc in documents: 
-            print("doc: ", doc)
-        
-        return f"Successfully connected to MongoDB. all_games: {all_games}", 200
-    except Exception as e:
-        return f"Failed to connect to MongoDB: {e}", 500
 
 # Get all owned games by user 
 def gamesInOwned(user_id=None): 
@@ -55,7 +26,6 @@ def gamesInOwned(user_id=None):
     try: 
         if user_id is None:
             user_id = session.get('_id')
-
 
         # check if there are any games owned
         document = db.new_user.find_one(
@@ -67,9 +37,6 @@ def gamesInOwned(user_id=None):
             return []
         else: 
             owned_games_array = document['owned_games']
-
-            for game in owned_games_array:
-                print(f"!!! game {game}")
 
             # Fetch additional details about the game
             owned_games_details = []
@@ -98,9 +65,6 @@ def getGameDetails(game_id, purchase_date, hours_played):
                 "hours_played": hours_played,
                 "image": doc.get("image", None),
                 "price_changes" : doc["price_changes"]
-                # "price": doc["price"],
-                # "categories": doc["categories"],
-                # "developers": doc["developers"],
             })
         return game 
     except Exception as e:
@@ -142,8 +106,7 @@ def view_owned_game():
 @owned_game_bp.route("/add-owned_game", methods=["POST"])
 def add_owned_game():
     db = get_NoSQLdb()
-        
-    print(f"Session ID: {session.get('_id')}")
+
     try: 
         if request.method == "POST":
             game_id = request.form["game"]
@@ -151,7 +114,6 @@ def add_owned_game():
             #     return "Game ID is required!", 400
             date = datetime.datetime.today().strftime("%Y-%m-%d")
             hours = 0
-
 
             new_owned_game = { 
                 "game_id" : game_id,

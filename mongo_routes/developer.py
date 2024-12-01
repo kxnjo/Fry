@@ -18,12 +18,6 @@ from auth_utils import login_required  # persistent login
 # MongoDB setup
 from mongo_cfg import get_NoSQLdb
 
-# integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
-from mysql_routes.review import user_written_reviews
-from mysql_routes.owned_game import get_owned_game
-from mysql_routes.friend import get_dashboard_mutual_friends
-# from mysql_routes.game import getGameNum, getGames, get_all_games
-
 # Create a Blueprint object
 developer_bp = Blueprint("developer_bp", __name__)
 
@@ -36,10 +30,10 @@ def view_all_developers():
     # Define the limit of items per page
     per_page = 20
 
-    # Calculate the offset for the SQL query
+    # Calculate the offset for the query
     offset = (page - 1) * per_page
 
-    db = get_NoSQLdb()  # Assuming you're using MongoDB and `get_db()` retrieves the db connection
+    db = get_NoSQLdb()
 
     try:
         # Find all unique developers from the "developers" field in all game documents
@@ -55,9 +49,10 @@ def view_all_developers():
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
 
-    return render_template("developers/view_developers.html", developers=developers_paginated,
-        page=page,
-        total_pages=total_pages)
+    return render_template("developers/view_developers.html", 
+                            developers=developers_paginated,
+                            page=page,
+                            total_pages=total_pages)
 
 # route to view individual developer page
 @developer_bp.route("/developer/<developer>")
@@ -95,5 +90,9 @@ def view_developer(developer):
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
     
-    return render_template("developers/developer.html", games=game_data, developer=developer, page=page, total_pages=total_pages)
+    return render_template("developers/developer.html", 
+                            games=game_data, 
+                            developer=developer, 
+                            page=page, 
+                            total_pages=total_pages)
 
