@@ -345,7 +345,7 @@
                                 <div class="mb-3">
                                     <label for="categories{{ game._id }}" class="form-label">Categories</label>
                                     <select class="form-select" id="categories{{ game._id }}" name="categories" multiple required>
-                                        {% for category in categories %}
+                                        {% for category in game.categories %}
                                         <option value="{{ category }}">
                                             {{ category }}
                                         </option>
