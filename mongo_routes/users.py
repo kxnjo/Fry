@@ -337,12 +337,14 @@ def dashboard():
         )
         game_total_pages = (total_games + items_per_page - 1) // items_per_page
         all_categories = db.new_game.distinct("categories")
+        developer_name = session["username"]
         return render_template(
             "user/developer_dashboard.html", 
             games=games,
             page=page,
             game_total_pages=game_total_pages,
             all_categories = all_categories,
+            developer_name = developer_name,
             sort_field=sort_field,
             sort_order=sort_order,
             search_query=search_query,

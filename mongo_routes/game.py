@@ -271,17 +271,66 @@ def edit_game(game_id):
     except Exception as e:
         return f"Failed to update the game: {e}", 500
     
-@game_bp.route("/create-game", methods=["POST"])
-def create_game(game_id):
-    # something (placeholder)
+@game_bp.route("/create-game/<developer_name>", methods=["POST"])
+def create_game(developer_name):
+    db = get_db()
 
-    return redirect(url_for("user_bp.dashboard"))
+    # Get form data
+    title = request.form.get("title")
+    release_date = request.form.get("release_date")
+    price = request.form.get("price")
+    categories = request.form.getlist("categories[]")  # Get selected categories as a list
+
+    # Validate form data
+    if not title or not release_date or not price or not categories:
+        flash("All fields are required!", "danger")
+        return redirect(url_for("game_bp.create_game", developer_name=developer_name))  # Or return to the add game modal
+
+    try:
+
+        # Create the new game document with the required structure
+        new_game = {
+            "_id": f"g{int(datetime.utcnow().timestamp())}",  # Generate a unique _id based on timestamp (you can change this logic)
+            "title": title,
+            "release_date": release_date,
+            "price": float(price),  # Ensure the price is saved as a float
+            "price_changes": [{
+                "change_date": datetime.utcnow().strftime("%Y-%m-%d"),
+                "base_price": float(price),
+                "discount": 0  # You can handle discounts later if needed
+            }],
+            "reviews": [],  # Initial empty reviews array
+            "categories": categories,  # Save the selected categories
+            "developers": [developer_name],  # Save the developer_name as a list with one item
+        }
+
+        # Insert the new game into the database
+        db.new_game.insert_one(new_game)
+
+        flash("Game created successfully!", "success")
+        return redirect(url_for("user_bp.dashboard"))  # Redirect to the dashboard or wherever appropriate
+
+    except Exception as e:
+        flash(f"Failed to create the game: {e}", "danger")
+        return redirect(url_for("game_bp.create_game", developer_name=developer_name))
+
 
 @game_bp.route("/delete-game/<game_id>", methods=["POST"])
 def delete_game(game_id):
-    # something (placeholder)
+    db = get_db()  # Connect to the database
 
-    return redirect(url_for("user_bp.dashboard"))
+    try:
+        # Attempt to delete the game from the database
+        result = db.new_game.delete_one({"_id": game_id})
+        
+        if result.deleted_count == 0:
+            return "Game not found or already deleted", 404
+
+        # Redirect back to the dashboard after deletion
+        return redirect(url_for("user_bp.dashboard"))
+
+    except Exception as e:
+        return f"Error occurred while deleting the game: {e}", 500
 
 def PriceChanges(_id): 
     db = get_db()

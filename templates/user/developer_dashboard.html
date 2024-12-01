@@ -404,7 +404,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="{{ url_for('game_bp.create_game') }}" enctype="multipart/form-data">
+                    <form method="POST" action="{{ url_for('game_bp.create_game', developer_name=developer_name) }}" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">
@@ -424,12 +424,16 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="categories" class="form-label">Categories</label>
-                                    <select class="form-select" id="categories" name="categories" multiple required>
-                                        {% for category in categories %}
-                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    <select class="form-select" id="categories" name="categories[]" multiple required>
+                                        {% for category in all_categories %}
+                                            <option value="{{ category }}" 
+                                                {% if category in selected_categories %}selected{% endif %}>
+                                                {{ category }}
+                                            </option>
                                         {% endfor %}
                                     </select>
                                 </div>
+                                
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
