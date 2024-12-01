@@ -19,12 +19,10 @@ from auth_utils import login_required  # persistent login
 import mongo_cfg
 
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
-from mysql_routes.review import user_written_reviews,mongo_find_review,mongo_find_owned, get_all_reviews_for_game
-from mysql_routes.owned_game import get_owned_game
-from mysql_routes.friend import get_dashboard_mutual_friends
+from mysql_routes.review import user_written_reviews,mongo_find_review, get_all_reviews_for_game
 # from mysql_routes.game import getGameNum, getGames, get_all_games
 from mongo_routes.wishlist import getAddedDate
-from mongo_routes.owned_game import getAddedDates
+from mongo_routes.owned_game import isOwned, getAddedDates
 
 # Create a Blueprint object
 game_bp = Blueprint("game_bp", __name__)
@@ -158,7 +156,7 @@ def view_game(game_id):
         }
         user_id = session.get('_id')
 
-        user_owned = mongo_find_owned(user_id, game_id)
+        user_owned = isOwned(user_id, game_id)
 
         # Find the review
         find_user_review = mongo_find_review(user_id, game_id)

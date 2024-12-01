@@ -173,20 +173,6 @@ def mongo_add():
     else:
         return redirect(url_for('game_bp.view_game', game_id=selected_game))
 
-
-def mongo_find_owned(user_id, game_id):
-    db = get_NoSQLdb()
-    result = db.new_user.find(
-        {
-            "_id": user_id,
-            "reviews": {"$elemMatch": {"game_id": game_id}}  # Match the user_id inside reviews
-        }
-    )
-    if result:
-        return True
-    else:
-        return False
-
 def mongo_find_review(user_id, game_id):
     # Get the database
     db = get_NoSQLdb()
