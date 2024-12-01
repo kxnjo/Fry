@@ -1,5 +1,4 @@
 from flask import app, Blueprint, jsonify, render_template, request, url_for, redirect, session, flash 
-import mysql.connector
 import pymongo
 
 # Load configuration
