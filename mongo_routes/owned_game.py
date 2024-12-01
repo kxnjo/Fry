@@ -147,18 +147,6 @@ def getAddedDates(game_id): # Return added date if game is in wishlist else retu
     except Exception as e:
         return f"Failed to connect to MongoDB: {e}", 500
 
-# check if game is owned
-def isOwned(user_id, game_id):
-    db = initialize_database()
-    if db is None: 
-        return "Database is not initalized!!", 500 
-
-    query = {
-        "_id": user_id,
-        "owned_games.game_id": game_id
-    }
-    return db.new_user.find_one(query) is not None
-
 # ---Routes---
 # View owned_game
 @owned_game_bp.route("/view-owned_game")

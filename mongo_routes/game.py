@@ -22,7 +22,7 @@ import mongo_cfg
 from mysql_routes.review import user_written_reviews,mongo_find_review, get_all_reviews_for_game
 # from mysql_routes.game import getGameNum, getGames, get_all_games
 from mongo_routes.wishlist import getAddedDate
-from mongo_routes.owned_game import isOwned, getAddedDates
+from mongo_routes.owned_game import getAddedDates
 
 # Create a Blueprint object
 game_bp = Blueprint("game_bp", __name__)
@@ -156,8 +156,6 @@ def view_game(game_id):
         }
         user_id = session.get('_id')
 
-        user_owned = isOwned(user_id, game_id)
-
         # Find the review
         find_user_review = mongo_find_review(user_id, game_id)
         get_user_review = None
@@ -171,7 +169,7 @@ def view_game(game_id):
             }
         game_reviews = get_all_reviews_for_game(game_id)
         gameInWishlist = getAddedDate(game_id)
-        gamePurchased = getAddedDates(game_id)
+        user_owned = getAddedDates(game_id)
 
         price_changes = PriceChanges(game_id)
         print("owned_game in view: ", price_changes)
@@ -204,9 +202,8 @@ def view_game(game_id):
                         #    reviews=reviews,
                         #    recommended_data=recommended_data,
                            gameInWishlist=gameInWishlist,
-                           gamePurchased=gamePurchased,
+                           user_owned=user_owned,
                            user_logged_in=bool(user_id),
-                           user_owned=bool(user_owned),
                            get_user_review=get_user_review,
                            game_reviews=game_reviews, 
                            dates_new = dates_new, 
