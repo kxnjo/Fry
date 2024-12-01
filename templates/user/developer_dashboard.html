@@ -344,9 +344,10 @@
                                 </div>
                                 <div class="mb-3">
                                     <label for="categories{{ game._id }}" class="form-label">Categories</label>
-                                    <select class="form-select" id="categories{{ game._id }}" name="categories" multiple required>
-                                        {% for category in game.categories %}
-                                        <option value="{{ category }}">
+                                    <select class="form-select" id="categories{{ game._id }}" name="categories[]" multiple required>
+                                        {% for category in all_categories %}
+                                        <option value="{{ category }}" 
+                                            {% if category in game.categories %}selected{% endif %}>
                                             {{ category }}
                                         </option>
                                         {% endfor %}

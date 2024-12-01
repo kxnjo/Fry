@@ -220,12 +220,15 @@ def edit_game(game_id):
     # Get form data
     title = request.form.get("title")
     new_price = request.form.get("price")
+    categories = request.form.getlist("categories[]")
+    release_date = request.form.get("release_date")
 
     # Validate form data (you can add more checks if needed)
     if not title or not new_price:
         return "Title and price are required!", 400
     
     try:
+        new_price = float(new_price)
         # Retrieve the current game document
         game = db.new_game.find_one({"_id": game_id})
         if not game:
@@ -236,6 +239,7 @@ def edit_game(game_id):
 
         # Update the game document
         update_data = {"title": title}
+
         if current_price != new_price:  # Only add price change if the price is updated
             update_data["price"] = new_price
 
@@ -251,6 +255,13 @@ def edit_game(game_id):
                 {"_id": game_id},
                 {"$push": {"price_changes": new_price_change}}
             )
+
+        # If categories are included in the form submission, update them
+        if categories:
+            update_data["categories"] = categories
+
+        if release_date:
+            update_data["release_date"] = release_date
 
         # Update the other fields
         db.new_game.update_one({"_id": game_id}, {"$set": update_data})

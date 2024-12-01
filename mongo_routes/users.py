@@ -331,17 +331,18 @@ def dashboard():
         total_games = db.new_game.count_documents(query)
         games = list(
             db.new_game.find(query)
-            .sort({sort_field: sort_order})
+            .sort({ sort_field: sort_order})
             .skip((page - 1) * items_per_page)
             .limit(items_per_page)
         )
         game_total_pages = (total_games + items_per_page - 1) // items_per_page
-
+        all_categories = db.new_game.distinct("categories")
         return render_template(
             "user/developer_dashboard.html", 
             games=games,
             page=page,
             game_total_pages=game_total_pages,
+            all_categories = all_categories,
             sort_field=sort_field,
             sort_order=sort_order,
             search_query=search_query,
