@@ -68,9 +68,6 @@ def gamesInOwned(user_id=None):
         else: 
             owned_games_array = document['owned_games']
 
-            for game in owned_games_array:
-                print(f"!!! game {game}")
-
             # Fetch additional details about the game
             owned_games_details = []
             for game in owned_games_array:
