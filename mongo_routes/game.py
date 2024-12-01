@@ -19,7 +19,7 @@ from auth_utils import login_required  # persistent login
 from mongo_cfg import get_NoSQLdb
 
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
-from mysql_routes.review import user_written_reviews,mongo_find_review, get_all_reviews_for_game
+from mongo_routes.review import user_written_reviews,mongo_find_review, get_all_reviews_for_game
 # from mysql_routes.game import getGameNum, getGames, get_all_games
 from mongo_routes.wishlist import getAddedDate
 from mongo_routes.owned_game import getAddedDates
