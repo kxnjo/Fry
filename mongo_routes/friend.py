@@ -15,37 +15,15 @@ import random
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
-import mongo_cfg
+from mongo_cfg import get_NoSQLdb
 
 # Create a Blueprint object
 friendlist_bp = Blueprint("friendlist_bp", __name__)
 
-db = None
-
-def initialize_database():
-    """Helper function to initialize the MongoDB user collection."""
-    global db
-    if db is None:
-        # Attempt to get an existing connection first
-        db = mongo_cfg.get_NoSQLdb()
-        
-        # If no existing connection, initialize a new one
-        if db is None:
-            db = mongo_cfg.noSQL_init(app)
-        
-        return db
-            
-    # After ensuring db is initialized, return the user collection if db is available
-    if db is not None:
-        return db
-    else:
-        raise Exception("Failed to initialize MongoDB connection")
 
 # MARK: FUNCTIONS USED BY OTHER FILES
 def get_user_friends(user_id=None):
-    db = initialize_database()
-    if db is None:
-        return "Database not initialized!", 500
+    db = get_NoSQLdb()
 
     if user_id == None:
         user_id = session['_id']
@@ -65,9 +43,7 @@ def get_user_friends(user_id=None):
 
 
 def get_mutual_friends(user_id_1, user_id_2):
-    db = initialize_database()
-    if db is None:
-        return "Database not initialized!", 500
+    db = get_NoSQLdb()
 
     # Fetch friends for both users
     user1 = db.new_user.find_one({'_id': user_id_1}, {'friends': 1})
@@ -94,9 +70,7 @@ def get_mutual_friends(user_id_1, user_id_2):
 @login_required
 def view_friends():
     try:
-        db = initialize_database()  
-        if db is None:
-            return "Database not initialized!!", 500
+        db = get_NoSQLdb()
         
         user_id = session["_id"]  # Get the user_id from the session
 
@@ -181,9 +155,7 @@ def view_friends():
 @friendlist_bp.route("/add-friend", methods=["GET", "POST"])
 def add_friend():
     try:
-        db = initialize_database()  
-        if db is None:
-            return "Database not initialized!!", 500
+        db = get_NoSQLdb()
         
         # Get user_id from session
         user_id = session.get("_id")
@@ -267,9 +239,7 @@ def add_friend():
 # Function to delete a friend
 def delete_friend(friend_id):
     try:
-        db = initialize_database()  
-        if db is None:
-            return "Database not initialized!!", 500
+        db = get_NoSQLdb()
         
         user_id = session["_id"]  # Get the user_id from the session
 

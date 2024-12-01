@@ -14,7 +14,7 @@ import datetime
 from auth_utils import login_required # Persistent login 
 
 # MongoDB setup 
-import mongo_cfg 
+from mongo_cfg import get_NoSQLdb
 
 # Integrating everyone part 
 from mysql_routes.review import user_written_reviews
@@ -25,33 +25,10 @@ from mysql_routes.game import getGameNum, getGames, get_all_games
 # Create a Blueprint object 
 owned_game_bp = Blueprint("owned_game_bp", __name__)
 
-db = None 
-
-def initialize_database(): 
-    """Helper function to initialize the MongoDB user collection."""
-    global db
-    if db is None: 
-        # Attempt to get an existing connection
-        db = mongo_cfg.get_NoSQLdb()
-
-        # If no existing connection, initialize a new one 
-        if db is None: 
-            db = mongo_cfg.noSQL_init(app)
-        
-        return db 
-
-    # After ensuring db is initialised, return the user collection if db is available
-    if db is not None: 
-        return db 
-    else: 
-        raise Exception("Failed to initialize MongoDB connection")
-
 # MONGO connections 
 @owned_game_bp.route('/test-db-connection')
 def mongo_connection(): 
-    db = initialize_database()
-    if db is None: 
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
     
     try: 
         # Retrieve all documents 
@@ -73,39 +50,39 @@ def mongo_connection():
 
 # Get all owned games by user 
 def gamesInOwned(user_id=None): 
-    db = initialize_database()
-    if db is None: 
-        return "Database is not initalized!!", 500 
+    db = get_NoSQLdb()
   
     try: 
-        if user_id == None:
-            user_id = session['_id']
-        
-        # Retrieve all documents 
-        documents = db.new_user.find({"_id": user_id,})
+        if user_id is None:
+            user_id = session.get('_id')
 
-        # Iterate through documents and print them 
-        # Fetch all owned_games from user's doc in db
-        owned_games_array = []
-        for doc in documents:
-            owned_games_array.extend(doc["owned_games"])
-        
-        # print("owned game array:", owned_games_array)
 
-        # Fetch additional details about the game
-        owned_games_details = []
-        for i in owned_games_array:
-            owned_games_details.extend(getGameDetails(i["game_id"], i["purchase_date"], i["hours_played"]))
+        # check if there are any games owned
+        document = db.new_user.find_one(
+            {"_id": user_id, "owned_games": {"$exists": True, "$ne": []}},  # Check if owned_games is non-empty
+            {"owned_games": 1}  # Return only the owned_games field
+        )
 
-        return owned_games_details
+        if not document:
+            return []
+        else: 
+            owned_games_array = document['owned_games']
+
+            for game in owned_games_array:
+                print(f"!!! game {game}")
+
+            # Fetch additional details about the game
+            owned_games_details = []
+            for game in owned_games_array:
+                owned_games_details.extend(getGameDetails(game["game_id"], game["purchase_date"], game["hours_played"]))
+
+            return owned_games_details
     except Exception as e: 
-        return f"Failed to connect to MongoDB: {e}", 500 
+        return f"ERROR ! {e}", 500 
 
 # get game details 
 def getGameDetails(game_id, purchase_date, hours_played):
-    db = initialize_database()
-    if db is None: 
-        return "Database not initialized", 500
+    db = get_NoSQLdb()
 
     try: 
         # Retrieve all documents 
@@ -131,9 +108,7 @@ def getGameDetails(game_id, purchase_date, hours_played):
 
 # Used to check if game is purchased as well
 def getAddedDates(game_id): # Return added date if game is in wishlist else return None
-    db = initialize_database()  
-    if db is None:
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
 
     try:
         document = db.new_user.find_one(
@@ -152,7 +127,6 @@ def getAddedDates(game_id): # Return added date if game is in wishlist else retu
 @owned_game_bp.route("/view-owned_game")
 @login_required
 def view_owned_game():
-
     user_id = request.args.get("uid", session['_id'])    # get user id from query params, if not avail, load current logged in user data: session['_id']
     owned_game = gamesInOwned(user_id)
 
@@ -167,9 +141,7 @@ def view_owned_game():
 # add to owned_game
 @owned_game_bp.route("/add-owned_game", methods=["POST"])
 def add_owned_game():
-    db = initialize_database()
-    if db is None: 
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
         
     print(f"Session ID: {session.get('_id')}")
     try: 
@@ -199,9 +171,7 @@ def add_owned_game():
 # Delete from owned_game
 @owned_game_bp.route("/delete-from-owned_game/<game_id>", methods=["GET"])
 def delete_owned_game(game_id):
-    db = initialize_database()
-    if db is None: 
-        return "Database not initialized!!", 500
+    db = get_NoSQLdb()
     try: 
         db.new_user.update_one(
             {"_id": session["_id"]},  # Match the document by _id

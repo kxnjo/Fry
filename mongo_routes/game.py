@@ -16,7 +16,7 @@ from datetime import datetime
 from auth_utils import login_required  # persistent login
 
 # MongoDB setup
-import mongo_cfg
+from mongo_cfg import get_NoSQLdb
 
 # integrating everyone's parts # XH TODO: IMPORT OTHER MEMBERS PARTS ONCE UPDATE MONGO!!
 from mysql_routes.review import user_written_reviews,mongo_find_review, get_all_reviews_for_game
@@ -27,35 +27,12 @@ from mongo_routes.owned_game import getAddedDates
 # Create a Blueprint object
 game_bp = Blueprint("game_bp", __name__)
 
-db = None
-
-# MARK: initialise database
-def get_db():
-    """Helper function to initialize the MongoDB user collection."""
-    global db
-    if db is None:
-        # Attempt to get an existing connection first
-        db = mongo_cfg.get_NoSQLdb()
-        
-        # If no existing connection, initialize a new one
-        if db is None:
-            db = mongo_cfg.noSQL_init(app)
-        
-        return db
-            
-    # After ensuring db is initialized, return the user collection if db is available
-    if db is not None:
-        return db
-    else:
-        raise Exception("Failed to initialize MongoDB connection")
-
-db = get_db()
 
 @game_bp.route('/gametest-db-connection')
 def mongo_connection():
     # Ensure db.new_user is initialized
     try:
-        db = get_db()
+        db = get_NoSQLdb()
 
         # Retrieve all documents
         documents = db.new_game.find()
@@ -75,7 +52,7 @@ def mongo_connection():
 # route to view games page
 @game_bp.route("/games", methods=['GET'])
 def view_all_games():
-    db = get_db()
+    db = get_NoSQLdb()
     search = request.args.get('query')
     page = request.args.get('page', 1, type=int)
     sort_by = request.args.get('sort', 'title')  # Default sort is by title
@@ -143,7 +120,7 @@ def view_all_games():
 @game_bp.route("/game/<game_id>")
 def view_game(game_id):
     try:
-        db = get_db()
+        db = get_NoSQLdb()
         doc = db.new_game.find_one({"_id":  game_id,})
         game = {
             "game_id": doc["_id"],
@@ -215,7 +192,7 @@ def view_game(game_id):
 @game_bp.route("/edit_game/<game_id>", methods=['POST'])
 def edit_game(game_id):
 
-    db = get_db()
+    db = get_NoSQLdb()
 
     # Get form data
     title = request.form.get("title")
@@ -333,7 +310,7 @@ def delete_game(game_id):
         return f"Error occurred while deleting the game: {e}", 500
 
 def PriceChanges(_id): 
-    db = get_db()
+    db = get_NoSQLdb()
     if db is None: 
         return "Database is not initalized!!", 500 
   
@@ -361,7 +338,7 @@ def PriceChanges(_id):
 
 # get price change details
 def getPriceChangeDetails(_id, change_date, base_price, discount):
-    db = get_db()
+    db = get_NoSQLdb()
     if db is None: 
         return "Databse not initialized", 500 
     try:
